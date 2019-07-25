@@ -526,7 +526,11 @@ int main(void)//(int argc, char **argv)
 			printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
 			//AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
 			AYFILE_ClearIpList();
-			
+			for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
+				AYFILE_AddIPsToFile(&AY_Ram.AY_DeviceList[i]._LocalIp, 1);
+			}
+
+
 			//!AY_SendDeviceStartToServer();			
 			
 			AY_Client_SendServer = 1;

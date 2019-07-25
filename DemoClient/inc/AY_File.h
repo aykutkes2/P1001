@@ -9,3 +9,5 @@
 
 extern int AYFILE_ClearIpList(void);
 
+extern int AYFILE_AddIPsToFile(Ui32 *pIP, Ui16 cnt);
+
