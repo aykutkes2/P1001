@@ -1,0 +1,32 @@
+#pragma once
+enum _GATEWAYLIST_OBJECTS {
+	GWL_Id,
+	GWL_Nm,
+	GWL_Uq0,
+	GWL_Uq1,
+	GWL_Uq2,
+	GWL_Mac,
+	GWL_Adm,
+	GWL_cer,
+	GWL_con,
+	GWL_SK0,
+	GWL_SK1,
+	GWL_SK2,
+	GWL_pkt,
+	GWL_Tot,
+	GWL_SdB,
+	GWL_RvB,
+	GWL_Fst,
+	GWL_Lst,
+	GWL_Div,
+};
+enum _DEVICELIST_OBJECTS {
+	DVL_id,
+	DVL_Rls,
+	DVL_Nam,
+	DVL_Pwd,
+	DVL_RcQ,
+	DVL_Ans,
+	DVL_Atr,
+	DVL_Pic,
+};

@@ -1,0 +1,16 @@
+CREATE TABLE `devicelist_001`.`devicelist_1` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `NAME` varchar(45) NOT NULL,
+  `UNIQUE_0` int(10) unsigned NOT NULL,
+  `UNIQUE_1` int(10) unsigned NOT NULL,
+  `UNIQUE_2` int(10) unsigned NOT NULL,
+  `PARENT` int(10) unsigned NOT NULL,
+  `TYPE` int(10) unsigned NOT NULL,
+  `LocalIP` int(10) unsigned NOT NULL,
+  `Status` int(10) unsigned NOT NULL,
+  `PACKET_CNT` int(10) unsigned NOT NULL,
+  `TOTAL_PACKETS` int(10) unsigned NOT NULL,
+  `SEND_BYTES` int(10) unsigned NOT NULL,
+  `RCV_BYTES` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

@@ -1,0 +1,11 @@
+CREATE TABLE `devicelist_001`.`user_list_001` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `UserRoles` int(11) DEFAULT NULL,
+  `UserName` varchar(45) DEFAULT NULL,
+  `UserPassword` varchar(45) DEFAULT NULL,
+  `RescueQuestionID` int(11) DEFAULT NULL,
+  `RescueQuestionAnswer` varchar(45) DEFAULT NULL,
+  `UserAvatarID` int(11) DEFAULT NULL,
+  `UserPictureID` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='User ID, User Name(email), User Password, Rescue Question ID, Rescue Question Answer, User Avatar ID, User Picture ID\n\n'

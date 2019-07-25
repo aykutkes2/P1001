@@ -1,0 +1,22 @@
+CREATE TABLE `gatewaylist_001` (
+  `idGatewayList_001` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `NAME` varchar(45) DEFAULT NULL,
+  `UNIQUE_0` int(11) DEFAULT NULL,
+  `UNIQUE_1` int(11) DEFAULT NULL,
+  `UNIQUE_2` int(11) DEFAULT NULL,
+  `MAC` bigint(20) DEFAULT NULL,
+  `ADMIN` int(11) DEFAULT NULL,
+  `CERTIFICATE_ID` int(11) DEFAULT NULL,
+  `CONNECTION_ID` int(11) DEFAULT NULL,
+  `SESSION_KEY_0` bigint(20) DEFAULT NULL,
+  `SESSION_KEY_1` bigint(20) DEFAULT NULL,
+  `SESSION_KEY_2` bigint(20) DEFAULT NULL,
+  `PACKET_CNT` int(11) DEFAULT NULL,
+  `TOTAL_PACKETS` int(11) DEFAULT NULL,
+  `SEND_BYTES` int(11) DEFAULT NULL,
+  `RCV_BYTES` int(11) DEFAULT NULL,
+  `FIRST_CONN` datetime DEFAULT NULL,
+  `LAST_CONN` datetime DEFAULT NULL,
+  `DEVICE_LIST` int(11) DEFAULT NULL,
+  PRIMARY KEY (`idGatewayList_001`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='gateway MAC, gateway UniqueID, gateway Certificate ID, gateway instant connection ID, Session Key, Packet Count, Total Packet Count, Total Send Bytes, Total Rcv Bytes, First Connection, Last Connection, Device List'
