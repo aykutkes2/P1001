@@ -33,145 +33,94 @@ Device 1 Ghost			192.168.2.148
 #include <string>
 using namespace std;
 
-int AYFILE_ClearIpList(void) {
-	string filename = "file/AddIP.bat";
+static fstream fio;
+static ofstream fout;
+static ifstream fin;
 
-	// Write to File
-	ofstream fout(filename.c_str(), ios::out | ios::binary);
-	if (!fout.is_open()) {
-		printf("error: open file for output failed!");
-		abort();
-	}
-	fout.write((char *)"", 0);
+const char AddIP_File[] = "file/AddIP.bat";
 
-	fout.close();
-}
-
-int AYFILE_AddIPsToFile(Ui32 *pIP, Ui16 cnt) {
-	//==============================================================================
-	int i=0;
-	char line[128];
-	string filename = "file/AddIP.bat";
-	string cd = "cd..";
-	char netsh[] = "netsh interface ip add address \"Local Area Connection\" ";
-	// Read/Write from file
-	fstream fio(filename.c_str(), ios::out | ios::in | ios::binary);
-	while (fio.read(&line[0],1)) {
-		i++;
+int AYFILE_OpenFile(char *pFile) {
+	char line[256];
+	fin.open(pFile, ios::in | ios::binary);
+	fout.open(pFile, ios::out | ios::binary);
+	printf("FILE: %s opened\n", pFile);
+	memset(line, 0, sizeof(line));
+	while (fin.read(&line[0], 255)) {
+		//line[16] = 0;
+		printf("FILE: %s LINE: %s\n", pFile, line);
 	};
-	//==============================================================================
-	if (i < 2) {
-		fio.write((char *)&cd, sizeof(cd));
-		fio.write((char *)&cd, sizeof(cd));
-		fio.write((char *)&cd, sizeof(cd));
-		fio.write((char *)&cd, sizeof(cd));
-		fio.write((char *)&cd, sizeof(cd));
-	}
-	
-	while (cnt) {
-		strcpy(line, netsh);
-		AY_ConvertIPAddToStrRet((Ui08 *)*pIP, line);
-		AY_ConvertIPAddToStrRet((Ui08 *)*pIP, line);
-		AY_ConvertIPAddToStrRet((Ui08 *)*pIP, line);
-		fio.write((char *)&line, sizeof(line));
-		cnt--;
-	}
-
-	fio.close();
-	//netsh interface ip add address "Local Area Connection" 192.168.2.213 255.255.255.0 192.168.2.1
-
-
 	return 1;
 }
 
+int AYFILE_CloseFile(char *pFile) {
+	if (fin.is_open()) {
+		fin.close();
+		printf("FILE: %s closed\n", pFile);
+		//return 1;
+	}
+	else {
+		printf("FILE: %s error: open file for output failed!\n", pFile);
+		//return -1;
+	}
+	if (fout.is_open()) {
+		fout.close();
+		printf("FILE: %s closed\n", pFile);
+	}
+	else {
+		printf("FILE: %s error: open file for output failed!\n", pFile);
+	}
+	return 1;
+}
 
-
-int AYFILE_ClearIpListb(void) {
-	string filename = ".\file\AddIP.bat";
-	
-
-	// Write to File
-	ofstream fout(filename.c_str(), ios::out | ios::binary);
+int AYFILE_ClearIpList(char *pFile) {
 	if (!fout.is_open()) {
-		cerr << "error: open file for output failed!" << endl;
-		abort();
+		printf("FILE: %s error: open file for clear failed!\n", pFile);
 	}
-	int i = 1234;
-	double d = 12.34;
-	fout.write((char *)&i, sizeof(int));
-	fout.write((char *)&i, sizeof(int));
-	fout.write((char *)&d, sizeof(double));
+	else {
+		fout.open(pFile, ios::out | ios::binary);
+		printf("FILE: %s opened\n", pFile);
+	}
+	fout.write((char *)"", 0);
+	printf("FILE: %s clear\n", pFile);
 	fout.close();
+	printf("FILE: %s closed\n", pFile);
+	fout.open(pFile, ios::out | ios::app | ios::binary);
+	printf("FILE: %s opened as app\n", pFile);
 
-	// Read from file
-	ifstream fin(filename.c_str(), ios::in | ios::binary);
-	if (!fin.is_open()) {
-		cerr << "error: open file for input failed!" << endl;
-		abort();
+	return 1;
+}
+/*
+* netsh interface ip add address "Local Area Connection" 192.168.2.213 255.255.255.0 192.168.2.1
+*/
+int AYFILE_AddIPsToFile(char *pFile, Ui32 *pIP, Ui16 cnt, Ui32 GwMask, Ui32 GwIP) {
+	int i = 0;
+	char line[256];
+	const char netsh[] = "netsh interface ip add address \"Local Area Connection\" ";
+	const char cd[] = "cd..\r\n\0";
+	const char exit[] = "exit\r\n\0";
+
+	//==============================================================================
+	if (cnt == 0) {
+		fout.write((char *)&cd, strlen(cd));	printf("FILE: %s NEW LINE: %s", pFile, cd);
+		fout.write((char *)&cd, strlen(cd));	printf("FILE: %s NEW LINE: %s", pFile, cd);
+		fout.write((char *)&cd, strlen(cd));	printf("FILE: %s NEW LINE: %s", pFile, cd);
+		fout.write((char *)&cd, strlen(cd));	printf("FILE: %s NEW LINE: %s", pFile, cd);
+		fout.write((char *)&cd, strlen(cd));	printf("FILE: %s NEW LINE: %s", pFile, cd);
 	}
-	int i_in;
-	double d_in;
-	fin.read((char *)&i_in, sizeof(int));
-	cout << i_in << endl;
-	fin.read((char *)&d_in, sizeof(double));
-	cout << d_in << endl;
-	fin.close();
-	
-	
-	
-	
-	//// Creation of ofstream class object 
-	//ofstream fout;
-
-	//string line;
-	//const char * c;
-
-	//// by default ios::out mode, automatically deletes 
-	//// the content of file. To append the content, open in ios:app 
-	//// fout.open("sample.txt", ios::app) 
-	//fout.open("AddIP.txt", ios::trunc | ios::out | ios::in); //fout.open(".\file\AddIP.bat");
-	//// Execute a loop If file successfully opened 
-	//while (fout) {
-	//	// Read a Line from standard input 
-	//	getline(cin, line);
-
-	//	// Press -1 to exit 
-	//	if (line == "-1")
-	//		break;
-
-	//	// Write line in file 
-	//	char * writable = new char[line.size() + 1];
-	//	std::copy(line.begin(), line.end(), writable);
-	//	writable[line.size()] = '\0'; // don't forget the terminating 0
-
-
-	//	//c = line.c_str();
-	//	printf("LINE: %s", writable);
-	//	fout.write(writable,strlen(writable));
-	//	//fout << line << endl;
-	//}
-
-	//// Close the File 
-	//fout.close();
-
-	//// Creation of ifstream class object to read the file 
-	//ifstream fin;
-
-	//// by default open mode = ios::in mode 
-	//fin.open("AddIP.txt"); //fin.open(".\file\AddIP.bat");
-
-	//// Execute a loop until EOF (End of File) 
-	//while (fin) {
-
-	//	// Read a Line from File 
-	//	getline(fin, line);
-
-	//	// Print line in Console 
-	//	cout << line << endl;
-	//}
-
-	//// Close the file 
-	//fin.close();
-
+	else if (cnt > 0xFFFE) {
+		fout.write((char *)&exit, strlen(cd));	printf("FILE: %s NEW LINE: %s", pFile, exit);
+	}
+	else {
+		while (cnt) {
+			strcpy(line, netsh);
+			AY_ConvertIPAddToStrRet((Ui08 *)pIP, line); strcat(line, " ");
+			AY_ConvertIPAddToStrRet((Ui08 *)&GwMask, line); strcat(line, " ");
+			AY_ConvertIPAddToStrRet((Ui08 *)&GwIP, line); //strcat(line, " ");
+			strcat(line, "\r\n");
+			fout.write((char *)&line, strlen(line)); printf("FILE: %s NEW LINE: %s", pFile, line);
+			cnt--;
+		}
+	}
+	//==============================================================================
 	return 1;
 }
