@@ -42,6 +42,15 @@ typedef struct ip_address
 	uint8_t byte4;
 }ip_address;
 
+/* 4 IP addresses */
+typedef struct ip_addressAll
+{
+	ip_address	_ip;
+	ip_address	_gateway;
+	ip_address	_mask;
+	ip_address	_subnet;
+}ip_addressAll;
+
 /**
  * Representation of a 48-bit Ethernet address.
  */

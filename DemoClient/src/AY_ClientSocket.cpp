@@ -271,6 +271,7 @@ int AY_ClientSocket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfi
 							//	printf("\n\n_A = %d I will use this device !!!\n\n",_A); 
 							//	printf(" %s \n\n", inet_ntoa(((struct sockaddr_in*)a->addr)->sin_addr));
 								b = a;
+								//e = d;
 								DevFound = 1;
 							//}
 							j++;
@@ -292,6 +293,25 @@ int AY_ClientSocket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfi
 		}
 	}
 L_DevFound:
+	//========================================================================//
+	bpf_u_int32 ip_raw; /* IP address as integer */
+	bpf_u_int32 subnet_mask_raw; /* Subnet mask as integer */
+		
+	/* Get device info */
+	if (pcap_lookupnet(d->name, &ip_raw, &subnet_mask_raw, errbuf) < 0) {
+		fprintf(stderr, "Error in pcap_lookupnet: %s\n", errbuf);
+		return PCAP_ERROR;
+	}
+
+	*(((Ui32 *)pAdr) + _SUBNET_) = subnet_mask_raw;
+	*(((Ui32 *)pAdr) + _MASK_) = ip_raw;
+	*(((Ui32 *)pAdr) + _GW_) = ip_raw+0x01000000;///< not good!
+
+	printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)&ip_raw, &errbuf[0]));
+	printf("Subnet mask: %s\n", AY_ConvertIPToStrRet((Ui08 *)&subnet_mask_raw, &errbuf[0]));
+	printf("Gateway address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _GW_), &errbuf[0]));
+
+//==========================================================================================================//
 	if ((a != NULL)&& (d != NULL)) {
 		*((Ui32 *)pAdr) = (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.S_un.S_addr);
 		/* Open the adapter */
@@ -306,9 +326,10 @@ L_DevFound:
 			return PCAP_ERROR;
 		}
 		//*pFp = (void *)fp;
-		if (d->addresses != NULL)
+		if (d->addresses != NULL) {
 			/* Retrieve the mask of the first address of the interface */
 			MyNetMask = ((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+		}
 		else
 			/* If the interface is without addresses we suppose to be in a C class network */
 			MyNetMask = 0xffffff;

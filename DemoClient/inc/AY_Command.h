@@ -6,6 +6,7 @@
 
 #pragma pack(pop)
 
+extern int AYCMD_SystemWrite(char *pSys);
 
 extern int AYCMD_TakeThisIP(Ui08 *pIP);
 

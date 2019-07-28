@@ -23,12 +23,15 @@ extern const Ui08			SERVER_Dns[40];
 extern const Ui16			MyUDP_StartPort;
 extern const Ui08			MyMac[6];
 extern const Ui08			MyUnique[12];
+extern const Ui08			MyInterface[45];
 
 extern const Ui32			LOCAL_CertNo;
 extern const Ui32			SERVER_CertNo;
 
 extern const Ui08 MY_NAME[45];
 extern const Ui08 MY_PASSWORD[45];
+
+extern const Ui08 * const Default_Config_File;
 
 extern const Ui08 * const SIGNING_PUB_KEY;
 extern const Ui08 * const SIGNING_PR_KEY;

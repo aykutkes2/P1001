@@ -23,6 +23,10 @@ Device 1 Ghost			192.168.2.148
 
 #include <iostream>
 
+int AYCMD_SystemWrite(char *pSys) {
+	return system(pSys);
+}
+
 int AYCMD_TakeThisIP(Ui08 *pIP) {
 	printf("Trying to run cmd using runas cmd");
 	//system("cmd;");

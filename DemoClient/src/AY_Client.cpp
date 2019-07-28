@@ -26,7 +26,9 @@ Device 1 Ghost			192.168.2.148
 AY_GlobalRAM			AY_Ram;
 static void				*pMainSocket;
 static void				*pMacSocket;
-static ip_address		MyIP_Address;
+//static ip_address		MyIP_Address;
+static ip_addressAll	MyIP_Addresses;
+#define MyIP_Address	MyIP_Addresses._ip
 static uip_eth_addr		MyEth_Address;
 static Ui08				MyUnique_ID[12];
 static ip_address		SrvIP_Address;
@@ -245,7 +247,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, AY_Ram.AY_DeviceCnt);
 				for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
 					printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-					AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
+					//AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
 				}
 				AY_Client_RecvServer = 1;
 			}
@@ -389,29 +391,6 @@ int main(void)//(int argc, char **argv)
 	Ui08 packet[114];
 	char GetVal;
 
-	//AY_ClientSocket_main();
-	//while (1) {
-	//	MyClientInstPort = 1982;
-	//	if (!AY_Client_Initied) {
-	//		MyIP_Address.byte1 = 0;	MyIP_Address.byte2 = 0;	MyIP_Address.byte3 = 0;	MyIP_Address.byte4 = 0;
-	//		if (AY_ClientSocket_Init(&pMainSocket, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, SERVER_Port, 0, AY_MainSocket_CallBack) == 1) {
-	//			AY_Client_Initied = 1;
-	//		}
-	//	}
-	//	UDP_header_init(&AY_UDPheader);
-	//	UDP_header_load(&AY_UDPheader, *((uip_eth_addr *)&DEMO_Mac[0]), *((ip_address *)&DEMO_SRV_IP[0]), DEMO_SRV_Port, *((uip_eth_addr *)&DEMO_Mac[0]), MyIP_Address, MyClientInstPort);
-
-	//	/* Fill the rest of the packet */
-	//	for (i = 0; i < 114; i++) {
-	//		packet[i] = (Ui08)i;
-	//	}
-
-	//	while (1) {
-	//		UDP_packet_send(pMainSocket, &AY_UDPheader, &packet[0], 114);
-	//	}
-	//}
-
-
 	MyClientInstPort = MyUDP_StartPort;
 	AY_Client_Flags = 0;///< clear all flags
 	AY_ClientInitLoop = 0;
@@ -468,11 +447,18 @@ int main(void)//(int argc, char **argv)
 		if (!AY_Client_Intro) {
 			printf("============ CLIENT PROJECT =================\n\n");
 			printf("================ START =================\n\n");
-			AY_Client_Intro 1;
+			AY_Client_Intro = 1;
 		}
 		else if (!AY_Client_Initied) {
+			Ui08 Temp[45];
 			MyIP_Address.byte1 = 0;	MyIP_Address.byte2 = 0;	MyIP_Address.byte3 = 0;	MyIP_Address.byte4 = 0;
 			if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, SERVER_Port, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
+
+				printf("IP address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _IP_), (char*)&Temp[0]));
+				printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _SUBNET_), (char*)&Temp[0]));
+				printf("Subnet mask: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _MASK_), (char*)&Temp[0]));
+				printf("Gateway address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _GW_), (char*)&Temp[0]));
+
 				AY_Client_Initied = 1;
 			}
 		}
@@ -515,28 +501,32 @@ int main(void)//(int argc, char **argv)
 #endif
 		else if (!AY_Client_SendServer) {
 			Ui08 Temp[45];
-			AY_Ram.AY_DeviceCnt = 5;
-			for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
-				AY_Ram.AY_DeviceList[i]._id = 1;
-				AY_Ram.AY_DeviceList[i]._Unique[0] = 1;
-				AY_Ram.AY_DeviceList[i]._Unique[1] = 2;
-				AY_Ram.AY_DeviceList[i]._Unique[2] = 3;
-				AY_Ram.AY_DeviceList[i]._ParentId = 6;
-				AY_Ram.AY_DeviceList[i]._Type = 1;
-				AY_Ram.AY_DeviceList[i]._LocalIp = 0xD502a8c0+(0x01000000*i);///< 192.168.2.213
-				printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-			}
-			//AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
-			AYFILE_OpenFile((char *)AddIP_File);
-			AYFILE_ClearIpList((char *)AddIP_File);
-			AYFILE_AddIPsFileStart((char *)AddIP_File);
-			for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
-				AYFILE_AddIPsToFile((char *)AddIP_File, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, AY_Ram.AY_DeviceList[i]._LocalIp, AY_Ram.AY_DeviceList[i]._LocalIp);
-			}
-			AYFILE_AddIPsFileStop((char *)AddIP_File);
-			AYFILE_CloseFile((char *)AddIP_File);
 
-			//!AY_SendDeviceStartToServer();			
+			AYFILE_TestConfigFile(1);
+			AYFILE_ConfigFileReadComp((char *)&Temp[0], ServerDns);
+			AYFILE_ConfigFileWriteComp((char *)"167", DNSPort);
+
+			//AY_Ram.AY_DeviceCnt = 5;
+			//for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
+			//	AY_Ram.AY_DeviceList[i]._id = 1;
+			//	AY_Ram.AY_DeviceList[i]._Unique[0] = 1;
+			//	AY_Ram.AY_DeviceList[i]._Unique[1] = 2;
+			//	AY_Ram.AY_DeviceList[i]._Unique[2] = 3;
+			//	AY_Ram.AY_DeviceList[i]._ParentId = 6;
+			//	AY_Ram.AY_DeviceList[i]._Type = 1;
+			//	AY_Ram.AY_DeviceList[i]._LocalIp = 0xD502a8c0+(0x01000000*i);///< 192.168.2.213
+			//	printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
+			//}
+			//AYFILE_OpenFile((char *)AddIP_File);
+			//AYFILE_ClearFile((char *)AddIP_File);
+			//AYFILE_AddIPsFileStart((char *)AddIP_File, (char *)&MyInterface[0], 1);
+			//for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
+			//	AYFILE_AddIPsToFile((char *)AddIP_File, (char *)&MyInterface[0], &AY_Ram.AY_DeviceList[i]._LocalIp, 1, AY_Ram.AY_DeviceList[i]._LocalIp, AY_Ram.AY_DeviceList[i]._LocalIp,1);
+			//}
+			//AYFILE_AddIPsFileStop((char *)AddIP_File, (char *)&MyInterface[0], 1);
+			//AYFILE_CloseFile((char *)AddIP_File);
+
+			////!AY_SendDeviceStartToServer();			
 			
 			AY_Client_SendServer = 1;
 		}
