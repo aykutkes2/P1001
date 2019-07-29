@@ -341,3 +341,88 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 	printf("FILE: %s comp. not found, file closed\n", cfg_file);
 	return -1;
 }
+
+//=================== CERTIFICATE FILE LOAD / UPLOAD =====================================//
+/*
+* netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all
+*/
+const char cert_file[] = "file/cert.ayk";
+const char cert_aes[16] = { 0x62,0xa3,0x3b,0xe9,0x1f,0xff,0xc2,0x0e,0xc9,0xfd,0xfc,0xda,0x6a,0x71,0x25,0x29 };
+int AYFILE_TestCertFile(Ui08 Create) {
+	int i = 0;
+	int j = 0;
+	char file[32768];
+
+	fin.open(cert_file, ios::in | ios::binary);
+	if (!fin) {
+		if (Create) {
+			printf("FILE: %s not found\n", (char *)&cert_file[0]);
+			fout.open(cert_file, ios::trunc);
+			fout.close();
+			fout.open(cert_file, ios::out | ios::app | ios::binary);
+			printf("FILE: %s opened as app\n", (char *)&cert_file[0]);
+			
+			i = sizeof((char *)&cert_file[0]);
+			memcpy(&file[0], (char *)&cert_file[0], i);
+			j = i % 16;
+			while (j) {
+				file[i] = 0x0;
+				i++;
+				j--;
+			}
+			AY_Crypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
+			fout.write((char *)&file, i);
+			printf("FILE: %s encprted write \n", cert_file);
+			fout.close();
+			printf("FILE: %s closed\n", cert_file);
+		}
+		else {
+			printf("FILE: %s not found\n", cert_file);
+			return 0;
+
+		}
+	}
+	else {
+		printf("FILE: %s opened\n", cert_file);
+		fin.close();
+		printf("FILE: %s closed\n", cert_file);
+		return 1;
+	}
+	return 1;
+}
+
+int AYFILE_ReadCertFile(void) {
+	int i = 0;
+	int j = 0;
+	char file[32768];
+
+	fin.open(cert_file, ios::in | ios::binary);
+	if (!fin) {
+		printf("FILE: %s not found\n", (char *)&cert_file[0]);
+		fout.open(cert_file, ios::trunc);
+		fout.close();
+		fout.open(cert_file, ios::out | ios::app | ios::binary);
+		printf("FILE: %s opened as app\n", (char *)&cert_file[0]);
+
+		i = sizeof((char *)&cert_file[0]);
+		memcpy(&file[0], (char *)&cert_file[0], i);
+		j = i % 16;
+		while (j) {
+			file[i] = 0x0;
+			i++;
+			j--;
+		}
+		AY_Crypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
+		fout.write((char *)&file, i);
+		printf("FILE: %s encprted write \n", cert_file);
+		fout.close();
+		printf("FILE: %s closed\n", cert_file);
+	}
+	else {
+		printf("FILE: %s opened\n", cert_file);
+		fin.close();
+		printf("FILE: %s closed\n", cert_file);
+		return 1;
+	}
+	return 1;
+}

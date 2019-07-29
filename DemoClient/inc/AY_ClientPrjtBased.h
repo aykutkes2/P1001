@@ -32,11 +32,18 @@ extern const Ui08 MY_NAME[45];
 extern const Ui08 MY_PASSWORD[45];
 
 extern const Ui08 * const Default_Config_File;
+extern const Ui08 * const Default_Cert_File;
 
-extern const Ui08 * const SIGNING_PUB_KEY;
-extern const Ui08 * const SIGNING_PR_KEY;
-extern const Ui08 * const SERVER_PUB_KEY;
-extern const Ui08 * const SERVER_PR_KEY;
+extern Ui08 SIGNING_PUB_KEY[2048];
+extern Ui08 SIGNING_PR_KEY[2048];
+extern Ui08 SERVER_PUB_KEY[2048];
+extern Ui32 SERVER_NO;
+
+
+//extern const Ui08 * const SIGNING_PUB_KEY;
+//extern const Ui08 * const SIGNING_PR_KEY;
+//extern const Ui08 * const SERVER_PUB_KEY;
+//extern const Ui08 * const SERVER_PR_KEY;
 
 //extern const Ui08			MyPublicKey[256];
 //extern const Ui08			MyPrivateKey[256];
