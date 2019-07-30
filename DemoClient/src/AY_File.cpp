@@ -244,7 +244,6 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	else {
 		printf("FILE: %s opened\n", cfg_file);
 		memset(line, 0, sizeof(line));	
-		//fin.getline()
 		while (fin.getline(&line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
@@ -268,9 +267,6 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 					return 1;
 				}
 			}
-			else {
-				//memset(line, 0, sizeof(line));
-			}
 		};
 	}
 	fin.close();
@@ -278,26 +274,28 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	return -1;
 }
 
-#define FILEm	fin//fio//fio
 int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 	int i = 0;
 	int j = 0;
+	char file[32768];///< file temp
 	char line[1024];
 	char line2[1024];
 	const char item[] = "<Item id = \"";
 	const char value[] = "Value = \"";
 	char *p,*q;
 
-	FILEm.open(cfg_file, ios::in | ios::binary);
-	fout.open(cfg_file, ios::out | ios::app | ios::trunc | ios::binary);
-	if (!FILEm) {
+
+	fin.open(cfg_file, ios::in | ios::binary);
+	if (!fin) {
 		printf("FILE: %s not found\n", cfg_file);
 		return -1;///< file no
 	}
 	else {
-		printf("FILE: %s opened\n", cfg_file);
+		memset(file, 0, sizeof(file));
+
+		printf("FILE: %s opened to read \n", cfg_file);
 		memset(line, 0, sizeof(line));
-		while (FILEm.getline(&line[0], 1023)) {
+		while (fin.getline(&line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if(p != 0){
@@ -318,30 +316,28 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 					//-----------------
 					strcat(p, q);
 					//-----------------
-					//FILEm.write((char *)&line, strlen(line));
-					i = FILEm.tellg();
-					fout.seekp(i);
-					fout.write((char *)&line, strlen(line));
-					//-----------------
 					printf("FILE: %s COMPONENT: %s\n", cfg_file, pVal);
-					printf("\n");
-					FILEm.close();
-					fout.close();
-					printf("FILE: %s comp. found, file closed\n", cfg_file);
-					return 1;
 				}
 			}
-			else {
-				memset(line, 0, sizeof(line));
-			}
+			strcat(line, "\n");
+			strcat(file, line);
 		};
+		fout.open(cfg_file, ios::out | ios::binary);
+		printf("FILE: %s opened to write \n", cfg_file);
+		fout.write((char *)"", 0);
+		printf("FILE: %s clear\n", cfg_file);
+		fout.close();
+		printf("FILE: %s closed\n", cfg_file);
+		fout.open(cfg_file, ios::out | ios::app | ios::binary);
+		printf("FILE: %s opened as app\n", cfg_file);
+		fout.write((char *)&file, strlen(file));
+		fout.close();
+		printf("FILE: %s closed\n", cfg_file);
 	}
-	FILEm.close();
-	fout.close();
-	printf("FILE: %s comp. not found, file closed\n", cfg_file);
+	fin.close();
+	printf("FILE: %s reader closed\n", cfg_file);
 	return -1;
 }
-
 //=================== CERTIFICATE FILE LOAD / UPLOAD =====================================//
 /*
 * netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all
