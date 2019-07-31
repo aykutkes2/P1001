@@ -59,7 +59,7 @@ int AY_Decrypt_AES128(Ui08 *pKey, Ui08 *pData, Ui16 Len) {
 
 	//==== decrpt
 	mbedtls_aes_setkey_dec(&ctx, key, 128);
-	for (j = 0; j < 4; j++) {
+	for (j = 0; j < Len; j++) {
 		memcpy(&buff_enc[0], pData, 16);
 		memset(&buff_dec[0], 0, 16);
 		mbedtls_aes_crypt_ecb(&ctx, MBEDTLS_AES_DECRYPT, &buff_enc[0], &buff_dec[0]);

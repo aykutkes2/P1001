@@ -502,6 +502,8 @@ int main(void)//(int argc, char **argv)
 		else if (!AY_Client_SendServer) {
 			Ui08 Temp[45];
 
+			AYFILE_ReadCertFile();
+
 			AYFILE_TestConfigFile(1);
 			AYFILE_ConfigFileReadComp((char *)&Temp[0], ServerDns);
 			AYFILE_ConfigFileWriteComp((char *)"53", DNSPort);

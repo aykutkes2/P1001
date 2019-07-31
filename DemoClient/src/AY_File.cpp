@@ -350,7 +350,7 @@ int AYFILE_TestCertFile(Ui08 Create) {
 	char file[32768];
 
 	fin.open(cert_file, ios::in | ios::binary);
-	if (!fin) {
+	if (!fin){
 		if (Create) {
 			printf("FILE: %s not found\n", (char *)&cert_file[0]);
 			fout.open(cert_file, ios::trunc);
@@ -358,9 +358,9 @@ int AYFILE_TestCertFile(Ui08 Create) {
 			fout.open(cert_file, ios::out | ios::app | ios::binary);
 			printf("FILE: %s opened as app\n", (char *)&cert_file[0]);
 			
-			i = sizeof((char *)&cert_file[0]);
-			memcpy(&file[0], (char *)&cert_file[0], i);
-			j = i % 16;
+			i = strlen((char *)Default_Cert_File);
+			memcpy(&file[0], Default_Cert_File, i);
+			j = (16 - (i & 0xF))& 0xF;
 			while (j) {
 				file[i] = 0x0;
 				i++;
@@ -375,7 +375,6 @@ int AYFILE_TestCertFile(Ui08 Create) {
 		else {
 			printf("FILE: %s not found\n", cert_file);
 			return 0;
-
 		}
 	}
 	else {
@@ -391,34 +390,39 @@ int AYFILE_ReadCertFile(void) {
 	int i = 0;
 	int j = 0;
 	char file[32768];
+	char *p,*q;
 
-	fin.open(cert_file, ios::in | ios::binary);
-	if (!fin) {
-		printf("FILE: %s not found\n", (char *)&cert_file[0]);
-		fout.open(cert_file, ios::trunc);
-		fout.close();
-		fout.open(cert_file, ios::out | ios::app | ios::binary);
-		printf("FILE: %s opened as app\n", (char *)&cert_file[0]);
-
-		i = sizeof((char *)&cert_file[0]);
-		memcpy(&file[0], (char *)&cert_file[0], i);
-		j = i % 16;
-		while (j) {
-			file[i] = 0x0;
-			i++;
-			j--;
+	if (AYFILE_TestCertFile(1)) {
+		fin.open(cert_file, ios::in | ios::binary);
+		if (!fin) {
+			printf("FILE: %s There is something wrong!!\n", (char *)&cert_file[0]);
+			fin.close();
+			printf("FILE: %s closed\n", cert_file);
+			return -1;
 		}
-		AY_Crypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
-		fout.write((char *)&file, i);
-		printf("FILE: %s encprted write \n", cert_file);
-		fout.close();
-		printf("FILE: %s closed\n", cert_file);
+		else {
+			i = 0;			
+			p = &file[0];
+			while (fin.read(p, 1)) {
+				i++;
+				p++;
+			}
+
+			AY_Decrypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
+			p = (char *)&file[0];
+			SERVER_NO = (Ui32)AY_ConvertStringToUi64(p);
+			p = strstr(p, "-----BEGIN PUBLIC KEY-----\n");
+			q = strstr(p, "-----END PUBLIC KEY-----\n");
+			if ((p) && (q)) {
+				memcpy(&SIGNING_PUB_KEY[0], p, (q - p + sizeof("-----END PUBLIC KEY-----\n")));				
+			}
+			p = strstr(p, "-----BEGIN RSA PRIVATE KEY-----\n");
+			q = strstr(p, "-----END RSA PRIVATE KEY-----\n");
+			if ((p) && (q)) {
+				memcpy(&SIGNING_PR_KEY[0], p, (q - p + sizeof("-----END RSA PRIVATE KEY-----\n")));
+			}
+			return 1;
+		}
 	}
-	else {
-		printf("FILE: %s opened\n", cert_file);
-		fin.close();
-		printf("FILE: %s closed\n", cert_file);
-		return 1;
-	}
-	return 1;
+	return -1;	
 }

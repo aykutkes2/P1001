@@ -48,3 +48,6 @@ enum _CFG_FILE {
 extern int AYFILE_TestConfigFile(Ui08 Create);
 extern int AYFILE_ConfigFileReadComp(char *pVal, int comp);
 extern int AYFILE_ConfigFileWriteComp(char *pVal, int comp);
+
+extern int AYFILE_TestCertFile(Ui08 Create);
+extern int AYFILE_ReadCertFile(void);
