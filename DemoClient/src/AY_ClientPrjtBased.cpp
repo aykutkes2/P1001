@@ -14,8 +14,11 @@ Ui08 SERVER_PUB_KEY[2048];
 Ui32 SERVER_NO;
 
 const Ui08 DefaultInterface[45] = "Wi-Fi";// "Local Area Connection";
-const Ui08 DefaultDns[] = "datakomip.dyndns.org";
-const Ui16 DefaultDNSPort = 53;
+const Ui08 DefaultServerDns[] = "datakomip.dyndns.org";
+const Ui16 DefaultServerPort = 1982;
+const Ui08 DefaultDNS_Ip[4] = { 8,8,8,8 };
+const Ui16 DefaultDNS_Port = 53;
+const Ui16 DefaultServerID = 1;
 
 
 const Ui16 MyUDP_StartPort = 1985;

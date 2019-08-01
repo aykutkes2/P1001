@@ -144,7 +144,7 @@ Ui32 AY_ConvertStringToIP(char **ptr) {
 	Ui32 Rslt = 0;
 	Ui08 i = 0;
 	Ui08 j = 0;
-	Ui08 Vals[4];
+	Ui08 Vals[4] = { 0 };
 	char *p;
 	p = *ptr;
 	while ((++i < 200) && (*p != 0x00) && (!((*p >= '0') && (*p <= '9')))) { p++; }

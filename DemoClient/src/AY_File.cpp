@@ -190,7 +190,7 @@ int AYFILE_TestConfigFile(Ui08 Create) {
 	char line[1024];
 
 	fin.open(cfg_file, ios::in | ios::binary);
-	if (!fin) {
+	if ( (!fin)|| (Create==0xAA) ) {
 		if (Create) {
 			printf("FILE: %s not found\n", (char *)&cfg_file[0]);
 			fout.open(cfg_file, ios::trunc);
@@ -255,9 +255,16 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 					p += strlen(value);
 					q = pVal;///< start
 					while (*p != '"') {
-						*pVal = *p;
-						pVal++;
-						p++;
+						if (*p == 0) {
+							fin.getline(&line[0], 1023);
+							printf("FILE: %s LINE: %s\n", cfg_file, line);
+							p = &line[0];
+						}
+						if (*p != '"') {
+							*pVal = *p;
+							pVal++;
+							p++;
+						}
 					}
 					*pVal = 0;
 					printf("FILE: %s COMPONENT: %s\n", cfg_file, q);
@@ -356,13 +363,13 @@ int AYFILE_ConfigFileUpdate(void) {
 			}
 			else {
 				AY_Client_DynamicIP = 0;
+				p = &rd[0];
+				*((Ui32 *)&CngFile.NetIpAddress) = AY_ConvertStringToIP(&p);
 			}
-			p = &rd[0];
-			*((Ui32 *)&CngFile.NetIpAddress) = AY_ConvertStringToIP(&p);
 			//-------------------------//
 			if (AYFILE_ConfigFileReadComp(rd, _NetworkSubnetMask)) {///< read NetworkSubnetMask
 				if (strlen(rd) == 0) {///< use default
-					if(!AY_Client_DynamicIP) { return -1; }					
+					if(!AY_Client_DynamicIP) { return -28; }					
 				}
 				else {
 					if (!AY_Client_DynamicIP) { 
@@ -373,7 +380,7 @@ int AYFILE_ConfigFileUpdate(void) {
 				//-------------------------//
 				if (AYFILE_ConfigFileReadComp(rd, _NetworkGatewayIp)) {///< read NetworkGatewayIp
 					if (strlen(rd) == 0) {///< use default
-						if (!AY_Client_DynamicIP) { return -1; }
+						if (!AY_Client_DynamicIP) { return -27; }
 					}
 					else {
 						if (!AY_Client_DynamicIP) {
@@ -384,7 +391,7 @@ int AYFILE_ConfigFileUpdate(void) {
 					//-------------------------//
 					if (AYFILE_ConfigFileReadComp(rd, _NetSubnetIp)) {///< read NetSubnetIp
 						if (strlen(rd) == 0) {///< use default
-							if (!AY_Client_DynamicIP) { return -1; }
+							if (!AY_Client_DynamicIP) { return -26; }
 						}
 						else {
 							if (!AY_Client_DynamicIP) {
@@ -401,7 +408,8 @@ int AYFILE_ConfigFileUpdate(void) {
 								//-------------------------//
 								if (AYFILE_ConfigFileReadComp(rd, _AllowAddRemove)) {///< read AllowAddRemove
 									p = &rd[0];
-									if ((strstr(p, "YES")) || (strstr(p, "yes")) || (strstr(p, "Yes"))) { CngFile.AllowAddRemove = 1; } else { CngFile.AllowAddRemove = 0; }
+									if ((strstr(p, "YES")) || (strstr(p, "yes")) || (strstr(p, "Yes"))) { CngFile.AllowAddRemove = 1; } 
+									else { CngFile.AllowAddRemove = 0; }
 									//-------------------------//
 									if (AYFILE_ConfigFileReadComp(rd, _UniqueID)) {///< read UniqueID
 										if (strlen(rd) == 0) {///< generate new
@@ -412,39 +420,67 @@ int AYFILE_ConfigFileUpdate(void) {
 										AY_StrToHex(CngFile.UniqueID, &rd[0], 12);
 										//-------------------------//
 										if (AYFILE_ConfigFileReadComp(rd, _ServerDns)) {///< read ServerDns
-											if (strlen(rd) == 0) { strcpy(rd, (char*)&DefaultDns[0]); }///< use default
+											if (strlen(rd) == 0) { strcpy(rd, (char*)&DefaultServerDns[0]); }///< use default
 											strcpy(CngFile.ServerDns, rd);		rd[0] = 0;
 											//-------------------------//
 											if (AYFILE_ConfigFileReadComp(rd, _ServerPort)) {///< read ServerPort
-												if (strlen(rd) == 0) { CngFile.ServerPort = DefaultDNSPort; }///< use default
+												if (strlen(rd) == 0) { CngFile.ServerPort = DefaultServerPort; }///< use default
 												else {	CngFile.ServerPort = AY_ConvertStringToUi64(rd); }
 												//-------------------------//
 												if (AYFILE_ConfigFileReadComp(rd, _DNSIp)) {///< read DNSIp
-													/*buradasin !!! if (strlen(rd) == 0) { CngFile.ServerPort = DefaultDNSPort; }///< use default
-													else { CngFile.ServerPort = AY_ConvertStringToUi64(rd); }*/
-													//wr
+													if (strlen(rd) == 0) {///< use default
+														*((Ui32 *)&CngFile.DNSIp) = *((Ui32 *)&DefaultDNS_Ip);
+													}
+													else {
+														p = &rd[0];
+														*((Ui32 *)&CngFile.DNSIp[0]) = AY_ConvertStringToIP(&p);
+													}
+													//-------------------------//
+													if (AYFILE_ConfigFileReadComp(rd, _DNSPort)) {///< read DNSPort
+														if (strlen(rd) == 0) { CngFile.DNSPort = DefaultDNS_Port; }///< use default
+														else { CngFile.DNSPort = AY_ConvertStringToUi64(rd); }
+														//-------------------------//
+														if (AYFILE_ConfigFileReadComp(rd, _ServerID)) {///< read ServerID
+															if (strlen(rd) == 0) { CngFile.ServerID = DefaultServerID; }///< use default
+															else { CngFile.ServerID = AY_ConvertStringToUi64(rd); }
+															//-------------------------//
+															if (AYFILE_ConfigFileReadComp(&CngFile.ServerPublicKey[0], _ServerPublicKey)) {///< read ServerPublicKey
+																if (strlen(&CngFile.ServerPublicKey[0]) == 0) {///< use default 
+																	AYFILE_TestConfigFile(0xAA);
+																	return -16; 
+																}
+																else { 
+																	//strcpy(&CngFile.ServerPublicKey[0],rd); 
+																}
+																return 1;
+															}
+															else { return -15; }
+														}
+														else { return -14; }
+													}
+													else { return -13; }
 												}
-												else { return -1; }
+												else { return -12; }
 											}
-											else { return -1; }
+											else { return -11; }
 										}
-										else { return -1; }
+										else { return -10; }
 									}
-									else { return -1; }
+									else { return -9; }
 								}
-								else { return -1; }
+								else { return -8; }
 							}
-							else { return -1; }
+							else { return -7; }
 						}
-						else { return -1; }
+						else { return -6; }
 					}
-					else { return -1; }
+					else { return -5; }
 				}
-				else { return -1; }
+				else { return -4; }
 			}
-			else { return -1; }
+			else { return -3; }
 		}
-		else { return -1; }
+		else { return -2; }
 	}
 	else { return -1; }
 }
