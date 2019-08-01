@@ -27,22 +27,22 @@ extern int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui
 extern const char AddIP_File[];
 
 enum _CFG_FILE {
-	UNDEF,
-	NetInterfaceName,
-	NetIpAddress,
-	NetworkSubnetMask,
-	NetworkGatewayIp,
-	NetSubnetIp,
-	GatewayName,
-	GatewayPass,
-	AllowAddRemove,
-	UniqueID,
-	ServerDns,
-	ServerPort,
-	DNSIp,
-	DNSPort,
-	ServerID,
-	ServerPublicKey,
+	_UNDEF,
+	_NetInterfaceName,
+	_NetIpAddress,
+	_NetworkSubnetMask,
+	_NetworkGatewayIp,
+	_NetSubnetIp,
+	_GatewayName,
+	_GatewayPass,
+	_AllowAddRemove,
+	_UniqueID,
+	_ServerDns,
+	_ServerPort,
+	_DNSIp,
+	_DNSPort,
+	_ServerID,
+	_ServerPublicKey,
 };
 
 extern int AYFILE_TestConfigFile(Ui08 Create);

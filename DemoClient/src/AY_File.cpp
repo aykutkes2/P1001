@@ -338,6 +338,119 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 	printf("FILE: %s reader closed\n", cfg_file);
 	return -1;
 }
+
+int AYFILE_ConfigFileUpdate(void) {
+	char *p,rd[45] = { 0 };
+	Ui32 i;
+	if (AYFILE_ConfigFileReadComp(rd, _NetInterfaceName)) {///< read NetInterfaceName
+		if (strlen(rd) == 0) {	strcpy(rd, (char*)&DefaultInterface[0]);	}///< use default
+		strcpy(CngFile.NetInterfaceName, rd);		rd[0] = 0;
+		//-------------------------//
+		if (AYFILE_ConfigFileReadComp(rd, _NetIpAddress)) {///< read NetIpAddress
+			if (strlen(rd) == 0) {///< use default
+				AY_Client_DynamicIP = 1;
+				memset(CngFile.NetIpAddress, 0, sizeof(CngFile.NetIpAddress));
+				memset(CngFile.NetworkGatewayIp, 0, sizeof(CngFile.NetworkGatewayIp));
+				memset(CngFile.NetSubnetIp, 0, sizeof(CngFile.NetSubnetIp));
+				memset(CngFile.NetworkSubnetMask, 0, sizeof(CngFile.NetworkSubnetMask));
+			}
+			else {
+				AY_Client_DynamicIP = 0;
+			}
+			p = &rd[0];
+			*((Ui32 *)&CngFile.NetIpAddress) = AY_ConvertStringToIP(&p);
+			//-------------------------//
+			if (AYFILE_ConfigFileReadComp(rd, _NetworkSubnetMask)) {///< read NetworkSubnetMask
+				if (strlen(rd) == 0) {///< use default
+					if(!AY_Client_DynamicIP) { return -1; }					
+				}
+				else {
+					if (!AY_Client_DynamicIP) { 
+						p = &rd[0];
+						*((Ui32 *)&CngFile.NetworkSubnetMask) = AY_ConvertStringToIP(&p);
+					}
+				}
+				//-------------------------//
+				if (AYFILE_ConfigFileReadComp(rd, _NetworkGatewayIp)) {///< read NetworkGatewayIp
+					if (strlen(rd) == 0) {///< use default
+						if (!AY_Client_DynamicIP) { return -1; }
+					}
+					else {
+						if (!AY_Client_DynamicIP) {
+							p = &rd[0];
+							*((Ui32 *)&CngFile.NetworkGatewayIp) = AY_ConvertStringToIP(&p);
+						}
+					}
+					//-------------------------//
+					if (AYFILE_ConfigFileReadComp(rd, _NetSubnetIp)) {///< read NetSubnetIp
+						if (strlen(rd) == 0) {///< use default
+							if (!AY_Client_DynamicIP) { return -1; }
+						}
+						else {
+							if (!AY_Client_DynamicIP) {
+								p = &rd[0];
+								*((Ui32 *)&CngFile.NetSubnetIp) = AY_ConvertStringToIP(&p);
+							}
+						}
+						//-------------------------//
+						if (AYFILE_ConfigFileReadComp(rd, _GatewayName)) {///< read GatewayName
+							strcpy(CngFile.GatewayName, rd);		rd[0] = 0;
+							//-------------------------//
+							if (AYFILE_ConfigFileReadComp(rd, _GatewayPass)) {///< read GatewayPass
+								strcpy(CngFile.GatewayPass, rd);		rd[0] = 0;
+								//-------------------------//
+								if (AYFILE_ConfigFileReadComp(rd, _AllowAddRemove)) {///< read AllowAddRemove
+									p = &rd[0];
+									if ((strstr(p, "YES")) || (strstr(p, "yes")) || (strstr(p, "Yes"))) { CngFile.AllowAddRemove = 1; } else { CngFile.AllowAddRemove = 0; }
+									//-------------------------//
+									if (AYFILE_ConfigFileReadComp(rd, _UniqueID)) {///< read UniqueID
+										if (strlen(rd) == 0) {///< generate new
+											AY_Generate_AES128((Ui08 *)&rd[26]);
+											AY_HexToStr(&rd[0], (Ui08 *)&rd[26], 12, 0);
+											AYFILE_ConfigFileWriteComp(&rd[0], _UniqueID);
+										}
+										AY_StrToHex(CngFile.UniqueID, &rd[0], 12);
+										//-------------------------//
+										if (AYFILE_ConfigFileReadComp(rd, _ServerDns)) {///< read ServerDns
+											if (strlen(rd) == 0) { strcpy(rd, (char*)&DefaultDns[0]); }///< use default
+											strcpy(CngFile.ServerDns, rd);		rd[0] = 0;
+											//-------------------------//
+											if (AYFILE_ConfigFileReadComp(rd, _ServerPort)) {///< read ServerPort
+												if (strlen(rd) == 0) { CngFile.ServerPort = DefaultDNSPort; }///< use default
+												else {	CngFile.ServerPort = AY_ConvertStringToUi64(rd); }
+												//-------------------------//
+												if (AYFILE_ConfigFileReadComp(rd, _DNSIp)) {///< read DNSIp
+													/*buradasin !!! if (strlen(rd) == 0) { CngFile.ServerPort = DefaultDNSPort; }///< use default
+													else { CngFile.ServerPort = AY_ConvertStringToUi64(rd); }*/
+													//wr
+												}
+												else { return -1; }
+											}
+											else { return -1; }
+										}
+										else { return -1; }
+									}
+									else { return -1; }
+								}
+								else { return -1; }
+							}
+							else { return -1; }
+						}
+						else { return -1; }
+					}
+					else { return -1; }
+				}
+				else { return -1; }
+			}
+			else { return -1; }
+		}
+		else { return -1; }
+	}
+	else { return -1; }
+}
+
+
+
 //=================== CERTIFICATE FILE LOAD / UPLOAD =====================================//
 /*
 * netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all

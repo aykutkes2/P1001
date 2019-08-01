@@ -505,8 +505,8 @@ int main(void)//(int argc, char **argv)
 			AYFILE_ReadCertFile();
 
 			AYFILE_TestConfigFile(1);
-			AYFILE_ConfigFileReadComp((char *)&Temp[0], ServerDns);
-			AYFILE_ConfigFileWriteComp((char *)"53", DNSPort);
+			//AYFILE_ConfigFileReadComp((char *)&Temp[0], ServerDns);
+			//AYFILE_ConfigFileWriteComp((char *)"53", DNSPort);
 
 			//AY_Ram.AY_DeviceCnt = 5;
 			//for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {

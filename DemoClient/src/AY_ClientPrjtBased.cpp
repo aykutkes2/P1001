@@ -7,11 +7,16 @@
 #include <AY_Client.h>
 #include <AY_ClientPrjtBased.h>
 
-
+CFG_FILES	CngFile;
 Ui08 SIGNING_PUB_KEY[2048];
 Ui08 SIGNING_PR_KEY[2048];
 Ui08 SERVER_PUB_KEY[2048];
 Ui32 SERVER_NO;
+
+const Ui08 DefaultInterface[45] = "Wi-Fi";// "Local Area Connection";
+const Ui08 DefaultDns[] = "datakomip.dyndns.org";
+const Ui16 DefaultDNSPort = 53;
+
 
 const Ui16 MyUDP_StartPort = 1985;
 const Ui16 SERVER_Port = 1982;

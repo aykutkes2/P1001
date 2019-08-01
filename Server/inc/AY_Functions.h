@@ -30,4 +30,12 @@ extern char *AY_ConvertIPAddToStr0(Ui08 *pVal, char *ptr, char Add, char RetStrt
 #define AY_ConvertIPAddToStrRet(Val, ptr)		AY_ConvertIPAddToStr0(Val, ptr, 1, 1)
 extern Ui32 AY_ConvertStringToIP(char **ptr);
 
+//---------------------------------------------------------------------------------------------//
+#define HexToChar(a)	((a>9)?((a+'A'-0xA)):((a+'0')))
+#define _CharToHex(a)	((a>='A')?((a+0xA-'A')):((a-'0')))
+#define HexUpper(a)		((a>='a')?((a+'A'-'a')):((a)))
+#define CharToHex(a)	_CharToHex(HexUpper(a))
+#define IsHex(a)		((( ((a >= 'A') && (a <= 'F')) || ((a >= '0') && (a <= '9')) || ((a >= 'a') && (a <= 'f')) ))?(1):(0))
+extern void AY_HexToStr(char *pDst, Ui08 *pSrc, Ui08 ByteCnt, Ui08 add);
+extern void AY_StrToHex(Ui08 *pDst, char *pSrc, Ui08 ByteCnt);
 

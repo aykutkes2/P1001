@@ -17,6 +17,8 @@ typedef union _AY_FLGS {
 		Ui32	_RecvServer : 1;
 		Ui32	_GenerateRemoteDevs : 1;
 		Ui32	_ListenThreads : 1;
+
+		Ui32	_DynamicIP : 1;
 	};
 
 }AY_FLGS;
@@ -42,6 +44,9 @@ extern	AY_GlobalRAM	AY_Ram;
 #define AY_Client_RecvServer			AY_Ram.AY_Flgs._RecvServer
 #define AY_Client_GenerateRemoteDevs	AY_Ram.AY_Flgs._GenerateRemoteDevs
 #define AY_Client_ListenThreads			AY_Ram.AY_Flgs._ListenThreads
+
+
+#define AY_Client_DynamicIP				AY_Ram.AY_Flgs._DynamicIP
 
 
 #pragma pack(pop)
