@@ -51,6 +51,6 @@ extern	AY_GlobalRAM	AY_Ram;
 
 #pragma pack(pop)
 
-#define CLIENT_DEMO					1
+#define CLIENT_DEMO					0//1
 
 

@@ -21,6 +21,10 @@ Device 1 Ghost			192.168.2.148
 #include <AY_Memory.h>
 #include <AY_Command.h>
 #include <AY_File.h>
+#define DK_DEMO							0//1
+#if DK_DEMO
+#include <DKRTU_MsgObjects.h>
+#endif
 
 
 AY_GlobalRAM			AY_Ram;
@@ -144,7 +148,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		AY_Client_GetMACadr = 1;
 	}
 	else if ((!AY_Client_GetSrvIPadr)){
-		if ((pUDP->_udpHeader.sport == _HTONS(DNS_Port))) {
+		if ((pUDP->_udpHeader.sport == _HTONS(CngFile.DNSPort))) {
 			if ((pUDP->_udpHeader.dport == _HTONS((MyClientInstPort + 1)))) {
 				unsigned char *qname, *reader;
 				struct RES_RECORD answer;
@@ -233,11 +237,11 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		}
 	}
 	else if ((!AY_Client_RecvServer)) {
-		int i;
+		Ui32 i;
 		Ui08 Temp[45];
 		AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
 		AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
-		if ((pUDP->_udpHeader.sport == _HTONS(SERVER_Port))) {
+		if ((pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort))) {
 			if ((pRsp->_Test0 == PACKET_TEST_DATA0) && (pRsp->_Test1 == PACKET_TEST_DATA1)) {
 				AY_Ram.AY_DeviceCnt = pRsp->_DevCnt;
 				if (AY_Ram.AY_DeviceCnt) {
@@ -247,7 +251,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, AY_Ram.AY_DeviceCnt);
 				for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
 					printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-					//AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
+					AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
 				}
 				AY_Client_RecvServer = 1;
 			}
@@ -307,14 +311,14 @@ int AY_DNS_Query(char *pDNS, ip_address *pDNS_SRV) {
 	//============= SET FILTER ==========================//
 	AY_ClientFilterFreeA(_SLVS_SCKT);
 	strcpy((char *)&MySocketBuff[0], "udp src port ");
-	AY_ConvertUi32AddToStrRet( DNS_Port, (char *)&MySocketBuff[0] );
+	AY_ConvertUi32AddToStrRet(CngFile.DNSPort, (char *)&MySocketBuff[0] );
 	strcat((char *)&MySocketBuff[0], " and udp dst port ");
 	AY_ConvertUi32AddToStrRet((MyClientInstPort + 1), (char *)&MySocketBuff[0] );
 	AY_ClientFilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
 	
 	//============= SEND PACKET ==========================//
 	UDP_header_init(&UDPheader);
-	UDP_header_load(&UDPheader, SrvEth_Address/**((uip_eth_addr *)&DEMO_Mac[0])*/, *((ip_address *)&DNS_SRV_IP[0]), DNS_Port, MyEth_Address, MyIP_Address, (MyClientInstPort+1));
+	UDP_header_load(&UDPheader, SrvEth_Address/**((uip_eth_addr *)&DEMO_Mac[0])*/, *((ip_address *)&CngFile.DNSIp[0]), CngFile.DNSPort, MyEth_Address, MyIP_Address, (MyClientInstPort+1));
 
 	//Set the DNS structure to standard queries
 	dns = (struct DNS_HEADER *)&MySocketBuff[0];
@@ -356,30 +360,30 @@ int AY_SendDeviceStartToServer(void) {
 	//============= SET FILTER ==========================//
 	AY_ClientFilterFreeA(_SLVS_SCKT);
 	strcpy((char *)&MySocketBuff[0], "udp src port ");
-	AY_ConvertUi32AddToStrRet(SERVER_Port, (char *)&MySocketBuff[0]);
+	AY_ConvertUi32AddToStrRet(CngFile.ServerPort, (char *)&MySocketBuff[0]);
 	AY_ClientFilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
 
 	//------- LOAD
 	memset(&DevStrt,0,sizeof(DevStrt));
 	DevStrt._Test0 = PACKET_TEST_DATA0;
 	DevStrt._Test1 = PACKET_TEST_DATA1;
-	DevStrt._LocalCertNo = LOCAL_CertNo;
-	DevStrt._ServerCertNo = SERVER_CertNo;
-	memcpy(&DevStrt._Name[0], &MY_NAME, sizeof(MY_NAME));
-	memcpy(&DevStrt._Pswd[0], &MY_PASSWORD, sizeof(MY_PASSWORD));
+	DevStrt._LocalCertNo = CLIENT_CERT_NO;
+	DevStrt._ServerCertNo = CngFile.ServerID;
+	memcpy(&DevStrt._Name[0], &CngFile.GatewayName, sizeof(CngFile.GatewayName));
+	memcpy(&DevStrt._Pswd[0], &CngFile.GatewayPass, sizeof(CngFile.GatewayPass));
 	memcpy(&DevStrt._MAC, &MyEth_Address, sizeof(MyEth_Address));
 	memcpy(&DevStrt._Unique, &MyUnique_ID, sizeof(MyUnique_ID));
 	//------ Generate AES Key
 	AY_Generate_AES128(&DevStrt._SessionKey[0]);
 	memcpy(&AY_Ram.AY_Sessionkey[0], &DevStrt._SessionKey[0],16);
 	//------ ENCRPT
-	AY_Crypt_RSAEncrpt((Ui08 *)&SERVER_PUB_KEY[0], (Ui08 *)&DevStrt._Input[0], 240, (Ui08 *)&OutData[0], &oLen);
+	AY_Crypt_RSAEncrpt((Ui08 *)&CngFile.ServerPublicKey[0], (Ui08 *)&DevStrt._Input[0], 240, (Ui08 *)&OutData[0], &oLen);
 	memcpy(&DevStrt._Input[0], &OutData[0], oLen);
 	//------- SIGN
 	AY_Crypt_RSASign((Ui08 *)&SIGNING_PR_KEY[0], (Ui08 *)&DevStrt._Input[0], 256, (Ui08 *)&DevStrt._Sign[0]);
 	//------- SEND
 	UDP_header_init(&UDPheader);
-	UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, SERVER_Port, MyEth_Address, MyIP_Address, MyClientInstPort);
+	UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort);
 	oLen = sizeof(AY_DeviceStart);
 	return ( UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&DevStrt, oLen/*sizeof(AY_DeviceStart)*/) );
 
@@ -387,6 +391,11 @@ int AY_SendDeviceStartToServer(void) {
 
 int main(void)//(int argc, char **argv)
 {
+#if DK_DEMO
+	while (1) {
+		DKRTU_ParsObj_Test();
+	}
+#else	
 	int i,j=0;
 	Ui08 packet[114];
 	char GetVal;
@@ -424,8 +433,8 @@ int main(void)//(int argc, char **argv)
 					memcpy(&SrvEth_Address.addr[0], &DEMO_Mac[0], 6);
 				}
 				strcpy((char *)&MySocketBuff[0], "udp src port ");
-				AY_ConvertUi32AddToStrRet(SERVER_Port, (char *)&MySocketBuff[0] );
-				if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, SERVER_Port, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
+				AY_ConvertUi32AddToStrRet(CngFile.ServerPort, (char *)&MySocketBuff[0] );
+				if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
 					AY_Client_Initied = 1;
 					AY_Client_GetMACadr = 1;
 					AY_Client_WaitMACadr = 1;
@@ -435,10 +444,10 @@ int main(void)//(int argc, char **argv)
 		}
 		else if (!AY_Client_GetSrvIPadr) {
 			strcpy((char *)&MySocketBuff[0], "udp src port ");
-			AY_ConvertUi32AddToStrRet(DNS_Port, (char *)&MySocketBuff[0] );
+			AY_ConvertUi32AddToStrRet(CngFile.DNSPort, (char *)&MySocketBuff[0] );
 			strcat((char *)&MySocketBuff[0], " and udp dst port ");
 			AY_ConvertUi32AddToStrRet((MyClientInstPort + 1), (char *)&MySocketBuff[0] );
-			if (AY_ClientSocket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, SERVER_Port, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
+			if (AY_ClientSocket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
 				AY_Client_GetSrvIPadr = 1;
 				AY_Client_WaitSrvIPadr = 1;
 			}
@@ -447,12 +456,17 @@ int main(void)//(int argc, char **argv)
 		if (!AY_Client_Intro) {
 			printf("============ CLIENT PROJECT =================\n\n");
 			printf("================ START =================\n\n");
+			AYFILE_TestCertFile(1);
+			AYFILE_ReadCertFile();
+			AYFILE_TestConfigFile(1);
+			AYFILE_ConfigFileUpdate();
 			AY_Client_Intro = 1;
 		}
 		else if (!AY_Client_Initied) {
 			Ui08 Temp[45];
+			//if()
 			MyIP_Address.byte1 = 0;	MyIP_Address.byte2 = 0;	MyIP_Address.byte3 = 0;	MyIP_Address.byte4 = 0;
-			if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, SERVER_Port, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
+			if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
 
 				printf("IP address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _IP_), (char*)&Temp[0]));
 				printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _SUBNET_), (char*)&Temp[0]));
@@ -484,7 +498,7 @@ int main(void)//(int argc, char **argv)
 		}
 		else if (!AY_Client_GetSrvIPadr) {
 			if (!AY_Client_WaitSrvIPadr) {
-				if (AY_DNS_Query((char *)SERVER_Dns, (ip_address *)&DNS_SRV_IP) == 1) {
+				if (AY_DNS_Query((char *)CngFile.ServerDns, (ip_address *)&CngFile.DNSIp) == 1) {
 					AY_Client_WaitSrvIPadr = 1;
 					j = 0;
 				}
@@ -500,13 +514,13 @@ int main(void)//(int argc, char **argv)
 		}
 #endif
 		else if (!AY_Client_SendServer) {
-			Ui08 Temp[45];
-			int RetVal1, RetVal2;
+			//Ui08 Temp[45];
+			//int RetVal1, RetVal2;
 
-			RetVal1 = AYFILE_TestConfigFile(1);
+			/*RetVal1 = AYFILE_TestConfigFile(1);
 			RetVal2 = AYFILE_ConfigFileUpdate();
 
-			AYFILE_ReadCertFile();
+			AYFILE_ReadCertFile();*/
 
 			//AYFILE_TestConfigFile(1);
 			//AYFILE_ConfigFileReadComp((char *)&Temp[0], ServerDns);
@@ -532,7 +546,7 @@ int main(void)//(int argc, char **argv)
 			//AYFILE_AddIPsFileStop((char *)AddIP_File, (char *)&MyInterface[0], 1);
 			//AYFILE_CloseFile((char *)AddIP_File);
 
-			////!AY_SendDeviceStartToServer();			
+			AY_SendDeviceStartToServer();			
 			
 			AY_Client_SendServer = 1;
 		}
@@ -578,21 +592,22 @@ int main(void)//(int argc, char **argv)
 
 	//===================================================//
 
-	UDP_header_init(&AY_UDPheader);
-	UDP_header_load(&AY_UDPheader, *((uip_eth_addr *)&DEMO_Mac[0]), *((ip_address *)&DEMO_SRV_IP[0]), DEMO_SRV_Port, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyClientInstPort);
+	//UDP_header_init(&AY_UDPheader);
+	//UDP_header_load(&AY_UDPheader, *((uip_eth_addr *)&DEMO_Mac[0]), *((ip_address *)&DEMO_SRV_IP[0]), DEMO_SRV_Port, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyClientInstPort);
 
-	/* Fill the rest of the packet */
-	for (i = 0; i < 114; i++) {
-		packet[i] = (Ui08)i;
-	}
+	///* Fill the rest of the packet */
+	//for (i = 0; i < 114; i++) {
+	//	packet[i] = (Ui08)i;
+	//}
 
-	while (1) {
-		UDP_packet_send(_MAIN_SCKT, &AY_UDPheader, &packet[0], 114);
-	}
+	//while (1) {
+	//	UDP_packet_send(_MAIN_SCKT, &AY_UDPheader, &packet[0], 114);
+	//}
 
 
 
 	//AY_ClientSocket_main();
+#endif
 	return 0;
 }
 

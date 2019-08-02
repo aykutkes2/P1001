@@ -42,62 +42,13 @@ extern const Ui08 * const Default_Cert_File;
 
 extern Ui08 SIGNING_PUB_KEY[2048];
 extern Ui08 SIGNING_PR_KEY[2048];
-extern Ui08 SERVER_PUB_KEY[2048];
-extern Ui32 SERVER_NO;
+extern Ui32 CLIENT_CERT_NO;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-extern const Ui08 DEMO_SRV_IP[4];
-extern const Ui08 DEMO_CLNT_IP[2][4];
-extern const Ui08 DEMO_CLNT_MAC[2][6];
-extern const Ui08 DEMO_CLNT_UNIQUE[2][12];
-extern const Ui08 DEMO_Mac[6];
-extern const Ui16 DEMO_SRV_Port;
-
-extern const Ui16			SERVER_Port;
-extern const Ui08			SERVER_Dns[40];
 extern const Ui16			MyUDP_StartPort;
 extern const Ui08			MyMac[6];
-extern const Ui08			MyUnique[12];
-extern const Ui08			MyInterface[45];
 
-extern const Ui32			LOCAL_CertNo;
-extern const Ui32			SERVER_CertNo;
-
-extern const Ui08 MY_NAME[45];
-extern const Ui08 MY_PASSWORD[45];
-
-
-//extern const Ui08 * const SIGNING_PUB_KEY;
-//extern const Ui08 * const SIGNING_PR_KEY;
-//extern const Ui08 * const SERVER_PUB_KEY;
-//extern const Ui08 * const SERVER_PR_KEY;
-
-//extern const Ui08			MyPublicKey[256];
-//extern const Ui08			MyPrivateKey[256];
-//extern const Ui08			MyRSA_CAR[8];
-//extern const Ui08			MyRSA_Exp[8];
-//extern const RSA2048		MyRSA2048_Cert;
-
-extern const Ui08			DNS_SRV_IP[4];
-extern const Ui16			DNS_Port;
-
-
+//--------------------------------------------------------------------------------------//
 extern const char TestData[65];
 extern const Ui08 DemoAESkey[16];
 

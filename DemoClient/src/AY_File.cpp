@@ -559,7 +559,7 @@ int AYFILE_ReadCertFile(void) {
 
 			AY_Decrypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
 			p = (char *)&file[0];
-			SERVER_NO = (Ui32)AY_ConvertStringToUi64(p);
+			CLIENT_CERT_NO = (Ui32)AY_ConvertStringToUi64(p);
 			p = strstr(p, "-----BEGIN PUBLIC KEY-----\n");
 			q = strstr(p, "-----END PUBLIC KEY-----\n");
 			if ((p) && (q)) {
