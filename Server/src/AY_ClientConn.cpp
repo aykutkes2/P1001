@@ -18,6 +18,14 @@
 #include <AY_Queue.h>
 #include <AY_ClientConn.h>
 
+int AY_HexValPrint(Ui08 *phex, Ui08 bytCnt) {
+	char HexVal[128];
+	memset(HexVal, 0, 128);
+	AY_HexToStr((char *)&HexVal[0], phex, bytCnt, 0);
+	printf("%s", (char *)&HexVal[0]);
+	return 1;
+}
+
 void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	AY_DEVSTRTIN		*pDevStrtIn;
 	AY_DeviceStartResp	*pDevStrtPspHdr;
@@ -40,6 +48,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 
 	pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pUDP)+sizeof(udp_headerAll));///< max packet size
 	j = 0; k = 0;
+	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0] /*&MYSQL_Gateway._SessionKey[0]*/, 16); printf("\r\n");
 	do {
 		i = MYSQL_ReadDeviceList(0, (MYSQL_DeviceRead *)(((Ui08 *)pDevStrtPspHdr)+sizeof(AY_DeviceStartResp)), 168, j);
 		pDevStrtPspHdr->_Test0 = PACKET_TEST_DATA0;
@@ -48,7 +57,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		pDevStrtPspHdr->_DevPcktNo= k;
 
 		if (i) {
-			AY_Crypt_AES128((Ui08 *)&MYSQL_Gateway._SessionKey[0], (((Ui08 *)pDevStrtPspHdr) + sizeof(AY_DeviceStartResp)), (((Ui16)i) * sizeof(AY_DeviceRead)));
+			AY_Crypt_AES128((Ui08 *)&pDevStrtIn->_SessionKey[0] /*&MYSQL_Gateway._SessionKey[0]*/, (((Ui08 *)pDevStrtPspHdr) + sizeof(AY_DeviceStartResp)), (((Ui16)i) * sizeof(AY_DeviceRead)));
 		}
 		k++;
 		j += i;
@@ -61,7 +70,6 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	pQ->QFlg._QKeepF = 0; 
 	pQ->QFlg._QBusyF = 1;
 }
-
 
 int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 	udp_headerAll	*pUDP; 
@@ -93,6 +101,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			memcpy(&pDevStrtIn->_Name, &pDevStrt->_Name, 45);
 			memcpy(&pDevStrtIn->_Pswd, &pDevStrt->_Pswd, 45);
 			memcpy(&pDevStrtIn->_SessionKey, &pDevStrt->_SessionKey, 16);
+			printf("AYDVSTRT--> SSK = "); AY_HexValPrint(&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
 			memcpy(&pDevStrtIn->_Unique, &pDevStrt->_Unique, 12);
 			//======= Release AY_DeviceStart
 			_AY_FreeMemory((unsigned char*)pDevStrt);

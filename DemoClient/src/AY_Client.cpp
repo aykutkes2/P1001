@@ -2,11 +2,16 @@
 #undef UNICODE
 /*
 =========== Demo Configurations ================
+									|192.168.2.149|
+				|192.168.2.145|								|192.168.2.146|
+				<|192.168.2.147|>							||192.168.2.148||
+
+
 Server IP				192.168.2.149	
 Client 1				192.168.2.145	74-D4-35-3C-4A-B2		74-D4-35-3C-4A-B2-74-D4-35-3C-4A-B2		
 Client 2				192.168.2.146	74-D4-35-3C-4A-B3		74-D4-35-3C-4A-B3-74-D4-35-3C-4A-B3
-Device 1				192.168.2.147
-Device 1 Ghost			192.168.2.148
+Device 1				192.168.2.147	(Client 2)
+Device 1 Ghost			192.168.2.148	(Client 1)
 */
 #include <stdio.h>
 #include <time.h>
@@ -45,6 +50,7 @@ static char				DNS_Searching[40];
 AY_DeviceRead			*pAY_Clients;
 static udp_headerAll	AY_UDPheader;
 static Ui32				AY_ClientInitLoop;
+static char				GetVal;
 
 //struct timeval {
 //	long    tv_sec;         /* seconds */
@@ -256,6 +262,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
 						AY_Client_AddDevToList((Ui08 *)&AY_Ram.AY_DeviceList[i], (k+i), _DEV_READ_ALL);
 						if (AY_Ram.AY_DeviceList[i]._Type==1) {
+							printf("Remote Device found Device No:%d ID:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id,  AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
 							AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
 						}
 					}
@@ -410,7 +417,6 @@ int main(void)//(int argc, char **argv)
 	char *p;
 	int i,j=0;
 	Ui08 packet[114];
-	char GetVal;
 
 	MyClientInstPort = MyUDP_StartPort;
 	AY_Client_Flags = 0;///< clear all flags
@@ -472,8 +478,22 @@ int main(void)//(int argc, char **argv)
 		}
 #else
 		if (!AY_Client_Intro) {
+			GetVal = 0;
+#if CLIENT_DEMO2
+			printf("============ CLIENT DEMO PROJECT =================\n\n");
+			printf("Enter Client No (1-2)\n\n");
+			GetVal = getchar();
+			if ((GetVal != '1') && (GetVal != '2')) {
+				GetVal = 0;
+			}
+			else {
+				GetVal -= '0';
+			}
+
+#endif
 			printf("============ CLIENT PROJECT =================\n\n");
 			printf("================ START =================\n\n");
+			AYFILE_SelectConfigFile(GetVal);
 			AYFILE_TestCertFile(1);
 			AYFILE_ReadCertFile();
 			AYFILE_TestConfigFile(1);
@@ -506,6 +526,14 @@ int main(void)//(int argc, char **argv)
 				}
 			}
 			else {		
+#if CLIENT_DEMO2
+				if (GetVal > 0) {
+					memcpy(&MyEth_Address.addr[0], &DEMO_CLNT_MAC[GetVal][0], 6);
+					memcpy(&SrvEth_Address.addr[0], &MyMac[0], 6);
+					AY_Client_GetMACadr = 1;
+				}
+
+#else
 				if (++j < 10) {
 					AY_Delay(1000);
 				}
@@ -516,6 +544,7 @@ int main(void)//(int argc, char **argv)
 					AY_Client_WaitMACadr = 0;
 					AY_Client_Initied = 0;
 				}
+#endif
 			}
 		}
 		else if (!AY_Client_GetSrvIPadr) {			

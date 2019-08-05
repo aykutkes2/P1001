@@ -23,6 +23,7 @@ const Ui16 DefaultServerID = 1;
 const Ui16 MyUDP_StartPort = 1985;
 const Ui08 MyMac[6] = {0x60,0xF6,0x77,0xBE,0x5F,0x30};
 
+
 const Ui08 * const Default_Config_File = (unsigned char *)
 "< ? xml version = \"1.0\" encoding = \"UTF-8\" ? >\n"
 "<!--\n"
@@ -55,40 +56,6 @@ const Ui08 * const Default_Config_File = (unsigned char *)
 "\"/>	<!-- Server's public key for Server ID  Server ID=1 means LocalAndSafe.com default server -->\n"
 "\n"
 "</Gateway>\n";
-
-//const Ui08 * const Default_Config_File = (unsigned char *)
-//"< ? xml version = \"1.0\" encoding = \"UTF-8\" ? >\n"
-//"<!--\n"
-//"By modifying this file,\n"
-//"-->\n"
-//"<Gateway>\n"
-//"<Item id = \"1\" Name = \"Local Network Interface Name\" 		Value = \"Wi-Fi\" />	<!--exp: \"Local Area Network\", \"Wi-Fi\", \"Local Area Network 2\", \"\"(means Local Area Connection)-->\n"
-//"<Item id = \"2\" Name = \"Local Network Ip Address\" 			Value = \"\" />	<!--exp: \"192.168.2.101\", \"\"(means automatic)-->\n"
-//"<Item id = \"3\" Name = \"Local Network Subnet Mask\" 			Value = \"\" />	<!--exp: \"255.255.255.0\", \"\"(means automatic)-->\n"
-//"<Item id = \"4\" Name = \"Local Network Gateway Ip\" 			Value = \"\" />	<!--exp: \"192.168.2.1\", \"\"(means automatic)-->\n"
-//"<Item id = \"5\" Name = \"Local Network Subnet Ip\" 			Value = \"\" />	<!--exp: \"192.168.2.0\", \"\"(means automatic)-->\n"
-//"<Item id = \"6\" Name = \"Gateway Name\" 						Value = \"\" />	<!--exp: \"Gateway-1\", \"Office\", \"Home\", \"\"(means empty)-->\n"
-//"<Item id = \"7\" Name = \"Gateway Password\" 					Value = \"\" />	<!--exp: \"1234\", \"A1b4c32\", \"\"(means empty)-->\n"
-//"<Item id = \"8\" Name = \"Allow To Add/Remove Ghost Ips\" 		Value = \"YES\" />	<!--exp: \"YES\", \"NO\", \"\"(means YES)-->\n"
-//"<Item id = \"9\" Name = \"Unique ID\" 							Value = \"\" />	<!--exp: \"112233445566778899AABBCC\", \"\"(means generate new)-->\n"
-//"<Item id = \"10\" Name = \"Server Dns\" 						Value = \"datakomip.dyndns.org\" />	<!--exp: \"LocalAndSafe.com\" -->\n"
-//"<Item id = \"11\" Name = \"Server Port\" 						Value = \"1982\" />	<!--exp: \"1982\" -->\n"
-//"<Item id = \"12\" Name = \"DNS Ip\" 							Value = \"8.8.8.8\" />	<!--exp: \"8.8.4.4\" -->\n"
-//"<Item id = \"13\" Name = \"DNS Port\" 							Value = \"53\" />	<!--exp: \"53\" -->\n"
-//"<Item id = \"14\" Name = \"Server ID\" 							Value = \"1\" />	<!--exp: \"1\", \"121\", \"\"(means 1 LocalAndSafe.com default server)-->\n"
-//"<Item id = \"15\" Name = \"Server Public Key\" 					Value = \""
-//"-----BEGIN PUBLIC KEY-----"
-//"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnJC0Zax2WvioDwC8IDfc"
-//"Bk3Iw9CaVU0t6QgVA3Mgn0v3x/m0uPk/CzkCR4l0IDbG4mpn2N9E1727Gpn4sZo5"
-//"lv9xy35K4kt+lUhd6Oj4JUj2HhnvUDeG81FdAQ/E1BBmLyWAYYNTVrG2tQ1+O7K9"
-//"7lyE3avTPnfAeGOfvQe/lQ07TCyealtdYFYYFW3n5JW1okS2AIrIO7yt8bJ1fU1h"
-//"3uIqO9IsVN11dO/Yz9PX4heYclBQzDnzzd/wXq7bQPXToZJE5MqQszAF+mliiCMG"
-//"fp8+9OlJQwpwNxNKxEAVsBnK9u+CvSq/PQlwqdan1DUb/jnTCXQCDEEoLM4QLKbP"
-//"HwIDAQAB"
-//"-----END PUBLIC KEY-----"
-//"\"/>	<!-- Server's public key for Server ID  Server ID=1 means LocalAndSafe.com default server -->\n"
-//"\n"
-//"</Gateway>\n";
 
 const Ui08 * const Default_Cert_File = (unsigned char *)
 "1\n"
@@ -133,6 +100,7 @@ const Ui08 * const Default_Cert_File = (unsigned char *)
 
 
 //--------------------------------------------------------------------------------------//
+const Ui08 DEMO_CLNT_MAC[3][6] = { { 0x60,0xF6,0x77,0xBE,0x5F,0x30 },{ 0x60,0xF6,0x77,0xBE,0x5F,0x31 },{ 0x60,0xF6,0x77,0xBE,0x5F,0x32 } };
 
 const Ui08 * const SERVER_PUB_KEY = (Ui08 *)
 "-----BEGIN PUBLIC KEY-----\n"

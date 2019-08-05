@@ -24,7 +24,7 @@ extern int AYFILE_AddIPsToFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cn
 */
 extern int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt, Ui08 System);
  
-extern const char AddIP_File[];
+extern const char *AddIP_File;
 
 enum _CFG_FILE {
 	_UNDEF,					///< 0
@@ -45,6 +45,7 @@ enum _CFG_FILE {
 	_ServerPublicKey,		///< 15
 };
 
+extern int AYFILE_SelectConfigFile(Ui08 FileNo);
 extern int AYFILE_TestConfigFile(Ui08 Create);
 extern int AYFILE_ConfigFileReadComp(char *pVal, int comp);
 extern int AYFILE_ConfigFileWriteComp(char *pVal, int comp);

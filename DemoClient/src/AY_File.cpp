@@ -37,7 +37,10 @@ static fstream fio;
 static ofstream fout;
 static ifstream fin;
 
-const char AddIP_File[] = "file/AddIP.bat";
+const char AddIP_File0[] = "file/AddIP.bat";
+const char AddIP_File1[] = "file/AddIP1.bat";
+const char AddIP_File2[] = "file/AddIP2.bat";
+const char *AddIP_File;
 
 int AYFILE_OpenFile(char *pFile) {
 	char line[256];
@@ -72,13 +75,12 @@ int AYFILE_CloseFile(char *pFile) {
 }
 
 int AYFILE_ClearFile(char *pFile) {
-	if (!fout.is_open()) {
-		printf("FILE: %s error: open file for clear failed!\n", pFile);
+	if (fout.is_open()) {
+		printf("FILE: %s error: file already opened!\n", pFile); 
+		fout.close();
 	}
-	else {
-		fout.open(pFile, ios::out | ios::binary);
-		printf("FILE: %s opened\n", pFile);
-	}
+	fout.open(pFile, ios::out | ios::binary);
+	printf("FILE: %s opened\n", pFile);
 	fout.write((char *)"", 0);
 	printf("FILE: %s clear\n", pFile);
 	fout.close();
@@ -183,7 +185,19 @@ int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt,
 /*
 * netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all
 */
-const char cfg_file[] = "file/cfg.xml";
+const char cfg_file0[] = "file/cfg.xml";
+const char cfg_file1[] = "file/cfg1.xml";
+const char cfg_file2[] = "file/cfg2.xml";
+const char *cfg_file;
+int AYFILE_SelectConfigFile(Ui08 FileNo) {
+	switch (FileNo) {
+	case 1:		cfg_file = &cfg_file1[0];	AddIP_File = &AddIP_File1[0];  break;
+	case 2:		cfg_file = &cfg_file2[0];	AddIP_File = &AddIP_File2[0];  break;
+	default:	cfg_file = &cfg_file0[0];	AddIP_File = &AddIP_File0[0];  break;
+	}
+	return 1;
+}
+
 int AYFILE_TestConfigFile(Ui08 Create) {
 	int i = 0;
 	int j = 0;
