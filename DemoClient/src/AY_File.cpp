@@ -126,7 +126,7 @@ int AYFILE_AddIPsToFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt, Ui32
 			strcat(line, "\r\n");
 			fout.write((char *)&line, strlen(line));
 			printf("FILE: %s NEW LINE: %s", pFile, line);
-
+			pIP++;
 			cnt--;
 		}
 	}
@@ -261,6 +261,9 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 							p = &line[0];
 						}
 						if (*p != '"') {
+							if ((comp == _ServerPublicKey)&&(*p=='\r')) {
+								*p = '\n';
+							}
 							*pVal = *p;
 							pVal++;
 							p++;
@@ -570,6 +573,8 @@ int AYFILE_ReadCertFile(void) {
 			if ((p) && (q)) {
 				memcpy(&SIGNING_PR_KEY[0], p, (q - p + sizeof("-----END RSA PRIVATE KEY-----\n")));
 			}
+			fin.close();
+			printf("FILE: %s closed\n", cert_file);
 			return 1;
 		}
 	}

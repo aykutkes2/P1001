@@ -29,6 +29,7 @@ extern char *AY_ConvertIPAddToStr0(Ui08 *pVal, char *ptr, char Add, char RetStrt
 #define AY_ConvertIPToStrRet(Val, ptr)			AY_ConvertIPAddToStr0(Val, ptr, 0, 1)
 #define AY_ConvertIPAddToStrRet(Val, ptr)		AY_ConvertIPAddToStr0(Val, ptr, 1, 1)
 extern Ui32 AY_ConvertStringToIP(char **ptr);
+extern int AY_IsStringToIP(char *ptr);
 
 //---------------------------------------------------------------------------------------------//
 #define HexToChar(a)	((a>9)?((a+'A'-0xA)):((a+'0')))

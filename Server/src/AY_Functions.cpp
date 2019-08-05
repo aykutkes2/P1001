@@ -161,6 +161,26 @@ Ui32 AY_ConvertStringToIP(char **ptr) {
 	*ptr = p;
 	return (Rslt);
 }
+int AY_IsStringToIP(char *ptr) {
+	Ui08 j,i = 0;
+	char *p;
+	p = ptr;
+	j = 0;
+	while((*p)&&(j<100)){
+		if (!(((*p >= '0') && (*p <= '9')) || (*p == '.'))) {
+			return -1;
+		}
+		else if (*p == '.') {
+			i++;
+		}
+		else if (i >= 3) {
+			break;
+		}
+		p++;
+		j++;
+	}
+	return 1;
+}
 
 void AY_HexToStr(char *pDst, Ui08 *pSrc,Ui08 ByteCnt, Ui08 add) {
 	int i = 0;
@@ -190,7 +210,7 @@ void AY_StrToHex(Ui08 *pDst, char *pSrc, Ui08 ByteCnt) {
 		x = CharToHex(x);
 		pSrc++; y = *pSrc;
 		if (IsHex(y)) {
-			y = CharToHex(x);
+			y = CharToHex(y);
 			x = (((x << 4) & 0xF0) | y);
 			*pDst = x;
 			pDst++;

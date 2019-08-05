@@ -27,6 +27,7 @@
 #include <AY_Printf.h>
 #include <AY_Functions.h>
 #include <AY_ClientSocket.h>
+#include <AY_ClientPrjtBased.h>
 #include <AY_Client.h>
 #include <AY_Memory.h>
 #include <process.h>
@@ -294,23 +295,28 @@ int AY_ClientSocket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfi
 	}
 L_DevFound:
 	//========================================================================//
-	bpf_u_int32 ip_raw; /* IP address as integer */
-	bpf_u_int32 subnet_mask_raw; /* Subnet mask as integer */
-		
-	/* Get device info */
-	if (pcap_lookupnet(d->name, &ip_raw, &subnet_mask_raw, errbuf) < 0) {
-		fprintf(stderr, "Error in pcap_lookupnet: %s\n", errbuf);
-		return PCAP_ERROR;
+	if (AY_Client_DynamicIP) {
+		bpf_u_int32 ip_raw; /* IP address as integer */
+		bpf_u_int32 subnet_mask_raw; /* Subnet mask as integer */
+
+		/* Get device info */
+		if (pcap_lookupnet(d->name, &ip_raw, &subnet_mask_raw, errbuf) < 0) {
+			fprintf(stderr, "Error in pcap_lookupnet: %s\n", errbuf);
+			return PCAP_ERROR;
+		}
+
+		*(((Ui32 *)pAdr) + _SUBNET_) = subnet_mask_raw;
+		*(((Ui32 *)pAdr) + _MASK_) = ip_raw;
+		*(((Ui32 *)pAdr) + _GW_) = ip_raw + 0x01000000;///< not good!
 	}
-
-	*(((Ui32 *)pAdr) + _SUBNET_) = subnet_mask_raw;
-	*(((Ui32 *)pAdr) + _MASK_) = ip_raw;
-	*(((Ui32 *)pAdr) + _GW_) = ip_raw+0x01000000;///< not good!
-
-	printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)&ip_raw, &errbuf[0]));
-	printf("Subnet mask: %s\n", AY_ConvertIPToStrRet((Ui08 *)&subnet_mask_raw, &errbuf[0]));
+	else {
+		*(((Ui32 *)pAdr) + _MASK_) = *((Ui32 *)&CngFile.NetworkSubnetMask);
+		*(((Ui32 *)pAdr) + _GW_) = *((Ui32 *)&CngFile.NetworkGatewayIp);
+		*(((Ui32 *)pAdr) + _SUBNET_) = *((Ui32 *)&CngFile.NetSubnetIp);
+	}
+	printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _SUBNET_), &errbuf[0]));
+	printf("Subnet mask: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _MASK_), &errbuf[0]));
 	printf("Gateway address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _GW_), &errbuf[0]));
-
 //==========================================================================================================//
 	if ((a != NULL)&& (d != NULL)) {
 		*((Ui32 *)pAdr) = (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.S_un.S_addr);

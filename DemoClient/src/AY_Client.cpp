@@ -21,6 +21,7 @@ Device 1 Ghost			192.168.2.148
 #include <AY_Memory.h>
 #include <AY_Command.h>
 #include <AY_File.h>
+#include <AY_ClientDev.h>
 #define DK_DEMO							0//1
 #if DK_DEMO
 #include <DKRTU_MsgObjects.h>
@@ -34,7 +35,7 @@ static void				*pMacSocket;
 static ip_addressAll	MyIP_Addresses;
 #define MyIP_Address	MyIP_Addresses._ip
 static uip_eth_addr		MyEth_Address;
-static Ui08				MyUnique_ID[12];
+//static Ui08				MyUnique_ID[12];
 static ip_address		SrvIP_Address;
 static uip_eth_addr		SrvEth_Address;
 static ip_address		GwIP_Address;
@@ -237,23 +238,33 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		}
 	}
 	else if ((!AY_Client_RecvServer)) {
-		Ui32 i;
+		Ui32 i,j,k;
 		Ui08 Temp[45];
 		AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
 		AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
 		if ((pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort))) {
 			if ((pRsp->_Test0 == PACKET_TEST_DATA0) && (pRsp->_Test1 == PACKET_TEST_DATA1)) {
-				AY_Ram.AY_DeviceCnt = pRsp->_DevCnt;
-				if (AY_Ram.AY_DeviceCnt) {
-					memcpy(&AY_Ram.AY_DeviceList[0], pDev, (AY_Ram.AY_DeviceCnt * sizeof(AY_DeviceRead)));
-					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)&AY_Ram.AY_DeviceList[0], (AY_Ram.AY_DeviceCnt * sizeof(AY_DeviceRead)));
+				if (AY_Ram.AY_DevPcktNo == pRsp->_DevPcktNo){
+					j = pRsp->_DevCnt;
+					k = AY_Ram.AY_DeviceCnt;
+					if (j) {
+						memcpy(&AY_Ram.AY_DeviceList[0], pDev, (j * sizeof(AY_DeviceRead)));
+						AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)&AY_Ram.AY_DeviceList[0], (j * sizeof(AY_DeviceRead)));
+					}
+					printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, j);
+					for (i = 0; i < j; i++) {
+						printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
+						AY_Client_AddDevToList((Ui08 *)&AY_Ram.AY_DeviceList[i], (k+i), _DEV_READ_ALL);
+						if (AY_Ram.AY_DeviceList[i]._Type==1) {
+							AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
+						}
+					}
+					AY_Ram.AY_DeviceCnt += j;
+					AY_Ram.AY_DevPcktNo++;
+					if (j < 168) {
+						AY_Client_RecvServer = 1;
+					}
 				}
-				printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, AY_Ram.AY_DeviceCnt);
-				for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
-					printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-					AYCMD_TakeThisIP((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp);
-				}
-				AY_Client_RecvServer = 1;
 			}
 		}
 	}
@@ -372,12 +383,12 @@ int AY_SendDeviceStartToServer(void) {
 	memcpy(&DevStrt._Name[0], &CngFile.GatewayName, sizeof(CngFile.GatewayName));
 	memcpy(&DevStrt._Pswd[0], &CngFile.GatewayPass, sizeof(CngFile.GatewayPass));
 	memcpy(&DevStrt._MAC, &MyEth_Address, sizeof(MyEth_Address));
-	memcpy(&DevStrt._Unique, &MyUnique_ID, sizeof(MyUnique_ID));
+	memcpy(&DevStrt._Unique, &CngFile.UniqueID, sizeof(CngFile.UniqueID));
 	//------ Generate AES Key
 	AY_Generate_AES128(&DevStrt._SessionKey[0]);
 	memcpy(&AY_Ram.AY_Sessionkey[0], &DevStrt._SessionKey[0],16);
 	//------ ENCRPT
-	AY_Crypt_RSAEncrpt((Ui08 *)&CngFile.ServerPublicKey[0], (Ui08 *)&DevStrt._Input[0], 240, (Ui08 *)&OutData[0], &oLen);
+	AY_Crypt_RSAEncrpt((Ui08 *)&/*SERVER_PUB_KEY*/CngFile.ServerPublicKey[0], (Ui08 *)&DevStrt._Input[0], 240, (Ui08 *)&OutData[0], &oLen);
 	memcpy(&DevStrt._Input[0], &OutData[0], oLen);
 	//------- SIGN
 	AY_Crypt_RSASign((Ui08 *)&SIGNING_PR_KEY[0], (Ui08 *)&DevStrt._Input[0], 256, (Ui08 *)&DevStrt._Sign[0]);
@@ -396,6 +407,7 @@ int main(void)//(int argc, char **argv)
 		DKRTU_ParsObj_Test();
 	}
 #else	
+	char *p;
 	int i,j=0;
 	Ui08 packet[114];
 	char GetVal;
@@ -409,6 +421,12 @@ int main(void)//(int argc, char **argv)
 			printf("============ CLIENT DEMO PROJECT =================\n\n");
 			printf("Enter Client No (1-2)\n\n"); 
 			GetVal = getchar();
+			//------------------------------//
+			AYFILE_TestCertFile(1);
+			AYFILE_ReadCertFile();
+			AYFILE_TestConfigFile(1);
+			AYFILE_ConfigFileUpdate();
+			//------------------------------//
 			AY_Client_Intro = 1;
 		}
 		else if (!AY_Client_Initied) {
@@ -422,14 +440,14 @@ int main(void)//(int argc, char **argv)
 					memcpy(&SrvIP_Address.byte1, &DEMO_SRV_IP[0], 4);
 					memcpy(&MyIP_Address.byte1, &DEMO_CLNT_IP[0][0], 4);
 					memcpy(&MyEth_Address.addr[0], &DEMO_CLNT_MAC[0][0], 6);
-					memcpy(&MyUnique_ID[0], &DEMO_CLNT_UNIQUE[0][0], 12);
+					memcpy(&CngFile.UniqueID[0], &DEMO_CLNT_UNIQUE[0][0], 12);
 					memcpy(&SrvEth_Address.addr[0], &DEMO_Mac[0], 6);
 				} 
 				else{
 					memcpy(&SrvIP_Address.byte1, &DEMO_SRV_IP[1], 4);
 					memcpy(&MyIP_Address.byte1, &DEMO_CLNT_IP[1][0], 4);
 					memcpy(&MyEth_Address.addr[0], &DEMO_CLNT_MAC[1][0], 6);
-					memcpy(&MyUnique_ID[0], &DEMO_CLNT_UNIQUE[1][0], 12);
+					memcpy(&CngFile.UniqueID[0], &DEMO_CLNT_UNIQUE[1][0], 12);
 					memcpy(&SrvEth_Address.addr[0], &DEMO_Mac[0], 6);
 				}
 				strcpy((char *)&MySocketBuff[0], "udp src port ");
@@ -464,8 +482,12 @@ int main(void)//(int argc, char **argv)
 		}
 		else if (!AY_Client_Initied) {
 			Ui08 Temp[45];
-			//if()
-			MyIP_Address.byte1 = 0;	MyIP_Address.byte2 = 0;	MyIP_Address.byte3 = 0;	MyIP_Address.byte4 = 0;
+			if (AY_Client_DynamicIP) {
+				*((Ui32 *)&MyIP_Address) = 0;
+			}
+			else {
+				*((Ui32 *)&MyIP_Address) = *((Ui32 *)&CngFile.NetIpAddress);
+			}
 			if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
 
 				printf("IP address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _IP_), (char*)&Temp[0]));
@@ -496,96 +518,59 @@ int main(void)//(int argc, char **argv)
 				}
 			}
 		}
-		else if (!AY_Client_GetSrvIPadr) {
-			if (!AY_Client_WaitSrvIPadr) {
-				if (AY_DNS_Query((char *)CngFile.ServerDns, (ip_address *)&CngFile.DNSIp) == 1) {
-					AY_Client_WaitSrvIPadr = 1;
-					j = 0;
-				}
+		else if (!AY_Client_GetSrvIPadr) {			
+			if (AY_IsStringToIP((char *)CngFile.ServerDns)) {
+				p = (char *)CngFile.ServerDns;
+				*((Ui32 *)&SrvIP_Address) = AY_ConvertStringToIP(&p);
+				AY_Client_GetSrvIPadr = 1;
 			}
 			else {
-				if (++j < 5) {
-					AY_Delay(1000);
+				if (!AY_Client_WaitSrvIPadr) {
+					if (AY_DNS_Query((char *)CngFile.ServerDns, (ip_address *)&CngFile.DNSIp) == 1) {
+						AY_Client_WaitSrvIPadr = 1;
+						j = 0;
+					}
 				}
 				else {
-					AY_Client_WaitSrvIPadr = 0;
+					if (++j < 5) {
+						AY_Delay(1000);
+					}
+					else {
+						AY_Client_WaitSrvIPadr = 0;
+					}
 				}
 			}
 		}
 #endif
 		else if (!AY_Client_SendServer) {
-			//Ui08 Temp[45];
-			//int RetVal1, RetVal2;
-
-			/*RetVal1 = AYFILE_TestConfigFile(1);
-			RetVal2 = AYFILE_ConfigFileUpdate();
-
-			AYFILE_ReadCertFile();*/
-
-			//AYFILE_TestConfigFile(1);
-			//AYFILE_ConfigFileReadComp((char *)&Temp[0], ServerDns);
-			//AYFILE_ConfigFileWriteComp((char *)"53", DNSPort);
-
-			//AY_Ram.AY_DeviceCnt = 5;
-			//for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
-			//	AY_Ram.AY_DeviceList[i]._id = 1;
-			//	AY_Ram.AY_DeviceList[i]._Unique[0] = 1;
-			//	AY_Ram.AY_DeviceList[i]._Unique[1] = 2;
-			//	AY_Ram.AY_DeviceList[i]._Unique[2] = 3;
-			//	AY_Ram.AY_DeviceList[i]._ParentId = 6;
-			//	AY_Ram.AY_DeviceList[i]._Type = 1;
-			//	AY_Ram.AY_DeviceList[i]._LocalIp = 0xD502a8c0+(0x01000000*i);///< 192.168.2.213
-			//	printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-			//}
-			//AYFILE_OpenFile((char *)AddIP_File);
-			//AYFILE_ClearFile((char *)AddIP_File);
-			//AYFILE_AddIPsFileStart((char *)AddIP_File, (char *)&MyInterface[0], 1);
-			//for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
-			//	AYFILE_AddIPsToFile((char *)AddIP_File, (char *)&MyInterface[0], &AY_Ram.AY_DeviceList[i]._LocalIp, 1, AY_Ram.AY_DeviceList[i]._LocalIp, AY_Ram.AY_DeviceList[i]._LocalIp,1);
-			//}
-			//AYFILE_AddIPsFileStop((char *)AddIP_File, (char *)&MyInterface[0], 1);
-			//AYFILE_CloseFile((char *)AddIP_File);
-
+			AY_Ram.AY_DeviceCnt = 0;
+			AY_Ram.AY_DevPcktNo = 0;
+			AYFILE_ClearFile((char*)&AddIP_File[0]);
+			AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0, 0, 0, 1);
 			AY_SendDeviceStartToServer();			
 			
 			AY_Client_SendServer = 1;
 		}
 		else if (!AY_Client_RecvServer) {
 			//.. wait
-
-
-			//AY_Client_RecvServer = 1;
 		}
 		else if (!AY_Client_GenerateRemoteDevs) {
+			AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0xFFFF, 0, 0, 1);
+			AYFILE_CloseFile((char*)&AddIP_File[0]);
+			if (AY_Ram.AY_DevPcktNo >0) {
+				AY_Client_GenerateRemoteDevs = 1;
+			}
+			else {
+				AY_Client_SendServer = 0;
+			}			
+		}
+		else if (!AY_Client_ListenThreads) {
 			if (++j < 300) {
 				AY_Delay(1000);
 			}
 			else {
-				AY_Client_SendServer = 0;
+				AY_Ram.AY_Flgs._Flgs = 0;
 			}
-			
-			
-			
-			/*j++;
-			if (j > 1000) {
-				j = 0;
-			}*/
-			//UDP_header_init(&AY_UDPheader);
-			//UDP_header_load(&AY_UDPheader, *((uip_eth_addr *)&DEMO_Mac[0]), *((ip_address *)&DEMO_SRV_IP[0]), DEMO_SRV_Port, *((uip_eth_addr *)&DEMO_Mac[0]), MyIP_Address, MyClientInstPort);
-
-			///* Fill the rest of the packet */
-			//for (i = 0; i < 114; i++) {
-			//	packet[i] = (Ui08)i;
-			//}
-
-			//while (1) {
-			//	UDP_packet_send(pMainSocket, &AY_UDPheader, &packet[0], 114);
-			//}
-			//
-			//
-			//if (AY_SendDeviceStartToServer() == 1) {
-			//	AY_Client_SendServer = 1;
-			//}
 		}
 
 	}

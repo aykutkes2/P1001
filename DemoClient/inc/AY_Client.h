@@ -26,6 +26,7 @@ typedef union _AY_FLGS {
 typedef struct _AY_GlobalRAM {
 	AY_FLGS			AY_Flgs;
 	Ui32			AY_DeviceCnt;
+	Ui16			AY_DevPcktNo;
 	AY_DeviceRead	AY_DeviceList[256];
 	Ui08			AY_Unique[12];
 	Ui08			AY_Sessionkey[16];

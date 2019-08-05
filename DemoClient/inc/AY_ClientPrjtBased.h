@@ -49,6 +49,8 @@ extern const Ui16			MyUDP_StartPort;
 extern const Ui08			MyMac[6];
 
 //--------------------------------------------------------------------------------------//
+extern const Ui08 * const SERVER_PUB_KEY;
+extern const Ui08 * const SERVER_PR_KEY;
 extern const char TestData[65];
 extern const Ui08 DemoAESkey[16];
 

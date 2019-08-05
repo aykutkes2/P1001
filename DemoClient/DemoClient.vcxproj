@@ -130,6 +130,7 @@
     <ClInclude Include="..\Test\inc\messages\DKRTU_55101000.h" />
     <ClInclude Include="..\Test\inc\messages\DKRTU_OD.h" />
     <ClInclude Include="inc\AY_Client.h" />
+    <ClInclude Include="inc\AY_ClientDev.h" />
     <ClInclude Include="inc\AY_ClientPrjtBased.h" />
     <ClInclude Include="inc\AY_ClientSocket.h" />
     <ClInclude Include="inc\AY_Command.h" />
@@ -213,6 +214,7 @@
     <ClCompile Include="..\Server\src\AY_Printf.cpp" />
     <ClCompile Include="..\Test\src\DKRTU_MsgObjects.cpp" />
     <ClCompile Include="src\AY_Client.cpp" />
+    <ClCompile Include="src\AY_ClientDev.cpp" />
     <ClCompile Include="src\AY_ClientPrjtBased.cpp" />
     <ClCompile Include="src\AY_ClientSocket.cpp" />
     <ClCompile Include="src\AY_Command.cpp" />
