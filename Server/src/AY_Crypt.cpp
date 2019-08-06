@@ -41,7 +41,7 @@ int AY_Crypt_AES128(Ui08 *pKey, Ui08 *pData, Ui16 Len) {
 		pData += 16;
 	}
 	mbedtls_aes_free(&ctx);
-	return 1;
+	return (Len<<4);
 }
 
 

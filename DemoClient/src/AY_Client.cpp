@@ -245,6 +245,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	}
 	else if ((!AY_Client_RecvServer)) {
 		Ui32 i,j,k;
+		Ui32 m, n;
 		Ui08 Temp[45];
 		AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
 		AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
@@ -254,9 +255,27 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					j = pRsp->_DevCnt;
 					k = AY_Ram.AY_DeviceCnt;
 					if (j) {
+						AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)pDev/*&AY_Ram.AY_DeviceList[0]*/, header->len-(sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp))/*(j * sizeof(AY_DeviceRead))*/);
 						memcpy(&AY_Ram.AY_DeviceList[0], pDev, (j * sizeof(AY_DeviceRead)));
-						AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)&AY_Ram.AY_DeviceList[0], (j * sizeof(AY_DeviceRead)));
 					}
+
+					//============== FILE========================//
+					printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0] , 16); printf("\r\n");
+					printf("AYDVSTRT--> %d ============ FILE START =========\n ",(header->len  - sizeof(udp_headerAll)));
+					m = sizeof(AY_DeviceStartResp) + (((Ui16)j) * sizeof(AY_DeviceRead));
+					n = 0;
+					while (m > 32) {
+						AY_HexValPrint((((Ui08 *)pRsp) + n), 32);
+						printf("\r\n ");
+						n += 32;
+						m -= 32;
+					}
+					if (m) {
+						AY_HexValPrint((((Ui08 *)pRsp) + n), m);
+						printf("\r\n ");
+					}
+					printf("AYDVSTRT--> ============ FILE END =========\n ");
+					//===========================================//
 					printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, j);
 					for (i = 0; i < j; i++) {
 						printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));

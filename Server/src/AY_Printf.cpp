@@ -14,3 +14,12 @@ void AY_Printf(CnstCh str0[], CnstCh str1[], CnstCh str2[], CnstCh str3[], CnstC
 	if (std::cout << str;
 }
 #endif
+
+
+int AY_HexValPrint(Ui08 *phex, Ui08 bytCnt) {
+	char HexVal[1024];
+	memset(HexVal, 0, 1024);
+	AY_HexToStr((char *)&HexVal[0], phex, bytCnt, 0);
+	printf("%s", (char *)&HexVal[0]);
+	return 1;
+}
