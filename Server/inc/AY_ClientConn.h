@@ -48,4 +48,7 @@ extern Ui32 AYCONN_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd);
 extern int AYCONN_UpdateTime(Ui32 ConnId);
 extern int AYCONN_ClientConnInit(void);
 
+//----------test sil !!!!
+extern void AYSRV_TestMySql(void);
+
 

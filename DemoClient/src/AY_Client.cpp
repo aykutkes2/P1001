@@ -426,6 +426,18 @@ int AY_SendDeviceStartToServer(void) {
 
 }
 
+int AY_StartSlaveListen(void) {
+	//============= SET FILTER ==========================//
+	// //ip.src != 192.168.2.144 && ip.dst != 192.168.2.144
+	AY_ClientFilterFreeA(_SLVS_SCKT);
+	strcpy((char *)&MySocketBuff[0], "ip src host not ");
+	AY_ConvertIPAddToStrRet(&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
+	strcat((char *)&MySocketBuff[0], " and ip dst host not ");
+	AY_ConvertIPAddToStrRet(&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
+	AY_ClientFilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+	return 1;
+}
+
 int main(void)//(int argc, char **argv)
 {
 #if DK_DEMO
@@ -613,33 +625,17 @@ int main(void)//(int argc, char **argv)
 			}			
 		}
 		else if (!AY_Client_ListenThreads) {
-			if (++j < 300) {
-				AY_Delay(1000);
-			}
-			else {
-				AY_Ram.AY_Flgs._Flgs = 0;
-			}
+			AY_StartSlaveListen();
+			AY_Client_ListenThreads = 1;
+		}
+		else {
+				///< check processes
 		}
 
 	}
 
 	//===================================================//
 
-	//UDP_header_init(&AY_UDPheader);
-	//UDP_header_load(&AY_UDPheader, *((uip_eth_addr *)&DEMO_Mac[0]), *((ip_address *)&DEMO_SRV_IP[0]), DEMO_SRV_Port, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyClientInstPort);
-
-	///* Fill the rest of the packet */
-	//for (i = 0; i < 114; i++) {
-	//	packet[i] = (Ui08)i;
-	//}
-
-	//while (1) {
-	//	UDP_packet_send(_MAIN_SCKT, &AY_UDPheader, &packet[0], 114);
-	//}
-
-
-
-	//AY_ClientSocket_main();
 #endif
 	return 0;
 }

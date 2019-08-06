@@ -631,8 +631,8 @@ int MYSQL_Init(void) {
 			MYSQL_Gateway._CertificateId = (Ui32)MYSQL_ConvertStringToUi64(row[GWL_cer]);
 			MYSQL_Gateway._ConnectionId = (Ui32)MYSQL_ConvertStringToUi64(row[GWL_con]);
 			MYSQL_Gateway._SessionKey[0] = (Ui64)MYSQL_ConvertStringToUi64(row[GWL_SK0]);
-			MYSQL_Gateway._SessionKey[0] = (Ui64)MYSQL_ConvertStringToUi64(row[GWL_SK1]);
-			MYSQL_Gateway._SessionKey[0] = (Ui64)MYSQL_ConvertStringToUi64(row[GWL_SK2]);
+			MYSQL_Gateway._SessionKey[1] = (Ui64)MYSQL_ConvertStringToUi64(row[GWL_SK1]);
+			MYSQL_Gateway._SessionKey[2] = (Ui64)MYSQL_ConvertStringToUi64(row[GWL_SK2]);
 			MYSQL_Gateway._PacketCount = (Ui32)MYSQL_ConvertStringToUi64(row[GWL_pkt]);
 			MYSQL_Gateway._TotalPackets = (Ui32)MYSQL_ConvertStringToUi64(row[GWL_Tot]);
 			MYSQL_Gateway._SendBytes = (Ui32)MYSQL_ConvertStringToUi64(row[GWL_SdB]);

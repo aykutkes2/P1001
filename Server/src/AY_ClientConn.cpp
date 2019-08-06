@@ -18,18 +18,41 @@
 #include <AY_Queue.h>
 #include <AY_ClientConn.h>
 
+////------------ TEST SIL !!! ___________________
+//const Ui08 UniqId[12] = {0x74,0xd4,0x35 ,0x3c ,0x4a ,0xb2 ,0x74 ,0xd4 ,0x35 ,0x3c ,0x4a ,0xb2};
+//const Ui08 Mac[8] = { 0x60 ,0xf6 ,0x77 ,0xbe ,0x5f ,0x31 ,0x00 ,0x00};
+//const char Name[45]="";
+//const char Psw[45]="";
+//const Ui32 CertNo=1;
+//const Ui32 ConnNo=0;
+//const Ui08 Sssk[16] = { 0x6c ,0x3a ,0x1b ,0xcc ,0x2f ,0x52 ,0xf0 ,0x37 ,0x71 ,0x43 ,0x3c ,0x39 ,0xf7 ,0x4c ,0x90 ,0x00 };
+//void AYSRV_TestMySql(void) {
+//	MYSQL_AddNewGateway((char *)Name, (char *)Psw, (Ui32 *)&UniqId, *((Ui64 *)&Mac[0]), ConnNo, CertNo, (Ui08*)&Sssk[0], _GATEWAY_UPDATE_);
+//	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&Sssk[0], 16); printf("\r\n");
+//	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
+//}
+////------------ TEST SIL !!! ___________________
+
 void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	AY_DEVSTRTIN		*pDevStrtIn;
 	AY_DeviceStartResp	*pDevStrtPspHdr;
 	udp_headerAll		*pUDP;
 	Ui32				i,j,k;
-	Ui32				m, n;
+	Ui32				m, n;//test sil !!!
 
 	pDevStrtIn = (AY_DEVSTRTIN	*)pQ->pIn;
 	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_UDPh, AY_CONN_UPDATE);
 	printf("AYDVSTRT--> Connection ID ConnId=%d \n", i);
 	MYSQL_AddNewGateway((char *)pDevStrtIn->_Name, (char *)pDevStrtIn->_Pswd, (Ui32 *)&pDevStrtIn->_Unique, *((Ui64 *)&pDevStrtIn->_MAC), i, pDevStrtIn->_ServerCertNo, &pDevStrtIn->_SessionKey[0], _GATEWAY_UPDATE_);
-	
+	//----------------------------//
+	/*memcpy(&UniqId[0], &pDevStrtIn->_Unique[0], 12);
+	memcpy(&Mac[0], &pDevStrtIn->_MAC[0], 6);
+	strcpy(Name, pDevStrtIn->_Name);
+	strcpy(Psw, pDevStrtIn->_Pswd);
+	CertNo = pDevStrtIn->_ServerCertNo;
+	ConnNo = i;
+	memcpy(&Sssk[0], &pDevStrtIn->_SessionKey[0], 16);*/
+	//--------------------------------//
 	pUDP = (udp_headerAll *)_AY_MallocMemory(4096);///< max packet size
 	memcpy(pUDP, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
 	pUDP->_ethHeader.dest = pDevStrtIn->_UDPh._ethHeader.src;
@@ -41,8 +64,8 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 
 	pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pUDP)+sizeof(udp_headerAll));///< max packet size
 	j = 0; k = 0;
-	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0] /*&MYSQL_Gateway._SessionKey[0]*/, 16); printf("\r\n");
-	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
+	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
+	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
 	do {
 		i = MYSQL_ReadDeviceList(0, (MYSQL_DeviceRead *)(((Ui08 *)pDevStrtPspHdr)+sizeof(AY_DeviceStartResp)), 168, j);
 		pDevStrtPspHdr->_Test0 = PACKET_TEST_DATA0;

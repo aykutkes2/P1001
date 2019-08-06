@@ -225,7 +225,14 @@ int main(void) {
 			AY_Server_StartSqlConn = 1;
 		}
 		else {
-			//...
+			if (++j < 2) {
+				AY_Delay(1000);
+			}
+			else {
+				//----------test sil !!!!
+				//AYSRV_TestMySql();
+				//...
+			}
 		}
 	}
 
