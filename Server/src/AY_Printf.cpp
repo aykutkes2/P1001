@@ -22,4 +22,4 @@ int AY_HexValPrint(Ui08 *phex, Ui08 bytCnt) {
 	AY_HexToStr((char *)&HexVal[0], phex, bytCnt, 0);
 	printf("%s", (char *)&HexVal[0]);
 	return 1;
-}
+} 
