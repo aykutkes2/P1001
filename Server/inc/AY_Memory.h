@@ -30,7 +30,7 @@ typedef struct _AY_DeviceRead {
 		Ui32		_typ_prnt;
 		struct {
 			Ui32	_ParentId : 28;		///< row number on remote gateway for only remote type device
-			Ui32	_Type : 4;			///< Local:0 Remote:1
+			Ui32	_Type : 4;			///< Real:0 Mirror:1
 		};
 	};
 	Ui32		_LocalIp;				///< local IP address on this gateway ( allways IP on this gateway, not remote IP for remote type device)
@@ -46,6 +46,10 @@ typedef struct _AY_DevStrtRspHdr {
 
 #pragma pack(pop)
 
+enum _DEVTYPES {
+	_REAL_,
+	_MIRROR_
+};
 
 extern unsigned char	*_AY_MallocMemory(Ui32 Cnt);
 
