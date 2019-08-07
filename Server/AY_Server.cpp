@@ -237,6 +237,7 @@ int main(void) {
 				//...
 			}
 		}
+		Sleep(1);
 	}
 
 	return 0;

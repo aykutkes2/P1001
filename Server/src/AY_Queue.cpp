@@ -47,6 +47,7 @@ void QUEUE_Process(int ql) {
 		if (ql >= QUEUE_THREAD_ALLWAYS) {
 			break;///*goto _EndThread_;//*/ _endthread();///< end thread
 		}
+		Sleep(1);
 	}
 //_EndThread_:
 

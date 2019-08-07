@@ -673,7 +673,7 @@ int main(void)//(int argc, char **argv)
 		else {
 				///< check processes
 		}
-
+		Sleep(1);
 	}
 
 	//===================================================//
