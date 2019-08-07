@@ -27,9 +27,6 @@
     <ClInclude Include="inc\AY_Client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\AY_ClientSocket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\AY_ClientPrjtBased.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,12 +51,12 @@
     <ClInclude Include="inc\AY_ClientDev.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Server\inc\AY_Socket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AY_Client.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\AY_ClientSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\AY_ClientPrjtBased.cpp">
@@ -303,6 +300,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\AY_ClientDev.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\src\AY_Socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

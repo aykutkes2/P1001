@@ -19,7 +19,7 @@ Device 1 Ghost			192.168.2.148	(Client 1)
 
 #include <AY_Printf.h>
 #include <AY_Functions.h>
-#include <AY_ClientSocket.h>
+#include <AY_Socket.h>
 #include <AY_Client.h>
 #include <AY_ClientPrjtBased.h>
 #include <AY_Crypt.h>
@@ -346,12 +346,12 @@ int AY_DNS_Query(char *pDNS, ip_address *pDNS_SRV) {
 	struct QUESTION *qinfo = NULL;
 
 	//============= SET FILTER ==========================//
-	AY_ClientFilterFreeA(_SLVS_SCKT);
+	AYSCKT_FilterFreeA(_SLVS_SCKT);
 	strcpy((char *)&MySocketBuff[0], "udp src port ");
 	AY_ConvertUi32AddToStrRet(CngFile.DNSPort, (char *)&MySocketBuff[0] );
 	strcat((char *)&MySocketBuff[0], " and udp dst port ");
 	AY_ConvertUi32AddToStrRet((MyClientInstPort + 1), (char *)&MySocketBuff[0] );
-	AY_ClientFilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+	AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
 	
 	//============= SEND PACKET ==========================//
 	UDP_header_init(&UDPheader);
@@ -395,10 +395,10 @@ int AY_SendDeviceStartToServer(void) {
 	Ui16				oLen;
 
 	//============= SET FILTER ==========================//
-	AY_ClientFilterFreeA(_SLVS_SCKT);
+	AYSCKT_FilterFreeA(_SLVS_SCKT);
 	strcpy((char *)&MySocketBuff[0], "udp src port ");
 	AY_ConvertUi32AddToStrRet(CngFile.ServerPort, (char *)&MySocketBuff[0]);
-	AY_ClientFilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+	AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
 
 	//------- LOAD
 	memset(&DevStrt,0,sizeof(DevStrt));
@@ -440,7 +440,7 @@ int AY_StartSlaveListen(void) {
 #if 0//1
 	Ui32 j = 1;
 	// //ip.src != 192.168.2.144 && ip.dst != 192.168.2.144
-	AY_ClientFilterFreeA(_SLVS_SCKT);
+	AYSCKT_FilterFreeA(_SLVS_SCKT);
 	strcpy((char *)&MySocketBuff[0], "ip src host not ");
 	AY_ConvertIPAddToStrRet(&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
 	strcat((char *)&MySocketBuff[0], " and ip dst host not ");
@@ -449,7 +449,7 @@ int AY_StartSlaveListen(void) {
 	Ui32 i,j=0;
 	AY_DEVINFO		*pDevIfo;
 	// //ip.src == 192.168.2.147 || ip.src == 192.168.2.148
-	AY_ClientFilterFreeA(_SLVS_SCKT);
+	AYSCKT_FilterFreeA(_SLVS_SCKT);
 
 	for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
 		pDevIfo = pAY_FindDevInfoByDevNo(i);
@@ -471,7 +471,7 @@ int AY_StartSlaveListen(void) {
 	}
 #endif
 	if (j) {
-		AY_ClientFilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+		AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
 	}
 	else {
 		MySocketBuff[0] = 0;
@@ -531,7 +531,7 @@ int main(void)//(int argc, char **argv)
 				}
 				strcpy((char *)&MySocketBuff[0], "udp src port ");
 				AY_ConvertUi32AddToStrRet(CngFile.ServerPort, (char *)&MySocketBuff[0] );
-				if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
+				if (AYSCKT_Socket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
 					AY_Client_Initied = 1;
 					AY_Client_GetMACadr = 1;
 					AY_Client_WaitMACadr = 1;
@@ -544,7 +544,7 @@ int main(void)//(int argc, char **argv)
 			AY_ConvertUi32AddToStrRet(CngFile.DNSPort, (char *)&MySocketBuff[0] );
 			strcat((char *)&MySocketBuff[0], " and udp dst port ");
 			AY_ConvertUi32AddToStrRet((MyClientInstPort + 1), (char *)&MySocketBuff[0] );
-			if (AY_ClientSocket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
+			if (AYSCKT_Socket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
 				AY_Client_GetSrvIPadr = 1;
 				AY_Client_WaitSrvIPadr = 1;
 			}
@@ -581,7 +581,7 @@ int main(void)//(int argc, char **argv)
 			else {
 				*((Ui32 *)&MyIP_Address) = *((Ui32 *)&CngFile.NetIpAddress);
 			}
-			if (AY_ClientSocket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
+			if (AYSCKT_Socket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
 
 				printf("IP address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _IP_), (char*)&Temp[0]));
 				printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _SUBNET_), (char*)&Temp[0]));
@@ -593,7 +593,7 @@ int main(void)//(int argc, char **argv)
 		}
 		else if (!AY_Client_GetMACadr) {
 			if (!AY_Client_WaitMACadr) {
-				if (AY_ClientSocket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, 0, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
+				if (AYSCKT_Socket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, 0, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
 					AY_Client_WaitMACadr = 1; 
 					j = 0;
 				}
@@ -612,8 +612,8 @@ int main(void)//(int argc, char **argv)
 				}
 				else {
 					AY_ClientInitLoop ++;
-					AY_ClientFilterFreeB(_MAIN_SCKT);
-					AY_ClientFilterFreeB(_SLVS_SCKT);
+					AYSCKT_FilterFreeB(_MAIN_SCKT);
+					AYSCKT_FilterFreeB(_SLVS_SCKT);
 					AY_Client_WaitMACadr = 0;
 					AY_Client_Initied = 0;
 				}

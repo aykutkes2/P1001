@@ -26,6 +26,7 @@ Device 1 Ghost			192.168.2.148
 //#include<mysql.h>
 #include <AY_MySql.h>
 
+CFG_FILES				CngFile;
 AY_GlobalRAM			AY_Ram;
 //MySqlConnect			MySqlConn;
 ip_address				MyIP_Address;
@@ -156,6 +157,7 @@ int main(void) {
 			printf("============ CLIENT DEMO PROJECT =================\n\n");
 			printf("My IP Address = %s \n\n", AY_ConvertIPAddToStrRet((Ui08 *)&DEMO_SRV_IP[0], (char *)&MySocketBuff[0]));
 			AY_Server_Intro = 1;
+			AY_Server_DynamicIP = 1;//sil !!!
 		}
 		else if (!AY_Server_Initied) {
 			memcpy(&MyIP_Address.byte1, &DEMO_SRV_IP[0], 4);
@@ -175,6 +177,7 @@ int main(void) {
 			printf("============ CLIENT PROJECT =================\n\n");
 			printf("================ START =================\n\n");
 			AY_Server_Intro = 1;
+			AY_Server_DynamicIP = 1;//sil !!!
 		}
 		else if (!AY_Server_Initied) {
 			MyIP_Address.byte1 = 0;	MyIP_Address.byte2 = 0;	MyIP_Address.byte3 = 0;	MyIP_Address.byte4 = 0;

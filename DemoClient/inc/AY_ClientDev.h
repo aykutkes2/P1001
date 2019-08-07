@@ -1,7 +1,7 @@
 #pragma once
 #include <AY_Type.h>
 #include <AY_Memory.h>
-#include <AY_ClientSocket.h>
+#include <AY_Socket.h>
 
 #define DEV_REMOTE_TIMEOUT			50000
 

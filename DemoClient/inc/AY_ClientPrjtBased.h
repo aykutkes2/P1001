@@ -55,6 +55,10 @@ extern const Ui08 DEMO_CLNT_MAC[3][6];
 extern const char TestData[65];
 extern const Ui08 DemoAESkey[16];
 
+//--------------------------------------------------------------------------------------//
+#define AY_NetworkSubnetMask		CngFile.NetworkSubnetMask
+#define AY_NetworkGatewayIp			CngFile.NetworkGatewayIp
+#define AY_NetSubnetIp				CngFile.NetSubnetIp
 #pragma pack(pop)
 
 

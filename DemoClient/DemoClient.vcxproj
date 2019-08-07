@@ -80,6 +80,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\Test\inc;..\DemoClient\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEVICE_CLIENT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>wpcap.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -125,6 +126,7 @@
     <ClInclude Include="..\P1001\inc\AY_Functions.h" />
     <ClInclude Include="..\P1001\inc\AY_Type.h" />
     <ClInclude Include="..\Server\inc\AY_Printf.h" />
+    <ClInclude Include="..\Server\inc\AY_Socket.h" />
     <ClInclude Include="..\Test\inc\DKRTU_MsgObjects.h" />
     <ClInclude Include="..\Test\inc\DKRTU_Parser.h" />
     <ClInclude Include="..\Test\inc\messages\DKRTU_55101000.h" />
@@ -132,7 +134,6 @@
     <ClInclude Include="inc\AY_Client.h" />
     <ClInclude Include="inc\AY_ClientDev.h" />
     <ClInclude Include="inc\AY_ClientPrjtBased.h" />
-    <ClInclude Include="inc\AY_ClientSocket.h" />
     <ClInclude Include="inc\AY_Command.h" />
   </ItemGroup>
   <ItemGroup>
@@ -212,11 +213,11 @@
     <ClCompile Include="..\Server\src\AY_Functions.cpp" />
     <ClCompile Include="..\Server\src\AY_Memory.cpp" />
     <ClCompile Include="..\Server\src\AY_Printf.cpp" />
+    <ClCompile Include="..\Server\src\AY_Socket.cpp" />
     <ClCompile Include="..\Test\src\DKRTU_MsgObjects.cpp" />
     <ClCompile Include="src\AY_Client.cpp" />
     <ClCompile Include="src\AY_ClientDev.cpp" />
     <ClCompile Include="src\AY_ClientPrjtBased.cpp" />
-    <ClCompile Include="src\AY_ClientSocket.cpp" />
     <ClCompile Include="src\AY_Command.cpp" />
     <ClCompile Include="src\AY_File.cpp" />
   </ItemGroup>

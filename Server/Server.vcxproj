@@ -80,6 +80,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\Server\inc;C:\Program Files (x86)\MySQL\MySQL Connector C 6.1\lib;C:\Program Files\MySQL\MySQL Connector C 6.1\lib;.\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEVICE_SERVER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>C:\Program Files (x86)\MySQL\MySQL Connector C 6.1\lib\libmysql.lib;..\WinPcap\wpcap.lib;..\WinPcap\Packet.lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -19,6 +19,8 @@ typedef union _AY_FLGS {
 		Ui32	_RecvServer : 1;
 		Ui32	_GenerateRemoteDevs : 1;
 		Ui32	_ListenThreads : 1;
+
+		Ui32	_DynamicIP : 1;
 	};
 
 }AY_FLGS;
@@ -49,6 +51,8 @@ extern	uip_eth_addr			MyEth_Address;
 #define AY_Server_GenerateRemoteDevs	AY_Ram.AY_Flgs._GenerateRemoteDevs
 #define AY_Server_ListenThreads			AY_Ram.AY_Flgs._ListenThreads
 
+#define AY_Server_DynamicIP				AY_Ram.AY_Flgs._DynamicIP
+#define AY_DynamicIP					AY_Server_DynamicIP
 
 #pragma pack(pop)
 

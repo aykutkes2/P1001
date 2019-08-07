@@ -14,7 +14,7 @@ Device 1 Ghost			192.168.2.148
 
 #include <AY_Printf.h>
 #include <AY_Functions.h>
-#include <AY_ClientSocket.h>
+#include <AY_Socket.h>
 #include <AY_Client.h>
 #include <AY_ClientPrjtBased.h>
 #include <AY_Crypt.h>

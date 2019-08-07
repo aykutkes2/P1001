@@ -51,6 +51,13 @@ typedef struct ip_addressAll
 	ip_address	_subnet;
 }ip_addressAll;
 
+enum _IP_ALL{
+	_IP_,
+	_GW_,
+	_MASK_,
+	_SUBNET_
+};
+
 /**
  * Representation of a 48-bit Ethernet address.
  */
@@ -91,6 +98,18 @@ typedef struct udp_header
 	uint16_t len;			// Datagram length
 	uint16_t crc;			// Checksum
 }udp_header;
+
+typedef struct tcp_header {
+	uint16_t sport; // Source port
+	uint16_t dport; // Destination port
+	uint32_t seqnum; // Sequence Number
+	uint32_t acknum; // Acknowledgement number
+	uint8_t th_off; // Header length
+	uint8_t flags; // packet flags
+	uint16_t win; // Window size
+	uint16_t crc; // Header Checksum
+	uint16_t urgptr; // Urgent pointer...still don't know what this is...
+}tcp_header;
 
 /* UDP header complete */
 typedef struct udp_headerAll

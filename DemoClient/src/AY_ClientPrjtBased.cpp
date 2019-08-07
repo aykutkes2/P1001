@@ -3,7 +3,7 @@
 
 #include <AY_Printf.h>
 #include <AY_Functions.h>
-#include <AY_ClientSocket.h>
+#include <AY_Socket.h>
 #include <AY_Client.h>
 #include <AY_ClientPrjtBased.h>
 

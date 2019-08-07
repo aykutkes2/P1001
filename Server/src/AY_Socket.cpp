@@ -28,6 +28,13 @@
 #include <AY_Memory.h>
 #include <process.h>
 #include <pcap.h>
+#if DEVICE_CLIENT
+#include <AY_Client.h>
+#include <AY_ClientPrjtBased.h>
+#else
+#include <AY_Server.h>
+#include <AY_ServerPrjtBased.h>
+#endif
 //
 
 #define BUF   ((struct uip_tcpip_hdr *)&buff[UIP_LLH_LEN])
@@ -303,7 +310,31 @@ int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfilt
 		}
 	}
 L_DevFound:
-	if ((a != NULL) && (d != NULL)) {
+	//========================================================================//
+	if (AY_DynamicIP) {
+		bpf_u_int32 ip_raw; /* IP address as integer */
+		bpf_u_int32 subnet_mask_raw; /* Subnet mask as integer */
+
+		/* Get device info */
+		if (pcap_lookupnet(d->name, &ip_raw, &subnet_mask_raw, errbuf) < 0) {
+			fprintf(stderr, "Error in pcap_lookupnet: %s\n", errbuf);
+			return PCAP_ERROR;
+		}
+
+		*(((Ui32 *)pAdr) + _SUBNET_) = subnet_mask_raw;
+		*(((Ui32 *)pAdr) + _MASK_) = ip_raw;
+		*(((Ui32 *)pAdr) + _GW_) = ip_raw + 0x01000000;///< not good!
+	}
+	else {
+		*(((Ui32 *)pAdr) + _MASK_) = *((Ui32 *)&AY_NetworkSubnetMask);
+		*(((Ui32 *)pAdr) + _GW_) = *((Ui32 *)&AY_NetworkGatewayIp);
+		*(((Ui32 *)pAdr) + _SUBNET_) = *((Ui32 *)&AY_NetSubnetIp);
+	}
+	printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _SUBNET_), &errbuf[0]));
+	printf("Subnet mask: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _MASK_), &errbuf[0]));
+	printf("Gateway address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _GW_), &errbuf[0]));
+//==========================================================================================================//
+	if ((a != NULL)&& (d != NULL)) {
 		*((Ui32 *)pAdr) = (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.S_un.S_addr);
 		/* Open the adapter */
 		if ((fp = pcap_open_live(d->name/*argv[1]*/,		// name of the device
@@ -317,9 +348,10 @@ L_DevFound:
 			return PCAP_ERROR;
 		}
 		//*pFp = (void *)fp;
-		if (d->addresses != NULL)
+		if (d->addresses != NULL) {
 			/* Retrieve the mask of the first address of the interface */
 			MyNetMask = ((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+		}
 		else
 			/* If the interface is without addresses we suppose to be in a C class network */
 			MyNetMask = 0xffffff;

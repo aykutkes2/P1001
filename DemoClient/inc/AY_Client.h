@@ -48,7 +48,7 @@ extern	AY_GlobalRAM	AY_Ram;
 
 
 #define AY_Client_DynamicIP				AY_Ram.AY_Flgs._DynamicIP
-
+#define AY_DynamicIP					AY_Client_DynamicIP
 
 #pragma pack(pop)
 
