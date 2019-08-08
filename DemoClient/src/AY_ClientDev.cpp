@@ -16,12 +16,13 @@ AY_DEVINFOLST	*pDevInfos[((MAX_DEVINFO_CNT/4096)-1)];///< total 4096 * (15+1) = 
 /*
 *
 */
-int AY_Client_RemoteDevTimeoutTest(void) {
+int AYCLNT_RemoteDevTimeoutTest(void) {
 	int i;
 	for (i = 0; i < 4096; i++) {
 		if (DevRemoteTOut[i]) {
 			DevRemoteTOut[i] --;
 			if (DevRemoteTOut[i] == 0) {
+				memset(&DevRemote.Info[i], 0, sizeof(AY_DEVINFO));
 				DevRemote.Info[i].DevF.Full_ = 0;
 			}
 		}
@@ -32,7 +33,7 @@ int AY_Client_RemoteDevTimeoutTest(void) {
 /*
 *
 */
-int AY_Client_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
+int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
 	switch (Comp) {
 	case _DEVINFOALL:
 		*pDeInf = *((AY_DEVINFO	*)pComp);
@@ -100,7 +101,7 @@ int AY_Client_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
 /*
 *
 */
-int AY_Client_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
+int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 	Ui32 i;
 	Ui16 j,k;
 	AY_DEVINFO	*pDeInf;
@@ -168,7 +169,7 @@ int AY_Client_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 	}
 	//=======================================================================================================//
 	if (Comp < _DEV_LASTCOMP) {
-		AY_Client_UpdateDevInfo(pDeInf, pComp, Comp);
+		AYCLNT_UpdateDevInfo(pDeInf, pComp, Comp);
 	}
 	//=======================================================================================================//
 	return 1;
@@ -253,7 +254,7 @@ AY_GWINFOLST			AYCLNT_GWLISTE_L1;
 AY_GWINFOLST			*pGwInfos[((MAX_CLNTGWLIST_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
 Ui32					AYCLNT_GW_Cnt = 0;
 
-AY_GWINFO	*pAY_Client_FindGwById(int Id) {
+AY_GWINFO	*pAYCLNT_FindGwById(int Id) {
 	Ui32 i,j;
 	if (Id >= 0) {
 		if (Id < 4096) {
@@ -274,7 +275,7 @@ AY_GWINFO	*pAY_Client_FindGwById(int Id) {
 	return nullptr;
 }
 
-AY_GWINFO	*pAY_Client_FindFirstFreeGwId(int *pId) {
+AY_GWINFO	*pAYCLNT_FindFirstFreeGwId(int *pId) {
 	AY_GWINFO	*pGw = nullptr;
 	Ui32 i, j=0;
 
@@ -294,6 +295,7 @@ AY_GWINFO	*pAY_Client_FindFirstFreeGwId(int *pId) {
 			}
 		}
 		if (pGw->GwF.Full_ == 0) {
+			memset(pGw, 0, sizeof(AY_GWINFO));
 			*pId = i;
 			return pGw;
 		}
@@ -302,7 +304,7 @@ AY_GWINFO	*pAY_Client_FindFirstFreeGwId(int *pId) {
 	return nullptr;
 }
 
-int AY_Client_CalcGwCnt(int *pCnt) {
+int AYCLNT_CalcGwCnt(int *pCnt) {
 	AY_GWINFO	*pGw = nullptr;
 	Ui32 i, j=0;
 	int tot = 0;
@@ -334,7 +336,7 @@ int AY_Client_CalcGwCnt(int *pCnt) {
 	return(lst+1);
 }
 
-int AY_Client_FindGwId(AY_GWINFO	*pGw) {
+int AYCLNT_FindGwId(AY_GWINFO	*pGw) {
 	Ui32 i, j;
 	Ui08 *p;
 	if ( (pGw >= &AYCLNT_GWLISTE_L1.Info[0]) && (pGw <= &AYCLNT_GWLISTE_L1.Info[4095]) ){
@@ -356,15 +358,15 @@ int AY_Client_FindGwId(AY_GWINFO	*pGw) {
 	return -1;
 }
 
-AY_GWINFO	*pAY_Client_FindGwByUnique(Ui32 *pUnique, int *pId) {
+AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId) {
 	AY_GWINFO	*pGw = nullptr;
 	Ui32 i, j;
 	Ui08 *p;
 
 	*pId = -1;
-	AYCLNT_GW_Cnt = AY_Client_CalcGwCnt(0);
+	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
 	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
-		pGw = pAY_Client_FindGwById(i);
+		pGw = pAYCLNT_FindGwById(i);
 		if (pGw != nullptr) {
 			if (pGw->GwF.Full_) {
 				if ((pGw->_Unique[0] == pUnique[0]) && (pGw->_Unique[1] == pUnique[1]) && (pGw->_Unique[2] == pUnique[2])) {
@@ -377,16 +379,16 @@ AY_GWINFO	*pAY_Client_FindGwByUnique(Ui32 *pUnique, int *pId) {
 	return pGw;
 }
 
-int AY_Client_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
+int AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 	AY_GWINFO	*pGw0 = nullptr;
 	int i=0;
 
-	pGw0 = pAY_Client_FindGwByUnique(&pGw->_Unique[0], pId);
+	pGw0 = pAYCLNT_FindGwByUnique(&pGw->_Unique[0], pId);
 	if (pGw0 != nullptr) {///< update
 		i = 1;
 	}
 	else {
-		pGw0 = pAY_Client_FindFirstFreeGwId(pId);
+		pGw0 = pAYCLNT_FindFirstFreeGwId(pId);
 		i = 2;
 	}
 	*pGw0 = *pGw;
@@ -397,7 +399,7 @@ int AY_Client_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 /*
 *
 */
-int AY_Client_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp) {
+int AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp) {
 	switch (Comp) {
 	case _GWINFOALL:
 		*pGw = *((AY_GWINFO	*)pComp);
@@ -462,32 +464,32 @@ int AY_Client_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp) {
 /*
 *
 */
-AY_GWINFO	*pAY_Client_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp) {
+AY_GWINFO	*pAYCLNT_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp) {
 	AY_GWINFO	*pGw0 = nullptr;
 	int Id = 0;
 	int i = 0;
 
-	pGw0 = pAY_Client_FindGwByUnique(&pUnique[0], &Id);
+	pGw0 = pAYCLNT_FindGwByUnique(&pUnique[0], &Id);
 	if (pGw0 != nullptr) {///< update
 		i = 1;
 	}
 	else {
-		pGw0 = pAY_Client_FindFirstFreeGwId(&Id);
+		pGw0 = pAYCLNT_FindFirstFreeGwId(&Id);
 		i = 2;
 	}
-	AY_Client_UpdateGwInfo(pGw0, pComp, Comp);
+	AYCLNT_UpdateGwInfo(pGw0, pComp, Comp);
 
 	return pGw0;
 }
 
 
-
 /*
 *
 */
-int AY_Client_GwReleaseSlot(AY_GWINFO	*pGw) {
+int AYCLNT_GwReleaseSlot(AY_GWINFO	*pGw) {
 	if (pGw != nullptr) {
 		if (pGw->GwF.Full_) {
+			memset(pGw, 0, sizeof(AY_GWINFO));
 			pGw->GwF.Full_ = 0;///< release slot
 		}
 	}
@@ -497,17 +499,18 @@ int AY_Client_GwReleaseSlot(AY_GWINFO	*pGw) {
 /*
 *
 */
-int AY_Client_GwTimeoutTest(void) {
+int AYCLNT_GwTimeoutTest(void) {
 	AY_GWINFO	*pGw;
 	int i;
-	AYCLNT_GW_Cnt = AY_Client_CalcGwCnt(0);
+	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
 	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
-		pGw = pAY_Client_FindGwById(i);
+		pGw = pAYCLNT_FindGwById(i);
 		if (pGw != nullptr) {
 			if (pGw->GwF.Full_) {
 				if (pGw->TimeOut) {
 					pGw->TimeOut--;
 					if (pGw->TimeOut == 0) {
+						memset(pGw, 0, sizeof(AY_GWINFO));
 						pGw->GwF.Full_ = 0;///< release slot
 					}
 				}
@@ -521,32 +524,117 @@ int AY_Client_GwTimeoutTest(void) {
 
 
 
+//============================ QUEUE ================================================================//
+//============================ QUEUE ================================================================//
+//============================ QUEUE ================================================================//
+//============================ QUEUE ================================================================//
+AY_GWQUEUELST			AYCLNT_QUEUELIST_L1;
+AY_GWQUEUELST			*pQueueInfos[((MAX_CLNTQUEUE_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
+Ui32					AYCLNT_QUEUE_Cnt = 0;
+ 
+
+
+AY_CLNTQUEUE	*pAYCLNT_FindFirstFreeQueueId(int *pId) {
+	AY_CLNTQUEUE	*pQue = nullptr;
+	Ui32 i, j = 0;
+
+	for (i = 0; i < MAX_CLNTQUEUE_CNT; i++) {
+		if ((i & 0xFFF) == 0) {
+			if (i == 0) {
+				pQue = &AYCLNT_QUEUELIST_L1.Info[0];
+			}
+			else {
+				j = (i - 4096) >> 12;
+				pQue = (AY_CLNTQUEUE	*)pQueueInfos[j];
+				if (pQue == nullptr) {
+					pQueueInfos[j] = (AY_GWQUEUELST	*)_AY_MallocMemory(sizeof(AY_GWQUEUELST));
+					memset(pQueueInfos[j], 0, sizeof(AY_GWQUEUELST));
+				}
+				pQue = &pQueueInfos[j]->Info[0];
+			}
+		}
+		if (pQue->QueF.Full_ == 0) {
+			memset(pQue, 0, sizeof(AY_CLNTQUEUE));
+			*pId = i;
+			return pQue;
+		}
+		pQue++;
+	}
+	return nullptr;
+}
+
+int AYCLNT_CalcQueueCnt(int *pCnt) {
+	AY_CLNTQUEUE	*pQue = nullptr;
+	Ui32 i, j = 0;
+	int tot = 0;
+	int lst = -1;
+
+	tot = 0;
+	for (i = 0; i < MAX_CLNTQUEUE_CNT; i++) {
+		if ((i & 0xFFF) == 0) {
+			if (i == 0) {
+				pQue = &AYCLNT_QUEUELIST_L1.Info[0];
+			}
+			else {
+				j = (i - 4096) >> 12;
+				pQue = (AY_CLNTQUEUE	*)pQueueInfos[j];
+				if (pQue == nullptr) {
+					if (pCnt != 0) { *pCnt = tot; }
+					return(lst + 1);
+				}
+				pQue = &pQueueInfos[j]->Info[0];
+			}
+		}
+		if (pQue->QueF.Full_ == 1) {
+			lst = i;
+		}
+		tot++;
+		pQue++;
+	}
+	if (pCnt != 0) { *pCnt = tot; }
+	return(lst + 1);
+}
 
 
 
-////============================ QUEUE ================================================================//
-////============================ QUEUE ================================================================//
-////============================ QUEUE ================================================================//
-////============================ QUEUE ================================================================//
-//typedef union _CLNTQ_FLG {
-//	Ui08	AllFlgs;
-//	struct {
-//		Ui08		Busy:1;
-//	};
-//}CLNTQ_FLG;
-//typedef struct _AY_CLNTQUEUE {
-//	AY_DEVINFO		*pInfo;
-//	Ui08			*pDataIO;
-//	Ui16			DataIOLen;
-//	Ui08			Status;
-//	CLNTQ_FLG		Flgs;
-//	Ui32			DevListNo;
-//	Ui32			TimeOut;
-//}AY_CLNTQUEUE;
+
+/*
+*
+*/
+int AYCLNT_QueueReleaseSlot(AY_CLNTQUEUE	*pQue) {
+	if (pQue != nullptr) {
+		if (pQue->QueF.Full_) {
+			if ((pQue->pDataIO != nullptr) && (pQue->DataIOLen)) {
+				free(pQue->pDataIO);
+			}
+			memset(pQue, 0, sizeof(AY_CLNTQUEUE));
+			pQue->QueF.Full_ = 0;///< release slot
+		}
+	}
+	return 1;
+}
+
+/*
+*
+*/
+//int AYCLNT_QueueTimeoutTest(void) {
+//	AY_CLNTQUEUE	*pQue;
+//	int i;
+//	AYCLNT_QUEUE_Cnt = AYCLNT_CalcQueueCnt(0);
+//	for (i = 0; i < AYCLNT_QUEUE_Cnt; i++) {
+//		pQue = pAYCLNT_FindGwById(i);
+//		if (pQue != nullptr) {
+//			if (pQue->QueF.Full_) {
+//				if (pQue->TimeOut) {
+//					pQue->TimeOut--;
+//					if (pQue->TimeOut == 0) {
+//						memset(pQue, 0, sizeof(AY_GWINFO));
+//						pQue->QueF.Full_ = 0;///< release slot
+//					}
+//				}
 //
-//AY_CLNTQUEUE			AYCLNT_QUEUE_L1[4096];
-//AY_CLNTQUEUE			**pDevInfos[((MAX_CLNTQUEUE_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
-//Ui32					AYCLNT_QUEUE_Cnt = 0;
-
-
-
+//			}
+//		}
+//	}
+//	return 1;
+//}

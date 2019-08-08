@@ -51,25 +51,29 @@ typedef struct  _AY_GWINFO {///< 2 + 12 + 42 + 16 +  4+4+4+4 = 88 Bytes
 	Ui32			ReadCnt;
 	Ui32			ErrCnt;
 }AY_GWINFO;
-typedef struct  _AY_GWINFOLST {///< 2 + 12 + 42 + 16 +  4+4+4+4 = 88 Bytes
+typedef struct  _AY_GWINFOLST {///< 4096*88 = 360448 Bytes
 	AY_GWINFO	Info[4096];
 }AY_GWINFOLST;
 //==============================================================//
 typedef union _CLNTQ_FLG {
 	Ui08	AllFlgs;
 	struct {
-		Ui08		Busy:1;
+		Ui08		Full_:1;
+		Ui08		Finished : 1;
 	};
 }CLNTQ_FLG;
-typedef struct _AY_CLNTQUEUE {
+typedef struct _AY_CLNTQUEUE {///< 4 + 4+ 2 + 1 + 1+ 4+ 4 = 20 Bytes
 	AY_DEVINFO		*pInfo;
 	Ui08			*pDataIO;
 	Ui16			DataIOLen;
 	Ui08			Status;
-	CLNTQ_FLG		Flgs;
+	CLNTQ_FLG		QueF;
 	Ui32			TimeOut;
 	Ui32			DevListNo;
 }AY_CLNTQUEUE;
+typedef struct  _AY_GWQUEUELST {///< 4096*20 = 81920 Bytes
+	AY_CLNTQUEUE	Info[4096];
+}AY_GWQUEUELST;
 
 #pragma pack(pop)
 
@@ -102,9 +106,9 @@ enum _GWINFO_COMPs {
 	_GW_DELETE,
 	_GW_LASTCOMP
 };
-extern int AY_Client_RemoteDevTimeoutTest(void);
-extern int AY_Client_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp);
-extern int AY_Client_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp);
+extern int AYCLNT_RemoteDevTimeoutTest(void);
+extern int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp);
+extern int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp);
 extern AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo);
 extern AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP);
 extern AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst);
@@ -119,14 +123,14 @@ extern AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst);
 //============================ GW LISTS ================================================================//;
 extern Ui32			AYCLNT_GW_Cnt;
 
-extern AY_GWINFO	*pAY_Client_FindGwById(int Id);
-extern AY_GWINFO	*pAY_Client_FindFirstFreeGwId(int *pId);
-extern int			AY_Client_CalcGwCnt(int *pCnt);
-extern int			AY_Client_FindGwId(AY_GWINFO	*pGw);
-extern AY_GWINFO	*pAY_Client_FindGwByUnique(Ui32 *pUnique, int *pId);
-extern int			AY_Client_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId);
-extern int			AY_Client_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp);
-extern AY_GWINFO	*pAY_Client_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp);
-extern int			AY_Client_GwReleaseSlot(AY_GWINFO	*pGw);
-extern int			AY_Client_GwTimeoutTest(void);
+extern AY_GWINFO	*pAYCLNT_FindGwById(int Id);
+extern AY_GWINFO	*pAYCLNT_FindFirstFreeGwId(int *pId);
+extern int			AYCLNT_CalcGwCnt(int *pCnt);
+extern int			AYCLNT_FindGwId(AY_GWINFO	*pGw);
+extern AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId);
+extern int			AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId);
+extern int			AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp);
+extern AY_GWINFO	*pAYCLNT_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp);
+extern int			AYCLNT_GwReleaseSlot(AY_GWINFO	*pGw);
+extern int			AYCLNT_GwTimeoutTest(void);
 
