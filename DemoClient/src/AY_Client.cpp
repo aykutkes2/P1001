@@ -10,8 +10,9 @@
 Server IP				192.168.2.149	
 Client 1				192.168.2.145	74-D4-35-3C-4A-B2		74-D4-35-3C-4A-B2-74-D4-35-3C-4A-B2		
 Client 2				192.168.2.146	74-D4-35-3C-4A-B3		74-D4-35-3C-4A-B3-74-D4-35-3C-4A-B3
-Device 1				192.168.2.147	(Client 2)
-Device 1 Ghost			192.168.2.148	(Client 1)
+Device 1	Ghost		192.168.2.147	(Client 1)
+Device 1 				192.168.2.148	(Client 2)
+Demo-1					192.168.2.150
 */
 #include <stdio.h>
 #include <time.h>
@@ -295,45 +296,57 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		}
 	}
 	else {
-		struct tm *ltime;
-		char timestr[16];
-		ip_header *ih;
-		udp_header *uh;
-		Ui32 ip_len;
-		Ui16 sport, dport;
-		time_t local_tv_sec;
+		AY_DEVINFO	*pInfo;
+		printf("AYCLNT--> ============ NEW SIDE PACKET Test & Find Target =========\n ");
 
-		/* convert the timestamp to readable format */
-		local_tv_sec = header->ts.tv_sec;
-		ltime = localtime(&local_tv_sec);
-		strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
+		pInfo = pAY_FindLocDevInfoByIP(*((Ui32 *)&pHdr->dest.addr[0]));
+		if (pInfo) {///< there is a valid target 
+			if (pInfo->DevRead._Type == _MIRROR_) {///< target must be a mirror device
+				///< find an empty queue row for outgoing packet
+				///< allocate memory for outgoing data
+			}
+		}
 
-		/* print timestamp and length of the packet */
-		printf("%s.%.6d len:%d ", timestr, header->ts.tv_usec, header->len);
 
-		/* retireve the position of the ip header */
-		ih = (ip_header *)(pkt_data + 14); //length of ethernet header
+		//struct tm *ltime;
+		//char timestr[16];
+		//ip_header *ih;
+		//udp_header *uh;
+		//Ui32 ip_len;
+		//Ui16 sport, dport;
+		//time_t local_tv_sec;
 
-		/* retireve the position of the udp header */
-		ip_len = (ih->ver_ihl & 0xf) * 4;
-		uh = (udp_header *)((ui08*)ih + ip_len);
+		///* convert the timestamp to readable format */
+		//local_tv_sec = header->ts.tv_sec;
+		//ltime = localtime(&local_tv_sec);
+		//strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
 
-		/* convert from network byte order to host byte order */
-		sport = _HTONS(uh->sport);
-		dport = _HTONS(uh->dport);
+		///* print timestamp and length of the packet */
+		//printf("%s.%.6d len:%d ", timestr, header->ts.tv_usec, header->len);
 
-		/* print ip addresses and udp ports */
-		printf("%d.%d.%d.%d.%d -> %d.%d.%d.%d.%d\n",
-			ih->saddr.byte1,
-			ih->saddr.byte2,
-			ih->saddr.byte3,
-			ih->saddr.byte4,
-			sport,
-			ih->daddr.byte1,
-			ih->daddr.byte2,
-			ih->daddr.byte3,
-			ih->daddr.byte4,
-			dport);
+		///* retireve the position of the ip header */
+		//ih = (ip_header *)(pkt_data + 14); //length of ethernet header
+
+		///* retireve the position of the udp header */
+		//ip_len = (ih->ver_ihl & 0xf) * 4;
+		//uh = (udp_header *)((ui08*)ih + ip_len);
+
+		///* convert from network byte order to host byte order */
+		//sport = _HTONS(uh->sport);
+		//dport = _HTONS(uh->dport);
+
+		///* print ip addresses and udp ports */
+		//printf("%d.%d.%d.%d.%d -> %d.%d.%d.%d.%d\n",
+		//	ih->saddr.byte1,
+		//	ih->saddr.byte2,
+		//	ih->saddr.byte3,
+		//	ih->saddr.byte4,
+		//	sport,
+		//	ih->daddr.byte1,
+		//	ih->daddr.byte2,
+		//	ih->daddr.byte3,
+		//	ih->daddr.byte4,
+		//	dport);
 	}
 }
 

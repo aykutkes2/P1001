@@ -8,21 +8,21 @@
 #include <AY_Memory.h>
 #include <AY_ClientDev.h>
 			
-AY_DEVINFO	DevLevel1[4096];
-AY_DEVINFO	DevRemote[256];
-Ui16		DevRemoteTOut[256];
-AY_DEVINFO	**pDevInfos[15];///< total 4096 * (15+1) = 65536 devices supported
+AY_DEVINFOLST	DevLevel1;
+AY_DEVINFOLST	DevRemote;
+Ui16			DevRemoteTOut[4096];
+AY_DEVINFOLST	*pDevInfos[((MAX_DEVINFO_CNT/4096)-1)];///< total 4096 * (15+1) = 65536 devices supported
 
 /*
 *
 */
 int AY_Client_RemoteDevTimeoutTest(void) {
 	int i;
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < 4096; i++) {
 		if (DevRemoteTOut[i]) {
 			DevRemoteTOut[i] --;
 			if (DevRemoteTOut[i] == 0) {
-				DevRemote[i].DevF.Full_ = 0;
+				DevRemote.Info[i].DevF.Full_ = 0;
 			}
 		}
 	}
@@ -105,30 +105,30 @@ int AY_Client_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 	Ui16 j,k;
 	AY_DEVINFO	*pDeInf;
 	//=======================================================================================================//
-	if ((DevNo & 0xFFFFFF) > 65535) {
+	if ((DevNo & 0xFFFFFF) >= (MAX_DEVINFO_CNT)) {
 		return -1;
 	}
-	else if ((DevNo & 0xFF000000)&& ((DevNo& 0xFFFFFF) < 0x000101)) {
+	else if ((DevNo & 0xFF000000)&& ((DevNo& 0xFFFFFF) < 0x001001)) {
 		k = 0;
 		DevNo &= 0xFFFFFF;
-		if (DevNo == 256) {///< find empty slot
-			pDeInf = &DevRemote[0];
-			for (i = 0; i < 256; i++) {
+		if (DevNo == 4096) {///< find empty slot
+			pDeInf = &DevRemote.Info[0];
+			for (i = 0; i < 4096; i++) {
 				if (!pDeInf->DevF.Full_) {
 					k = i;
 					break;
 				}
 			}
-			if (i == 256) {///< all full, find oldest and use it
+			if (i == 4096) {///< all full, find oldest and use it
 				j = 0xFFFF;
-				for (i = 0; i < 256; i++) {
+				for (i = 0; i < 4096; i++) {
 					if (DevRemoteTOut[i] < j) {
 						j = DevRemoteTOut[i];
 						k = i;
 					}
 				}
 			}
-			pDeInf = &DevRemote[k];
+			pDeInf = &DevRemote.Info[k];
 			pDeInf->DevF.Full_ = 1;
 			memset(pDeInf, 0, sizeof(AY_DEVINFO));
 			DevRemoteTOut[k] = DEV_REMOTE_TIMEOUT;
@@ -136,30 +136,39 @@ int AY_Client_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 		}
 		else {
 			k = DevNo;
-			pDeInf = &DevRemote[k];
+			pDeInf = &DevRemote.Info[k];
 			DevRemoteTOut[k] = DEV_REMOTE_TIMEOUT;
 			printf("AYDEV--> Device Remote Found DevNo=%d \n", DevNo);
 		}
-		i = k;
+		//i = k;
 	}
 	else if (DevNo < 4096) {
-		pDeInf = &DevLevel1[0];
-		i = DevNo;
+		pDeInf = &DevLevel1.Info[DevNo];
+		//i = DevNo;
 		printf("AYDEV--> New Device Level 1 created DevNo=%d \n", DevNo);
 	}
 	else {
 		i = DevNo - 4096;
-		pDeInf = *pDevInfos[(i >> 12)];
+		pDeInf = &pDevInfos[(i >> 12)]->Info[0];
 		i = (i & 0xFFF);
-		if (pDeInf == 0) {
+		if (pDeInf == nullptr) {
 			pDeInf = (AY_DEVINFO	*)_AY_MallocMemory(sizeof(DevLevel1));
-			memset(pDeInf, 0, sizeof(DevLevel1));
-			printf("AYDEV--> New Device List %d created DevNo=%d \n", ((DevNo >> 12)+2), DevNo);
+			printf("AYDEV--> New Device List %d created DevNo=%d \n", ((DevNo >> 12) + 2), DevNo);
+			if (pDeInf != nullptr) {
+				memset(pDeInf, 0, sizeof(DevLevel1));
+			}
+			else {
+				printf("AYDEV--> RAM NOT ENOUGH FREE SPACE !!!! \n");
+				printf("AYDEV--> RAM NOT ENOUGH FREE SPACE !!!! \n");
+				printf("AYDEV--> RAM NOT ENOUGH FREE SPACE !!!! \n");
+				return -1;
+			}
 		}
+		pDeInf = &pDevInfos[(i >> 12)]->Info[i];
 	}
 	//=======================================================================================================//
 	if (Comp < _DEV_LASTCOMP) {
-		AY_Client_UpdateDevInfo(&pDeInf[i], pComp, Comp);
+		AY_Client_UpdateDevInfo(pDeInf, pComp, Comp);
 	}
 	//=======================================================================================================//
 	return 1;
@@ -170,21 +179,19 @@ int AY_Client_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo) {
 	Ui32 i;
 	AY_DEVINFO	*pDeInf;
-	if ((DevNo & 0xFFFFFF) > 65535) {
+	if ((DevNo & 0xFFFFFF) >= (MAX_DEVINFO_CNT)) {
 		return 0;
 	}
-	else if ((DevNo & 0xFF000000) && ((DevNo & 0xFFFFFF) < 0x000101)) {
+	else if ((DevNo & 0xFF000000) && ((DevNo & 0xFFFFFF) < 0x001001)) {
 		DevNo &= 0xFFFFFF;
-		pDeInf = &DevRemote[DevNo];
+		pDeInf = &DevRemote.Info[DevNo];
 	}
 	else if (DevNo < 4096 ) {
-		pDeInf = &DevLevel1[DevNo];
+		pDeInf = &DevLevel1.Info[DevNo];
 	}
 	else {
 		i = DevNo - 4096;
-		pDeInf = *pDevInfos[(i >> 12)];
-		i = (i & 0xFFF);
-		pDeInf += i;
+		pDeInf = &pDevInfos[(i >> 12)]->Info[(i & 0xFFF)];
 	}
 	return pDeInf;
 }
@@ -195,7 +202,7 @@ AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo) {
 AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP) {
 	Ui32 i;
 	AY_DEVINFO	*pDeInf;
-	for (i = 0; i < 65536; i++) {
+	for (i = 0; i < (MAX_DEVINFO_CNT); i++) {
 		pDeInf = pAY_FindDevInfoByDevNo(i);
 		if (pDeInf) {
 			if (pDeInf->DevF.Full_) {
@@ -233,3 +240,313 @@ AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst) {
 	}
 	return 0;///< not found
 }
+
+
+
+
+
+//============================ GW LISTS ================================================================//
+//============================ GW LISTS ================================================================//
+//============================ GW LISTS ================================================================//
+//============================ GW LISTS ================================================================//
+AY_GWINFOLST			AYCLNT_GWLISTE_L1;
+AY_GWINFOLST			*pGwInfos[((MAX_CLNTGWLIST_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
+Ui32					AYCLNT_GW_Cnt = 0;
+
+AY_GWINFO	*pAY_Client_FindGwById(int Id) {
+	Ui32 i,j;
+	if (Id >= 0) {
+		if (Id < 4096) {
+			return (&AYCLNT_GWLISTE_L1.Info[Id]);
+		}
+		else {
+			Id -= 4096;
+			j = Id >> 12;
+			i = Id & 0xFFF;
+			if (pGwInfos[j] != nullptr) {
+				return (&pGwInfos[j]->Info[i]);
+			}
+			else {
+				return nullptr;
+			}
+		}
+	}
+	return nullptr;
+}
+
+AY_GWINFO	*pAY_Client_FindFirstFreeGwId(int *pId) {
+	AY_GWINFO	*pGw = nullptr;
+	Ui32 i, j=0;
+
+	for (i = 0; i < MAX_CLNTGWLIST_CNT; i++) {
+		if ((i & 0xFFF) == 0) {
+			if (i == 0) {
+				pGw = &AYCLNT_GWLISTE_L1.Info[0];
+			}
+			else {
+				j = (i-4096) >> 12;
+				pGw = (AY_GWINFO	*)pGwInfos[j];
+				if (pGw == nullptr) {
+					pGwInfos[j] = (AY_GWINFOLST	*)_AY_MallocMemory(sizeof(AY_GWINFOLST));
+					memset(pGwInfos[j], 0, sizeof(AY_GWINFOLST));
+				}
+				pGw = &pGwInfos[j]->Info[0];
+			}
+		}
+		if (pGw->GwF.Full_ == 0) {
+			*pId = i;
+			return pGw;
+		}
+		pGw++;
+	}
+	return nullptr;
+}
+
+int AY_Client_CalcGwCnt(int *pCnt) {
+	AY_GWINFO	*pGw = nullptr;
+	Ui32 i, j=0;
+	int tot = 0;
+	int lst = -1;
+
+	tot = 0;
+	for (i = 0; i < MAX_CLNTGWLIST_CNT; i++) {
+		if ((i & 0xFFF) == 0) {
+			if (i == 0) {
+				pGw = &AYCLNT_GWLISTE_L1.Info[0];
+			}
+			else {
+				j = (i-4096) >> 12;
+				pGw = (AY_GWINFO	*)pGwInfos[j];
+				if (pGw == nullptr) {
+					if (pCnt != 0) { *pCnt = tot; }
+					return(lst+1);
+				}
+				pGw = &pGwInfos[j]->Info[0];
+			}
+		}
+		if (pGw->GwF.Full_ == 1) {
+			lst = i;
+		}
+		tot++;
+		pGw++;
+	}
+	if (pCnt != 0) { *pCnt = tot; }
+	return(lst+1);
+}
+
+int AY_Client_FindGwId(AY_GWINFO	*pGw) {
+	Ui32 i, j;
+	Ui08 *p;
+	if ( (pGw >= &AYCLNT_GWLISTE_L1.Info[0]) && (pGw <= &AYCLNT_GWLISTE_L1.Info[4095]) ){
+		p = (Ui08 *)pGw;
+		i = ( (p - ((Ui08 *)&AYCLNT_GWLISTE_L1.Info[0])) / sizeof(AY_GWINFO) );
+		return (i);
+	}
+	else {
+		for (j = 0; j < cntof(pGwInfos); j++) {
+			if (pGwInfos[j] != nullptr) {
+				if ((pGw >= &pGwInfos[j]->Info[0]) && (pGw <= &pGwInfos[j]->Info[4095])) {
+					p = (Ui08 *)pGw;
+					i = ((p - ((Ui08 *)&pGwInfos[j]->Info[0])) / sizeof(AY_GWINFO));
+					return (i+((j+1)*4096));
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+AY_GWINFO	*pAY_Client_FindGwByUnique(Ui32 *pUnique, int *pId) {
+	AY_GWINFO	*pGw = nullptr;
+	Ui32 i, j;
+	Ui08 *p;
+
+	*pId = -1;
+	AYCLNT_GW_Cnt = AY_Client_CalcGwCnt(0);
+	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
+		pGw = pAY_Client_FindGwById(i);
+		if (pGw != nullptr) {
+			if (pGw->GwF.Full_) {
+				if ((pGw->_Unique[0] == pUnique[0]) && (pGw->_Unique[1] == pUnique[1]) && (pGw->_Unique[2] == pUnique[2])) {
+					*pId = i;
+					return pGw;
+				}
+			}
+		}
+	}
+	return pGw;
+}
+
+int AY_Client_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
+	AY_GWINFO	*pGw0 = nullptr;
+	int i=0;
+
+	pGw0 = pAY_Client_FindGwByUnique(&pGw->_Unique[0], pId);
+	if (pGw0 != nullptr) {///< update
+		i = 1;
+	}
+	else {
+		pGw0 = pAY_Client_FindFirstFreeGwId(pId);
+		i = 2;
+	}
+	*pGw0 = *pGw;
+
+	return i;
+}
+
+/*
+*
+*/
+int AY_Client_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp) {
+	switch (Comp) {
+	case _GWINFOALL:
+		*pGw = *((AY_GWINFO	*)pComp);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GWINFOALL \n");
+		break;
+	case _GW_FLG:
+		pGw->GwF = *((AY_GWFLAGs	*)pComp);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_FLG \n");
+		break;
+	case _GW_UDPH:
+		pGw->UDP_Hdr = *((udp_headerAll	*)pComp);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_UDPH \n");
+		break;
+	case _GW_SSK:
+		memcpy(&pGw->Sessionkey[0], ((Ui08	*)pComp), 16);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_SSK \n");
+		break;
+	case _GW_UNQUE_ALL:
+		memset(pGw, 0, sizeof(AY_GWINFO));
+	case _GW_UNQUE:
+		memcpy(&pGw->_Unique[0], pComp, 12);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_UNQUE \n");
+		break;
+	case _GW_SNDCNT:
+		pGw->SendCnt = *((Ui32	*)pComp);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_SNDCNT \n");
+		break;
+	case _GW_RDCNT:
+		pGw->ReadCnt = *((Ui32	*)pComp);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_RDCNT \n");
+		break;
+	case _GW_ERRCNT:
+		pGw->ErrCnt = *((Ui32	*)pComp);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_ERRCNT \n");
+		break;
+	case _GW_DELCNTS:
+		pGw->SendCnt = 0;
+		pGw->ReadCnt = 0;
+		pGw->ErrCnt = 0;
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_DELCNTS \n");
+		break;
+	case _GW_DELETE:
+		memset(pGw, 0, sizeof(AY_GWINFO));
+		break;
+	default:
+		printf("AYGW--> Undefined Object \n");
+		break;
+	};
+	return 1;
+}
+
+
+/*
+*
+*/
+AY_GWINFO	*pAY_Client_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp) {
+	AY_GWINFO	*pGw0 = nullptr;
+	int Id = 0;
+	int i = 0;
+
+	pGw0 = pAY_Client_FindGwByUnique(&pUnique[0], &Id);
+	if (pGw0 != nullptr) {///< update
+		i = 1;
+	}
+	else {
+		pGw0 = pAY_Client_FindFirstFreeGwId(&Id);
+		i = 2;
+	}
+	AY_Client_UpdateGwInfo(pGw0, pComp, Comp);
+
+	return pGw0;
+}
+
+
+
+/*
+*
+*/
+int AY_Client_GwReleaseSlot(AY_GWINFO	*pGw) {
+	if (pGw != nullptr) {
+		if (pGw->GwF.Full_) {
+			pGw->GwF.Full_ = 0;///< release slot
+		}
+	}
+	return 1;
+}
+
+/*
+*
+*/
+int AY_Client_GwTimeoutTest(void) {
+	AY_GWINFO	*pGw;
+	int i;
+	AYCLNT_GW_Cnt = AY_Client_CalcGwCnt(0);
+	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
+		pGw = pAY_Client_FindGwById(i);
+		if (pGw != nullptr) {
+			if (pGw->GwF.Full_) {
+				if (pGw->TimeOut) {
+					pGw->TimeOut--;
+					if (pGw->TimeOut == 0) {
+						pGw->GwF.Full_ = 0;///< release slot
+					}
+				}
+
+			}
+		}
+	}
+	return 1;
+}
+
+
+
+
+
+
+
+////============================ QUEUE ================================================================//
+////============================ QUEUE ================================================================//
+////============================ QUEUE ================================================================//
+////============================ QUEUE ================================================================//
+//typedef union _CLNTQ_FLG {
+//	Ui08	AllFlgs;
+//	struct {
+//		Ui08		Busy:1;
+//	};
+//}CLNTQ_FLG;
+//typedef struct _AY_CLNTQUEUE {
+//	AY_DEVINFO		*pInfo;
+//	Ui08			*pDataIO;
+//	Ui16			DataIOLen;
+//	Ui08			Status;
+//	CLNTQ_FLG		Flgs;
+//	Ui32			DevListNo;
+//	Ui32			TimeOut;
+//}AY_CLNTQUEUE;
+//
+//AY_CLNTQUEUE			AYCLNT_QUEUE_L1[4096];
+//AY_CLNTQUEUE			**pDevInfos[((MAX_CLNTQUEUE_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
+//Ui32					AYCLNT_QUEUE_Cnt = 0;
+
+
+
