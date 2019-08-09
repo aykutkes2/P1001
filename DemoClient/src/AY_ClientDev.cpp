@@ -10,6 +10,7 @@
 			
 AY_DEVINFOLST	DevLevel1;
 AY_DEVINFOLST	DevRemote;
+udp_headerAll	DevRemote_UDP_Hdr[4096];
 Ui16			DevRemoteTOut[4096];
 AY_DEVINFOLST	*pDevInfos[((MAX_DEVINFO_CNT/4096)-1)];///< total 4096 * (15+1) = 65536 devices supported
 
@@ -45,16 +46,6 @@ int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
 		pDeInf->DevF.Full_ = 1;
 		printf("AYDEV--> _DEV_FLG \n");
 		break;
-	case _DEV_UDPH:
-		pDeInf->UDP_Hdr = *((udp_headerAll	*)pComp);
-		pDeInf->DevF.Full_ = 1;
-		printf("AYDEV--> _DEV_UDPH \n");
-		break;
-	case _DEV_SSK:
-		memcpy(&pDeInf->Sessionkey[0], ((Ui08	*)pComp), 16);
-		pDeInf->DevF.Full_ = 1;
-		printf("AYDEV--> _DEV_SSK \n");
-		break;
 	case _DEV_READ:
 		pDeInf->DevRead = *((AY_DeviceRead	*)pComp);
 		pDeInf->DevF.Full_ = 1;
@@ -65,28 +56,6 @@ int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
 		pDeInf->DevRead = *((AY_DeviceRead	*)pComp);
 		pDeInf->DevF.Full_ = 1;
 		printf("AYDEV--> _DEV_READ_ALL \n");
-		break;
-	case _DEV_SNDCNT:
-		pDeInf->SendCnt = *((Ui32	*)pComp);
-		pDeInf->DevF.Full_ = 1;
-		printf("AYDEV--> _DEV_SNDCNT \n");
-		break;
-	case _DEV_RDCNT:
-		pDeInf->ReadCnt = *((Ui32	*)pComp);
-		pDeInf->DevF.Full_ = 1;
-		printf("AYDEV--> _DEV_RDCNT \n");
-		break;
-	case _DEV_ERRCNT:
-		pDeInf->ErrCnt = *((Ui32	*)pComp);
-		pDeInf->DevF.Full_ = 1;
-		printf("AYDEV--> _DEV_ERRCNT \n");
-		break;
-	case _DEV_DELCNTS:
-		pDeInf->SendCnt = 0;
-		pDeInf->ReadCnt = 0;
-		pDeInf->ErrCnt = 0;
-		pDeInf->DevF.Full_ = 1;
-		printf("AYDEV--> _DEV_DELCNTS \n");
 		break;
 	case _DEV_DELETE:
 		memset(pDeInf, 0, sizeof(AY_DEVINFO));
@@ -179,7 +148,7 @@ int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 */
 AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo) {
 	Ui32 i;
-	AY_DEVINFO	*pDeInf;
+	AY_DEVINFO	*pDeInf=nullptr;
 	if ((DevNo & 0xFFFFFF) >= (MAX_DEVINFO_CNT)) {
 		return 0;
 	}
@@ -213,25 +182,26 @@ AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP) {
 			}
 		}
 	}
-	return 0;///< not found
+	return nullptr;///< not found
 }
 
-/*
+/* 
 *
 */
 AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst) {
+	udp_headerAll		*pHdr;
 	Ui32 i;
 	AY_DEVINFO	*pDeInf;
 	Ui08 *pM;
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < 4096; i++) {
 		pDeInf = pAY_FindDevInfoByDevNo(i+0xFF000000);
 		if (pDeInf) {
 			if (pDeInf->DevF.Full_) {
 				if (SrcDst == 0) {///< SRC
-					pM = (Ui08 *)&pDeInf->UDP_Hdr._ethHeader.src;
+					pM = (Ui08 *)&DevRemote_UDP_Hdr[i]._ethHeader.src;
 				}
 				else {///< DST
-					pM = (Ui08 *)&pDeInf->UDP_Hdr._ethHeader.src;
+					pM = (Ui08 *)&DevRemote_UDP_Hdr[i]._ethHeader.src;
 				}
 				if( memcmp(pM, pMac,sizeof(uip_eth_addr)) == 0){
 					return pDeInf;
@@ -239,7 +209,7 @@ AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst) {
 			}
 		}
 	}
-	return 0;///< not found
+	return nullptr;///< not found
 }
 
 
@@ -296,6 +266,7 @@ AY_GWINFO	*pAYCLNT_FindFirstFreeGwId(int *pId) {
 		}
 		if (pGw->GwF.Full_ == 0) {
 			memset(pGw, 0, sizeof(AY_GWINFO));
+			pGw->TimeOut = AY_CLNTGW_TIMEOUT_VAL;
 			*pId = i;
 			return pGw;
 		}
@@ -392,6 +363,7 @@ int AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 		i = 2;
 	}
 	*pGw0 = *pGw;
+	pGw0->TimeOut = AY_CLNTGW_TIMEOUT_VAL;
 
 	return i;
 }
@@ -522,7 +494,257 @@ int AYCLNT_GwTimeoutTest(void) {
 }
 
 
+//============================ LOCAL CONNECTIONs ================================================================//
+//============================ LOCAL CONNECTIONs ================================================================//
+//============================ LOCAL CONNECTIONs ================================================================//
+//============================ LOCAL CONNECTIONs ================================================================//
+AY_LOCCONNINFOLST		AYCLNT_LOCCONNLIST_L1;
+AY_LOCCONNINFOLST		*pLocConnInfos[((MAX_LOCCONNINFO_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
+Ui32					AYCLNT_LocConn_Cnt = 0;
+Ui16					LocConnTestTask = 0;
 
+
+/****************************************************************************/
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_LocConnById(int Id)
+**
+** \brief		      Find Local Connection
+**
+** \param    			Id -> local connection no
+**
+** \return				*pLocConn	: local connection address if valid or nullptr
+**
+*****************************************************************************/
+AY_LOCCONNINFO	*pAYCLNT_LocConnById(int Id) {
+	Ui32 i, j;
+	if (Id >= 0) {
+		if (Id < 4096) {
+			return (&AYCLNT_LOCCONNLIST_L1.Info[Id]);
+		}
+		else {
+			Id -= 4096;
+			j = Id >> 12;
+			i = Id & 0xFFF;
+			if (pLocConnInfos[j] != nullptr) {
+				return (&pLocConnInfos[j]->Info[i]);
+			}
+			else {
+				return nullptr;
+			}
+		}
+	}
+	return nullptr;
+}
+
+/****************************************************************************/
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindFirstFreeLocConnId(int *pId)
+**
+** \brief		      Find First Free Local Connection
+**
+** \param    			&pId -> address of free Local Connection no register
+**
+** \return				*pQue	: free Local Connection's address
+**
+*****************************************************************************/
+AY_LOCCONNINFO	*pAYCLNT_FindFirstFreeLocConnId(int *pId) {
+	AY_LOCCONNINFO	*pLocConn = nullptr;
+	Ui32 i, j = 0;
+
+	for (i = 0; i < MAX_LOCCONNINFO_CNT; i++) {
+		if ((i & 0xFFF) == 0) {
+			if (i == 0) {
+				pLocConn = &AYCLNT_LOCCONNLIST_L1.Info[0];
+			}
+			else {
+				j = (i - 4096) >> 12;
+				pLocConn = (AY_LOCCONNINFO	*)pLocConnInfos[j];
+				if (pLocConn == nullptr) {
+					pLocConnInfos[j] = (AY_LOCCONNINFOLST	*)_AY_MallocMemory(sizeof(AY_LOCCONNINFOLST));
+					memset(pLocConnInfos[j], 0, sizeof(AY_LOCCONNINFOLST));
+				}
+				pLocConn = &pLocConnInfos[j]->Info[0];
+			}
+		}
+		if (pLocConn->LocConnF.Full_ == 0) {
+			memset(pLocConn, 0, sizeof(AY_LOCCONNINFO));
+			pLocConn->TimeOut = AY_CLNTLOCCONN_TIMEOUT_VAL;
+			*pId = i;
+			return pLocConn;
+		}
+		pLocConn++;
+	}
+	return nullptr;
+}
+
+
+/****************************************************************************/
+/*! \fn int AYCLNT_CalcLocConnCnt(int *pCnt)
+**
+** \brief		       Calculate Local Connection Length
+**
+** \param    			&pCnt -> address of total Local Connections register
+**
+** \return				*pCnt	: total Local Connections
+** 						lst		: last index of full Local Connection + 1
+**
+*****************************************************************************/
+int AYCLNT_CalcLocConnCnt(int *pCnt) {
+	AY_LOCCONNINFO	*pLocConn = nullptr;
+	Ui32 i, j = 0;
+	int tot = 0;
+	int lst = -1;
+
+	tot = 0;
+	for (i = 0; i < MAX_LOCCONNINFO_CNT; i++) {
+		if ((i & 0xFFF) == 0) {
+			if (i == 0) {
+				pLocConn = &AYCLNT_LOCCONNLIST_L1.Info[0];
+			}
+			else {
+				j = (i - 4096) >> 12;
+				pLocConn = (AY_LOCCONNINFO	*)pLocConnInfos[j];
+				if (pLocConn == nullptr) {
+					if (pCnt != 0) { *pCnt = tot; }
+					return(lst + 1);
+				}
+				pLocConn = &pLocConnInfos[j]->Info[0];
+			}
+		}
+		if (pLocConn->LocConnF.Full_ == 1) {
+			lst = i;
+		}
+		tot++;
+		pLocConn++;
+	}
+	if (pCnt != 0) { *pCnt = tot; }
+	return(lst + 1);
+}
+
+
+/****************************************************************************/
+/*! \fn int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn)
+**
+** \brief		        convert Local Connection address to Local Connection no
+**
+** \param    			pQ
+**
+** \return				0-MAX_LOCCONNINFO_CNT	: Local Connection No
+** 						-					: there is something wrong
+**
+*****************************************************************************/
+int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn) {
+	Ui32 i, j;
+	Ui08 *p;
+	if ((pLocConn >= &AYCLNT_LOCCONNLIST_L1.Info[0]) && (pLocConn <= &AYCLNT_LOCCONNLIST_L1.Info[4095])) {
+		p = (Ui08 *)pLocConn;
+		i = ((p - ((Ui08 *)&AYCLNT_LOCCONNLIST_L1.Info[0])) / sizeof(AY_LOCCONNINFO));
+		return (i);
+	}
+	else {
+		for (j = 0; j < cntof(pLocConnInfos); j++) {
+			if (pLocConnInfos[j] != nullptr) {
+				if ((pLocConn >= &pLocConnInfos[j]->Info[0]) && (pLocConn <= &pLocConnInfos[j]->Info[4095])) {
+					p = (Ui08 *)pLocConn;
+					i = ((p - ((Ui08 *)&pLocConnInfos[j]->Info[0])) / sizeof(AY_LOCCONNINFO));
+					return (i + ((j + 1) * 4096));
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+
+/****************************************************************************/
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId)
+**
+** \brief		        find Local Connection address for determined PI Header packet
+**
+** \param    			pIPA -> PI Header packet
+**
+** \return				pLocConn	: Local Connection Address
+** 						pId			: Local Connection no
+**
+*****************************************************************************/
+AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId) {
+	AY_LOCCONNINFO	*pLocConn = nullptr;
+	Ui32 i, j;
+	Ui08 *p;
+
+	if (pId != 0) { *pId = -1; }
+	AYCLNT_LocConn_Cnt = AYCLNT_CalcLocConnCnt(0);
+	for (i = 0; i < AYCLNT_LocConn_Cnt; i++) {
+		pLocConn = pAYCLNT_LocConnById(i);
+		if (pLocConn != nullptr) {
+			if (pLocConn->LocConnF.Full_) {
+				if (memcmp(&pLocConn->IPA_Hdr, pIPA, sizeof(ip_headerAll)) == 0) {
+					if (pId != 0) { *pId = i; }
+					return pLocConn;
+				}
+			}
+		}
+	}
+	return pLocConn;
+}
+
+/****************************************************************************/
+/*! \fn int AYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
+**
+** \brief		        if valid update else generate new Local Connection
+**
+** \param    			pLocConn	: Local Connection Address
+**
+** \return				i			: New or Update
+** 						pId			: Local Connection no
+**
+*****************************************************************************/
+int AYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId) {
+	AY_LOCCONNINFO	*pLocConn0 = nullptr;
+	int i = 0;
+
+	pLocConn0 = pAYCLNT_FindLocConnByIPA(&pLocConn->IPA_Hdr, pId);
+	if (pLocConn0 != nullptr) {///< update
+		i = 1;
+	}
+	else {
+		pLocConn0 = pAYCLNT_FindFirstFreeLocConnId(pId);
+		i = 2;
+	}
+	*pLocConn0 = *pLocConn;
+	pLocConn0->TimeOut = AY_CLNTLOCCONN_TIMEOUT_VAL;
+	return i;
+}
+
+
+/****************************************************************************/
+/*! \fn int AYCLNT_LocConnTimeoutTest(void)
+**
+** \brief		        Test timeout for Local Connection list
+**
+** \param    			-
+**
+** \return				1
+**
+*****************************************************************************/
+int AYCLNT_LocConnTimeoutTest(void) {
+	AY_LOCCONNINFO	*pLocConn;
+	int i;
+	AYCLNT_LocConn_Cnt = AYCLNT_CalcLocConnCnt(0);
+	for (i = 0; i < AYCLNT_LocConn_Cnt; i++) {
+		pLocConn = pAYCLNT_LocConnById(i);
+		if (pLocConn != nullptr) {
+			if (pLocConn->LocConnF.Full_) {
+				if (pLocConn->TimeOut) {
+					pLocConn->TimeOut--;
+					if (pLocConn->TimeOut == 0) {
+						memset(pLocConn, 0, sizeof(AY_LOCCONNINFO));
+						pLocConn->LocConnF.Full_ = 0;///< release slot
+					}
+				}
+			}
+		}
+	}
+	return 1;
+}
 
 //============================ QUEUE ================================================================//
 //============================ QUEUE ================================================================//
@@ -534,6 +756,16 @@ Ui32					AYCLNT_QUEUE_Cnt = 0;
  
 
 
+/****************************************************************************/
+/*! \fn AY_CLNTQUEUE	*pAYCLNT_FindFirstFreeQueueId(int *pId)
+**
+** \brief		      Find First Free Slot
+**
+** \param    			&pId -> address of free slot no register
+**
+** \return				*pQue	: free slot's address
+**
+*****************************************************************************/
 AY_CLNTQUEUE	*pAYCLNT_FindFirstFreeQueueId(int *pId) {
 	AY_CLNTQUEUE	*pQue = nullptr;
 	Ui32 i, j = 0;
@@ -555,6 +787,7 @@ AY_CLNTQUEUE	*pAYCLNT_FindFirstFreeQueueId(int *pId) {
 		}
 		if (pQue->QueF.Full_ == 0) {
 			memset(pQue, 0, sizeof(AY_CLNTQUEUE));
+			pQue->TimeOut = AY_CLNTQUEUE_TIMEOUT_VAL;
 			*pId = i;
 			return pQue;
 		}
@@ -563,6 +796,17 @@ AY_CLNTQUEUE	*pAYCLNT_FindFirstFreeQueueId(int *pId) {
 	return nullptr;
 }
 
+/****************************************************************************/
+/*! \fn int AYCLNT_CalcQueueCnt(int *pCnt)
+**
+** \brief		       Calculate Queue Length
+**
+** \param    			&pCnt -> address of total slots register
+**
+** \return				*pCnt	: total slots
+** 						lst		: last index of full slot + 1
+**
+*****************************************************************************/
 int AYCLNT_CalcQueueCnt(int *pCnt) {
 	AY_CLNTQUEUE	*pQue = nullptr;
 	Ui32 i, j = 0;
@@ -595,12 +839,17 @@ int AYCLNT_CalcQueueCnt(int *pCnt) {
 	return(lst + 1);
 }
 
-
-
-
-/*
-*
-*/
+/****************************************************************************/
+/*! \fn int AYCLNT_QueueReleaseSlot(AY_CLNTQUEUE	*pQue)
+**
+** \brief		        Release slot
+**
+** \param    			SlotNo
+**
+** \return				1	: OK
+** 						-	: there is something wrong
+**
+*****************************************************************************/
 int AYCLNT_QueueReleaseSlot(AY_CLNTQUEUE	*pQue) {
 	if (pQue != nullptr) {
 		if (pQue->QueF.Full_) {
@@ -614,27 +863,161 @@ int AYCLNT_QueueReleaseSlot(AY_CLNTQUEUE	*pQue) {
 	return 1;
 }
 
-/*
-*
-*/
-//int AYCLNT_QueueTimeoutTest(void) {
-//	AY_CLNTQUEUE	*pQue;
-//	int i;
-//	AYCLNT_QUEUE_Cnt = AYCLNT_CalcQueueCnt(0);
-//	for (i = 0; i < AYCLNT_QUEUE_Cnt; i++) {
-//		pQue = pAYCLNT_FindGwById(i);
-//		if (pQue != nullptr) {
-//			if (pQue->QueF.Full_) {
-//				if (pQue->TimeOut) {
-//					pQue->TimeOut--;
-//					if (pQue->TimeOut == 0) {
-//						memset(pQue, 0, sizeof(AY_GWINFO));
-//						pQue->QueF.Full_ = 0;///< release slot
-//					}
-//				}
-//
-//			}
-//		}
-//	}
-//	return 1;
-//}
+
+
+
+/****************************************************************************/
+/*! \fn AY_CLNTQUEUE *AYCLNT_QueueReadSlot(int SlotNo)
+**
+** \brief		        Read slot information
+**
+** \param    			SlotNo
+**
+** \return				slot pointer
+** 						0	: there is something wrong
+**
+*****************************************************************************/
+AY_CLNTQUEUE *AYCLNT_QueueReadSlot(int SlotNo) {
+	AY_CLNTQUEUE *pQue;
+	int j;
+
+	if (SlotNo < 4096) {
+		pQue = &AYCLNT_QUEUELIST_L1.Info[SlotNo];
+	}
+	else {
+		j = (SlotNo - 4096) >> 12;
+		pQue = (AY_CLNTQUEUE	*)pQueueInfos[j];
+		if (pQue != nullptr){
+			pQue = &pQueueInfos[j]->Info[(SlotNo & 0xFFF)];
+		}
+	}
+	if (pQue != nullptr){
+		if (pQue->QueF.Full_) {
+			return pQue;
+
+		}
+	}
+	return nullptr;
+}
+
+
+/****************************************************************************/
+/*! \fn int AYCLNT_QueueReadStatus(int SlotNo)
+**
+** \brief		        Read slot status
+**
+** \param    			SlotNo
+**
+** \return				-1	: there is something wrong
+** 						0-255	: status
+**
+*****************************************************************************/
+int AYCLNT_QueueReadStatus(int SlotNo) {
+	AY_CLNTQUEUE *pQue;
+	int j;
+
+	pQue = AYCLNT_QueueReadSlot(SlotNo);
+	if (pQue != nullptr) {
+		return ((int)pQue->Status);
+	}
+	else {
+		return -1;
+	}
+}
+
+/****************************************************************************/
+/*! \fn int AYCLNT_QueueFindSlotNo(AY_CLNTQUEUE *pQue)
+**
+** \brief		        convert slot address to slot no
+**
+** \param    			pQ
+**
+** \return				0-MAX_QUEUE_LENGTH	: SlotNo
+** 						-					: there is something wrong
+**
+*****************************************************************************/
+int AYCLNT_QueueFindSlotNo(AY_CLNTQUEUE *pQue) {
+	Ui32 i, j;
+	Ui08 *p;
+	if ((pQue >= &AYCLNT_QUEUELIST_L1.Info[0]) && (pQue <= &AYCLNT_QUEUELIST_L1.Info[4095])) {
+		p = (Ui08 *)pQue;
+		i = ((p - ((Ui08 *)&AYCLNT_QUEUELIST_L1.Info[0])) / sizeof(AY_CLNTQUEUE));
+		return (i);
+	}
+	else {
+		for (j = 0; j < cntof(pQueueInfos); j++) {
+			if (pQueueInfos[j] != nullptr) {
+				if ((pQue >= &pQueueInfos[j]->Info[0]) && (pQue <= &pQueueInfos[j]->Info[4095])) {
+					p = (Ui08 *)pQue;
+					i = ((p - ((Ui08 *)&pQueueInfos[j]->Info[0])) / sizeof(AY_CLNTQUEUE));
+					return (i + ((j + 1) * 4096));
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+
+
+
+//============================  CORE  ================================================================//
+//============================  CORE  ================================================================//
+//============================  CORE  ================================================================//
+//============================  CORE  ================================================================//
+
+/****************************************************************************/
+/*! \fn void AYCLNT_CoreDoTask(void)
+**
+** \brief		       main process
+**
+** \param    			-
+**
+** \return				-
+**
+*****************************************************************************/
+int AY_CLNTCORE_InstRow=0;
+void AYCLNT_CoreDoTask(void) {
+	AY_CLNTQUEUE *pQue;
+	AY_GWINFO	*pGw0;
+	int tmp,i,j,RowCnt;
+
+	RowCnt = AYCLNT_CalcQueueCnt(&tmp);
+	for (i = 0; i < RowCnt; i++) {
+		pQue = AYCLNT_QueueReadSlot(i);
+		if (pQue != nullptr) {///< it is a valid slot
+			if (pQue->QueF.Full_) {///< not empty slot. there works to do
+				switch (pQue->Status) {
+				case _FIND_GW:///< first step for side packet
+					pGw0 = pAYCLNT_FindGwByUnique((Ui32 *)&pQue->pInfo->DevRead._Unique[0], &tmp);
+					if (pGw0 != nullptr) {
+						pQue->pGw = pGw0;
+						pQue->Status = _PRE_SEND_PCKT;
+					}
+					else {
+						AY_SendGwInfoRequest(pQue,i);
+						pQue->Status = _WAIT_SERVER_FOR_GW;
+					}
+				break;
+				case _ASK_FOR_GW:
+				case _WAIT_SERVER_FOR_GW:
+					///... wait untill packet arrive or timeout
+				break;
+				case _CHNG_SERVER_CONN:
+
+				break;
+				case _PRE_SEND_PCKT:
+
+				break;
+				default:
+				break;
+				};
+				//---------- Test Timeouts -------------//
+				pQue->TimeOut--;
+				if (pQue->TimeOut <= 0) {///< Timeout release this slot.
+					AYCLNT_QueueReleaseSlot(pQue);
+				}
+			}
+		}
+	}
+}

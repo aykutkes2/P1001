@@ -43,6 +43,38 @@ typedef struct _AY_DevStrtRspHdr {
 	Ui32		_DevPcktNo;
 	Ui32		_DevCnt;
 }AY_DeviceStartResp;
+//-----------------------------------------------------//
+typedef struct _AY_GWINFORQST {
+	Ui32		_Test2;
+	Ui32		_Test3;
+	Ui32		_QueRowNo;
+	union {
+		Ui08	_InfoCont[32];
+		struct {
+			Ui08		_Unique[12];
+			Ui32		SendCnt;
+			Ui32		ReadCnt;
+			Ui32		ErrCnt;
+			//Ui32		reserved0;
+			//Ui32		reserved1;
+		};
+	};
+}AY_GWINFORQST;
+
+typedef struct _AY_GWINFORESP {
+	Ui32		_Test2;
+	Ui32		_Test3;
+	Ui32		_QueRowNo;
+	union {
+		Ui08	_InfoCont[64];
+		struct {
+			Ui32			_LastUpdateMin;
+			Ui08			_SessionKey[16];
+			udp_headerAll	_UDPh;//42 bytes
+			//Ui16			reserved0;
+		};
+	};
+}AY_GWINFORESP;
 
 #pragma pack(pop)
 

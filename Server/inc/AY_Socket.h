@@ -118,6 +118,18 @@ typedef struct udp_headerAll
 	ip_header		_ipHeader;		// IP Header		20 bytes
 	udp_header		_udpHeader;		// UDP Header		8 bytes
 }udp_headerAll;						// total			42 bytes
+
+/* TCP/IP header info */
+typedef struct ip_headerAll
+{
+	//struct uip_eth_addr		dest;
+	//struct uip_eth_addr		src;
+	ip_address				saddr;		// Source address
+	ip_address				daddr;		// Destination address
+	uint16_t				sport;		// Source port
+	uint16_t				dport;		// Destination port
+}ip_headerAll;						// total			24 bytes
+
 //==============================================================//
 struct ethip_hdr {
 	struct uip_eth_hdr ethhdr;

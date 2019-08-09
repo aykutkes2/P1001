@@ -18,6 +18,7 @@ typedef union _AY_FLGS {
 		Ui32	_GenerateRemoteDevs : 1;
 		Ui32	_ListenThreads : 1;
 
+		Ui32	_ChngServerConn : 1;///< generate new connection with server
 		Ui32	_DynamicIP : 1;
 	};
 
@@ -30,6 +31,9 @@ typedef struct _AY_GlobalRAM {
 	AY_DeviceRead	AY_DeviceList[256];
 	Ui08			AY_Unique[12];
 	Ui08			AY_Sessionkey[16];
+	Ui32			AY_SendCnt;
+	Ui32			AY_ReadCnt;
+	Ui32			AY_ErrCnt;
 }AY_GlobalRAM;
 
 extern	AY_GlobalRAM	AY_Ram;
@@ -47,12 +51,21 @@ extern	AY_GlobalRAM	AY_Ram;
 #define AY_Client_ListenThreads			AY_Ram.AY_Flgs._ListenThreads
 
 
+#define AY_Client_ChngServerConn		AY_Ram.AY_Flgs._ChngServerConn
 #define AY_Client_DynamicIP				AY_Ram.AY_Flgs._DynamicIP
+
 #define AY_DynamicIP					AY_Client_DynamicIP
+#define AY_SendCnt						AY_Ram.AY_SendCnt
+#define AY_ReadCnt						AY_Ram.AY_ReadCnt
+#define AY_ErrCnt						AY_Ram.AY_ErrCnt
 
 #pragma pack(pop)
 
 #define CLIENT_DEMO					0//1
 #define CLIENT_DEMO2				1				
 
-
+enum _SRVSTRT_TYP {
+	_USE_OLD,
+	_GNRT_NEW
+};
+extern int AY_SendDeviceStartToServer(Ui08 Filter);

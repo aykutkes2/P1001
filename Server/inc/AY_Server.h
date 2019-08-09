@@ -28,6 +28,9 @@ typedef union _AY_FLGS {
 typedef struct _AY_GlobalRAM {
 	AY_FLGS		AY_Flgs;
 	Ui08			AY_Unique[12];
+	Ui32			AY_SendCnt;
+	Ui32			AY_ReadCnt;
+	Ui32			AY_ErrCnt;
 }AY_GlobalRAM;
 
 extern	AY_GlobalRAM			AY_Ram;
@@ -53,6 +56,7 @@ extern	uip_eth_addr			MyEth_Address;
 
 #define AY_Server_DynamicIP				AY_Ram.AY_Flgs._DynamicIP
 #define AY_DynamicIP					AY_Server_DynamicIP
+#define AY_SendCnt						AY_Ram.AY_SendCnt
 
 #pragma pack(pop)
 

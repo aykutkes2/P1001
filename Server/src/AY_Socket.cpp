@@ -445,6 +445,7 @@ int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) 
 		return PCAP_ERROR;
 	}
 	printf("Data Has been Sent !!!! Count = %d", i);
+	AY_SendCnt += i;
 	_AY_FreeMemory((unsigned char*)ptr);
 	return 1;
 }
