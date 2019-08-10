@@ -6,6 +6,7 @@
 //#include <windows.h>
 
 #include <AY_Memory.h>
+#include <AY_Client.h>
 #include <AY_ClientDev.h>
 			
 AY_DEVINFOLST	DevLevel1;
@@ -177,7 +178,9 @@ AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP) {
 		if (pDeInf) {
 			if (pDeInf->DevF.Full_) {
 				if (pDeInf->DevRead._LocalIp == LocIP) {
-					return pDeInf;
+					//if (pDeInf->DevRead._Type == _MIRROR_) {
+						return pDeInf;
+					//}
 				}
 			}
 		}
@@ -350,6 +353,27 @@ AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId) {
 	return pGw;
 }
 
+AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId) {
+	AY_GWINFO	*pGw = nullptr;
+	Ui32 i, j;
+	Ui08 *p;
+
+	*pId = -1;
+	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
+	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
+		pGw = pAYCLNT_FindGwById(i);
+		if (pGw != nullptr) {
+			if (pGw->GwF.Full_) {
+				if (pGw->MyPortNo == PortNo) {
+					*pId = i;
+					return pGw;
+				}
+			}
+		}
+	}
+	return pGw;
+}
+
 int AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 	AY_GWINFO	*pGw0 = nullptr;
 	int i=0;
@@ -399,6 +423,11 @@ int AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp) {
 		memcpy(&pGw->_Unique[0], pComp, 12);
 		pGw->GwF.Full_ = 1;
 		printf("AYGW--> _GW_UNQUE \n");
+		break;
+	case _GW_PORTNO:
+		memcpy(&pGw->MyPortNo, pComp, 2);
+		pGw->GwF.Full_ = 1;
+		printf("AYGW--> _GW_PORTNO \n");
 		break;
 	case _GW_SNDCNT:
 		pGw->SendCnt = *((Ui32	*)pComp);
@@ -567,7 +596,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindFirstFreeLocConnId(int *pId) {
 		if (pLocConn->LocConnF.Full_ == 0) {
 			memset(pLocConn, 0, sizeof(AY_LOCCONNINFO));
 			pLocConn->TimeOut = AY_CLNTLOCCONN_TIMEOUT_VAL;
-			*pId = i;
+			if (pId != 0) { *pId = i; }
 			return pLocConn;
 		}
 		pLocConn++;
@@ -687,31 +716,31 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId) {
 }
 
 /****************************************************************************/
-/*! \fn int AYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
 **
 ** \brief		        if valid update else generate new Local Connection
 **
 ** \param    			pLocConn	: Local Connection Address
 **
-** \return				i			: New or Update
+** \return				pLocConn0	: New local connection
 ** 						pId			: Local Connection no
 **
 *****************************************************************************/
-int AYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId) {
+AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId) {
 	AY_LOCCONNINFO	*pLocConn0 = nullptr;
-	int i = 0;
+	//int i = 0;
 
 	pLocConn0 = pAYCLNT_FindLocConnByIPA(&pLocConn->IPA_Hdr, pId);
 	if (pLocConn0 != nullptr) {///< update
-		i = 1;
+		//i = 1;
 	}
 	else {
 		pLocConn0 = pAYCLNT_FindFirstFreeLocConnId(pId);
-		i = 2;
+		//i = 2;
 	}
 	*pLocConn0 = *pLocConn;
 	pLocConn0->TimeOut = AY_CLNTLOCCONN_TIMEOUT_VAL;
-	return i;
+	return pLocConn0;
 }
 
 
@@ -1004,12 +1033,14 @@ void AYCLNT_CoreDoTask(void) {
 					///... wait untill packet arrive or timeout
 				break;
 				case _CHNG_SERVER_CONN:
-
+					if (!AY_Client_ChngServerConn) {
+						AY_SendGwInfoSend(pQue, i);
+						pQue->Status = _PRE_SEND_PCKT;
+					}
 				break;
 				case _PRE_SEND_PCKT:
-
-				break;
 				default:
+					AYCLNT_QueueReleaseSlot(pQue);
 				break;
 				};
 				//---------- Test Timeouts -------------//

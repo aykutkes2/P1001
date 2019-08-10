@@ -62,6 +62,7 @@ typedef struct  _AY_GWINFO {///< 2 + 12 + 42 + 16 +  4+4+4+4 = 88 Bytes
 	Ui32			_Unique[3];				///< Gateway's Unique ID ( This gateway for local and remote gateway ID for remote type device)
 	udp_headerAll	UDP_Hdr;
 	Ui08			Sessionkey[16];
+	Ui16			MyPortNo;
 	Si32			TimeOut;
 	Ui32			SendCnt;
 	Ui32			ReadCnt;
@@ -81,12 +82,12 @@ typedef union _CLNTQ_FLG {
 typedef struct _AY_CLNTQUEUE {///< 4 + 4 + 4+ 2 + 1 + 1+ 4+ 4 = 24 Bytes
 	AY_DEVINFO		*pInfo;
 	AY_GWINFO		*pGw;
+	AY_LOCCONNINFO	*pLocConn;
 	Ui08			*pDataIO;
 	Ui16			DataIOLen;
 	Ui08			Status;
 	CLNTQ_FLG		QueF;
 	Si32			TimeOut;
-	Ui32			DevListNo;
 }AY_CLNTQUEUE;
 typedef struct  _AY_GWQUEUELST {///< 4096*24 = 98304 Bytes
 	AY_CLNTQUEUE	Info[4096];
@@ -107,6 +108,7 @@ enum _GWINFO_COMPs {
 	_GWINFOALL,
 	_GW_FLG,
 	_GW_UNQUE,
+	_GW_PORTNO,
 	_GW_UDPH,
 	_GW_SSK,
 	_GW_UNQUE_ALL,
@@ -139,6 +141,7 @@ extern AY_GWINFO	*pAYCLNT_FindFirstFreeGwId(int *pId);
 extern int			AYCLNT_CalcGwCnt(int *pCnt);
 extern int			AYCLNT_FindGwId(AY_GWINFO	*pGw);
 extern AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId);
+extern AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId);
 extern int			AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId);
 extern int			AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp);
 extern AY_GWINFO	*pAYCLNT_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp);
@@ -186,10 +189,10 @@ extern int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn);
 extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId);
 
 /****************************************************************************/
-/*! \fn int AYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
 ** \brief		        if valid update else generate new Local Connection
 *****************************************************************************/
-extern int AYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId);
+extern AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId);
 
 /****************************************************************************/
 /*! \fn int AYCLNT_LocConnTimeoutTest(void)
@@ -250,5 +253,12 @@ enum _AYCLNT_STATUS {
 
 };
 
+enum _AYCLIENT_ETH_ {
+	_ETH_NULL_,
+	_ETH_SRC_, 
+	_ETH_DST_
+};
 //================== Extrenals ===========================//
 extern int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row);
+extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr eth, Ui08 SrcDst);
+extern int AY_SendGwInfoSend(AY_CLNTQUEUE *pQue, Si32 row);

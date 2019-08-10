@@ -1,5 +1,6 @@
 #pragma once
 #include <AY_Type.h>
+#include <AY_Socket.h>
 
 #pragma pack(push, 1)
 
@@ -75,6 +76,27 @@ typedef struct _AY_GWINFORESP {
 		};
 	};
 }AY_GWINFORESP;
+
+typedef struct _AY_GWRENTRQST {
+	Ui32		_Test4;
+	Ui32		_Test5;
+	union {
+		Ui08	_InfoCont[80];
+		struct {
+			Ui32			_LastUpdateMin;
+			Ui08			_Unique[12];
+			Ui08			_SessionKey[16];
+			udp_headerAll	_UDPh;//42 bytes
+			//Ui16			reserved0;
+		};
+	};
+}AY_GWRENTRQST;
+
+typedef struct _AY_GWDATAHDR {
+	Ui32		_Test6;
+	Ui32		_Test7;
+	Ui32		_DevNoOnTrgt;	
+}AY_GWDATAHDR;
 
 #pragma pack(pop)
 

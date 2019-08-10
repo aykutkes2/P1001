@@ -80,7 +80,19 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	pData = (Ui08 *)(pkt_data + sizeof(udp_headerAll)); // 
 
 	if ((pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort))) {
-		if ((((AY_GWINFORESP	*)pData)->_Test2 == PACKET_TEST_DATA2) && (((AY_GWINFORESP	*)pData)->_Test3 == PACKET_TEST_DATA3)) {
+		if ((((AY_GWRENTRQST	*)pData)->_Test4 == PACKET_TEST_DATA4) && (((AY_GWRENTRQST	*)pData)->_Test5 == PACKET_TEST_DATA5)) {
+			AY_GWRENTRQST *pGwRent = (AY_GWRENTRQST	*)pData;
+			AY_GWINFO	*pGw0;
+
+			pGw0 = pAYCLNT_AddGwToList((Ui08 *)&pGwRent->_Unique[0], (Ui32*)&pGwRent->_Unique[0], _GW_UNQUE_ALL);///< add or update gw to list
+			AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRent->_UDPh, _GW_UDPH);
+			AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRent->_SessionKey[0], _GW_SSK);
+			pGw0->MyPortNo = pUDP->_udpHeader.dport;
+			//----------------//
+			MyClientInstPort++; if (MyClientInstPort < 81) { MyClientInstPort = 81; }
+			AY_SendDeviceStartToServer(_USE_OLD);
+		}
+		else if ((((AY_GWINFORESP	*)pData)->_Test2 == PACKET_TEST_DATA2) && (((AY_GWINFORESP	*)pData)->_Test3 == PACKET_TEST_DATA3)) {
 			AY_GWINFORESP *pGwRsp = (AY_GWINFORESP	*)pData;
 			AY_CLNTQUEUE *pQue = AYCLNT_QueueReadSlot(pGwRsp->_QueRowNo);
 			AY_GWINFO	*pGw0;
@@ -88,20 +100,65 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				pGw0 = pAYCLNT_AddGwToList((Ui08 *)&pQue->pInfo->DevRead._Unique[0], &pQue->pInfo->DevRead._Unique[0], _GW_UNQUE_ALL);///< add or update gw to list
 				AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRsp->_UDPh, _GW_UDPH);
 				AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRsp->_SessionKey[0], _GW_SSK);
+				pGw0->MyPortNo = pUDP->_udpHeader.dport;
 				//----------------//
 				pQue->pGw = pGw0;
 				AY_Client_ChngServerConn = 1;
 				pQue->Status = _CHNG_SERVER_CONN;
 				//----------------//
-				MyClientInstPort++;
+				MyClientInstPort++; if (MyClientInstPort < 81) { MyClientInstPort = 81; }
 				AY_SendDeviceStartToServer(_USE_OLD);
 			}
 		}
+		else if ((((AY_DeviceStartResp	*)pData)->_Test0 == PACKET_TEST_DATA0) && (((AY_DeviceStartResp	*)pData)->_Test1 == PACKET_TEST_DATA1)) {
+			Ui32 i, j, k;
+			Ui32 m, n;
+			Ui08 Temp[45];
+			AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
+			AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
+			if (AY_Ram.AY_DevPcktNo == pRsp->_DevPcktNo) {
+				j = pRsp->_DevCnt;
+				k = AY_Ram.AY_DeviceCnt;
+				if (j) {
+					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)pDev/*&AY_Ram.AY_DeviceList[0]*/, header->len - (sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp))/*(j * sizeof(AY_DeviceRead))*/);
+					memcpy(&AY_Ram.AY_DeviceList[0], pDev, (j * sizeof(AY_DeviceRead)));
+				}
 
-
-	}
-	
-	
+				//============== FILE========================//
+				printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
+				printf("AYDVSTRT--> %d ============ FILE START =========\n ", (header->len - sizeof(udp_headerAll)));
+				m = sizeof(AY_DeviceStartResp) + (((Ui16)j) * sizeof(AY_DeviceRead));
+				n = 0;
+				while (m > 32) {
+					AY_HexValPrint((((Ui08 *)pRsp) + n), 32);
+					printf("\r\n ");
+					n += 32;
+					m -= 32;
+				}
+				if (m) {
+					AY_HexValPrint((((Ui08 *)pRsp) + n), m);
+					printf("\r\n ");
+				}
+				printf("AYDVSTRT--> ============ FILE END =========\n ");
+				//===========================================//
+				printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, j);
+				for (i = 0; i < j; i++) {
+					printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
+					AYCLNT_AddDevToList((Ui08 *)&AY_Ram.AY_DeviceList[i], (k + i), _DEV_READ_ALL);
+					if ( (!AY_Client_RecvServer) && (AY_Ram.AY_DeviceList[i]._Type == _MIRROR_) ) {
+						printf("Remote Device found Device No:%d ID:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
+						AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
+					}
+				}
+				AY_Ram.AY_DeviceCnt += j;
+				AY_Ram.AY_DevPcktNo++;
+				if (j < 168) {
+					AY_Client_RecvServer = 1;
+					AY_Client_ChngServerConn = 0;
+				}
+			}
+		}
+	}	
 }
 
 void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const Ui08 *pkt_data) {
@@ -236,60 +293,10 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			}
 		}
 	}
-	else if ((!AY_Client_RecvServer)) {
-		Ui32 i,j,k;
-		Ui32 m, n;
-		Ui08 Temp[45];
-		AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
-		AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
-		if ((pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort))) {
-			if ((pRsp->_Test0 == PACKET_TEST_DATA0) && (pRsp->_Test1 == PACKET_TEST_DATA1)) {
-				if (AY_Ram.AY_DevPcktNo == pRsp->_DevPcktNo){
-					j = pRsp->_DevCnt;
-					k = AY_Ram.AY_DeviceCnt;
-					if (j) {
-						AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)pDev/*&AY_Ram.AY_DeviceList[0]*/, header->len-(sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp))/*(j * sizeof(AY_DeviceRead))*/);
-						memcpy(&AY_Ram.AY_DeviceList[0], pDev, (j * sizeof(AY_DeviceRead)));
-					}
-
-					//============== FILE========================//
-					printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0] , 16); printf("\r\n");
-					printf("AYDVSTRT--> %d ============ FILE START =========\n ",(header->len  - sizeof(udp_headerAll)));
-					m = sizeof(AY_DeviceStartResp) + (((Ui16)j) * sizeof(AY_DeviceRead));
-					n = 0;
-					while (m > 32) {
-						AY_HexValPrint((((Ui08 *)pRsp) + n), 32);
-						printf("\r\n ");
-						n += 32;
-						m -= 32;
-					}
-					if (m) {
-						AY_HexValPrint((((Ui08 *)pRsp) + n), m);
-						printf("\r\n ");
-					}
-					printf("AYDVSTRT--> ============ FILE END =========\n ");
-					//===========================================//
-					printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, j);
-					for (i = 0; i < j; i++) {
-						printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-						AYCLNT_AddDevToList((Ui08 *)&AY_Ram.AY_DeviceList[i], (k+i), _DEV_READ_ALL);
-						if (AY_Ram.AY_DeviceList[i]._Type== _MIRROR_) {
-							printf("Remote Device found Device No:%d ID:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id,  AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-							AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
-						}
-					}
-					AY_Ram.AY_DeviceCnt += j;
-					AY_Ram.AY_DevPcktNo++;
-					if (j < 168) {
-						AY_Client_RecvServer = 1;
-					}
-				}
-			}
-		}
-	}
-	else {
+	else if ((AY_Client_RecvServer)) {
 		AY_DEVINFO			*pInfom;
 		AY_CLNTQUEUE		*pQue;
+		AY_LOCCONNINFO		LocConn0;
 		int					i;
 		printf("AYCLNT--> ============ NEW SIDE PACKET Test & Find Target =========\n ");
 
@@ -299,11 +306,25 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
 				if (pQue != nullptr) {
 					pQue->pInfo = pInfom;
+					i = sizeof(AY_GWDATAHDR) + ((header->len + 15) & 0xFFF0);
 					pQue->DataIOLen = header->len;
-					pQue->pDataIO = (unsigned char*)_AY_MallocMemory(pQue->DataIOLen);///< allocate memory for outgoing data
-					memcpy(pQue->pDataIO, pkt_data, pQue->DataIOLen);
+					pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
+					memcpy(pQue->pDataIO + sizeof(AY_GWDATAHDR), pkt_data, pQue->DataIOLen);
 					pQue->Status = _FIND_GW;
 					pQue->QueF.Full_ = 1;///< start core process
+					//--------------//
+					LocConn0.IPA_Hdr.daddr = pUDP->_ipHeader.daddr;
+					LocConn0.IPA_Hdr.saddr = pUDP->_ipHeader.saddr;
+					if (header->len > (sizeof(uip_eth_hdr) + sizeof(ip_header))) {
+						LocConn0.IPA_Hdr.dport = pUDP->_udpHeader.dport;
+						LocConn0.IPA_Hdr.sport = pUDP->_udpHeader.sport;
+					} 
+					else {
+						LocConn0.IPA_Hdr.dport = 0;
+						LocConn0.IPA_Hdr.sport = 0;
+					}
+					LocConn0.pDevInfo = pQue->pInfo;
+					pQue->pLocConn = pAYCLNT_TestAddOrUpdateLocConn(&LocConn0, 0);
 				}				
 			}
 		}
@@ -482,6 +503,61 @@ int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRqst, oLen));
 }
 
+int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst) {
+	udp_headerAll UDP0 = *pUDP;
+
+	pUDP->_ethHeader.dest = UDP0._ethHeader.src;
+	pUDP->_ethHeader.src = UDP0._ethHeader.dest;
+	if (pEth != 0) {
+		if (SrcDst == _ETH_SRC_) {
+			pUDP->_ethHeader.src = *pEth;
+		}
+		else if (SrcDst == _ETH_DST_) {
+			pUDP->_ethHeader.dest = *pEth;
+		}
+	}
+
+	pUDP->_ipHeader.daddr = UDP0._ipHeader.saddr;
+	pUDP->_ipHeader.saddr = UDP0._ipHeader.daddr;
+
+	pUDP->_udpHeader.dport = UDP0._udpHeader.sport;
+	pUDP->_udpHeader.sport = UDP0._udpHeader.dport;
+
+	return 1;
+}
+int AY_SendGwInfoSend(AY_CLNTQUEUE *pQue, Si32 row) {
+	AY_GWINFORQST		GwRqst;
+	udp_headerAll		UDPheader;
+	Ui16				oLen;
+
+	AY_ChngPacketDest(&pQue->pGw->UDP_Hdr, &SrvEth_Address, _ETH_SRC_);///< Ser Eth or My Eth which is true ???
+	
+
+
+	i = ((header->len + 15) & 0xFFF0);
+	pQue->DataIOLen = header->len;
+	pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
+	memcpy(pQue->pDataIO, pkt_data, pQue->DataIOLen);
+
+
+
+	GwRqst._Test2 = PACKET_TEST_DATA2;
+	GwRqst._Test3 = PACKET_TEST_DATA3;
+	GwRqst._QueRowNo = row;
+	//---------------------------//
+	memcpy(&GwRqst._Unique[0], &pQue->pInfo->DevRead._Unique[0], sizeof(GwRqst._Unique));
+	GwRqst.SendCnt = AY_SendCnt;
+	GwRqst.ReadCnt = AY_ReadCnt;
+	GwRqst.ErrCnt = AY_ErrCnt;
+	//---------------------------//
+	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)GwRqst._InfoCont[0], sizeof(GwRqst._InfoCont));
+	//------- SEND
+	UDP_header_init(&UDPheader);
+	UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort);
+	oLen = sizeof(AY_GWINFORQST);
+	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRqst, oLen));
+}
+
 int main(void)//(int argc, char **argv)
 {
 #if DK_DEMO
@@ -491,7 +567,6 @@ int main(void)//(int argc, char **argv)
 #else	
 	char *p;
 	int i,j=0;
-	Ui08 packet[114];
 
 	MyClientInstPort = MyUDP_StartPort;
 	AY_Client_Flags = 0;///< clear all flags
