@@ -425,8 +425,7 @@ int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) 
 	int i = sizeof(udp_headerAll);
 	Ui08 *ptr = (Ui08	*)_AY_MallocMemory(len+sizeof(udp_headerAll));///< max packet size
 	udp_headerAll	*pHdr = (udp_headerAll *)&ptr[0];
-	//pcap_t *fp = (pcap_t *)pFp;
-	//i = sizeof(udp_headerAll);
+	
 	memcpy(&ptr[0], UDP_header, i);
 	memcpy(&ptr[i], pBuff, len);
 	i += len;
@@ -436,6 +435,59 @@ int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) 
 	pHdr->_udpHeader.crc = 0;				///< checksum
 	pHdr->_ipHeader.crc = ~(uip_ipchksum(&ptr[0])); 				///< header checksum
 	pHdr->_udpHeader.crc = ~(uip_udpchksum(&ptr[0]));  			///< checksum
+
+	/* Send down the packet */
+	if (pcap_sendpacket(Thrd[idx].pfp, ptr, i) != 0)
+	{
+		fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr(Thrd[idx].pfp));
+		_AY_FreeMemory((unsigned char*)ptr);
+		return PCAP_ERROR;
+	}
+	printf("Data Has been Sent !!!! Count = %d", i);
+	AY_SendCnt += i;
+	_AY_FreeMemory((unsigned char*)ptr);
+	return 1;
+}
+
+int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) {
+	int i = sizeof(tcp_headerAll);
+	Ui08 *ptr = (Ui08	*)_AY_MallocMemory(len + sizeof(tcp_headerAll));///< max packet size
+	tcp_headerAll	*pHdr = (tcp_headerAll *)&ptr[0];
+
+	memcpy(&ptr[0], TCP_header, i);
+	memcpy(&ptr[i], pBuff, len);
+	i += len;
+	pHdr->_ipHeader.tlen = mhtons(i - 14);	///< length 100 bytes
+	pHdr->_ipHeader.crc = 0;				///< header checksum
+	//pHdr->_tcpHeader.th_off = mhtons(20);	///< Header length
+	pHdr->_tcpHeader.crc = 0;				///< checksum
+	pHdr->_ipHeader.crc = ~(uip_ipchksum(&ptr[0])); 				///< header checksum
+	pHdr->_tcpHeader.crc = ~(uip_tcpchksum(&ptr[0]));  			///< checksum
+
+	/* Send down the packet */
+	if (pcap_sendpacket(Thrd[idx].pfp, ptr, i) != 0)
+	{
+		fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr(Thrd[idx].pfp));
+		_AY_FreeMemory((unsigned char*)ptr);
+		return PCAP_ERROR;
+	}
+	printf("Data Has been Sent !!!! Count = %d", i);
+	AY_SendCnt += i;
+	_AY_FreeMemory((unsigned char*)ptr);
+	return 1;
+}
+
+int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len) {
+	int i = sizeof(icmp_headerAll);
+	Ui08 *ptr = (Ui08	*)_AY_MallocMemory(len + sizeof(icmp_headerAll));///< max packet size
+	icmp_headerAll	*pHdr = (icmp_headerAll *)&ptr[0];
+
+	memcpy(&ptr[0], ICMP_header, i);
+	memcpy(&ptr[i], pBuff, len);
+	i += len;
+	pHdr->_ipHeader.tlen = mhtons(i - 14);	///< length 100 bytes
+	pHdr->_ipHeader.crc = 0;				///< header checksum
+	pHdr->_ipHeader.crc = ~(uip_ipchksum(&ptr[0])); 				///< header checksum
 
 	/* Send down the packet */
 	if (pcap_sendpacket(Thrd[idx].pfp, ptr, i) != 0)

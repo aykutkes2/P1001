@@ -100,6 +100,7 @@ enum _DEVINFO_COMPs{
 	_DEV_FLG,
 	_DEV_READ,
 	_DEV_READ_ALL,
+	_DEV_UNIQUE_ALL,
 	_DEV_DELETE,
 	_DEV_LASTCOMP
 };
@@ -121,7 +122,7 @@ enum _GWINFO_COMPs {
 };
 extern int AYCLNT_RemoteDevTimeoutTest(void);
 extern int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp);
-extern int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp);
+extern AY_DEVINFO *pAYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp);
 extern AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo);
 extern AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP);
 extern AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst);
@@ -188,6 +189,13 @@ extern int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn);
 *****************************************************************************/
 extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId);
 
+
+/****************************************************************************/
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId)
+** \brief		        find Local Connection address for determined PI Header packet
+*****************************************************************************/
+extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId);
+
 /****************************************************************************/
 /*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
 ** \brief		        if valid update else generate new Local Connection
@@ -251,6 +259,7 @@ enum _AYCLNT_STATUS {
 	_CHNG_SERVER_CONN,
 	_PRE_SEND_PCKT,
 
+	_FIND_GW2=16,
 };
 
 enum _AYCLIENT_ETH_ {
@@ -262,3 +271,4 @@ enum _AYCLIENT_ETH_ {
 extern int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row);
 extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr eth, Ui08 SrcDst);
 extern int AY_SendGwInfoSend(AY_CLNTQUEUE *pQue, Si32 row);
+extern int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row);

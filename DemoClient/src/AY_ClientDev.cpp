@@ -58,6 +58,12 @@ int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
 		pDeInf->DevF.Full_ = 1;
 		printf("AYDEV--> _DEV_READ_ALL \n");
 		break;
+	case _DEV_UNIQUE_ALL:
+		memset(pDeInf, 0, sizeof(AY_DEVINFO));
+		memcpy(&pDeInf->DevRead._Unique ,pComp, 12);
+		pDeInf->DevF.Full_ = 1;
+		printf("AYDEV--> _DEV_UNIQUE_ALL \n");
+		break;
 	case _DEV_DELETE:
 		memset(pDeInf, 0, sizeof(AY_DEVINFO));
 		break;
@@ -71,13 +77,13 @@ int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp) {
 /*
 *
 */
-int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
+AY_DEVINFO	*pAYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 	Ui32 i;
 	Ui16 j,k;
 	AY_DEVINFO	*pDeInf;
 	//=======================================================================================================//
 	if ((DevNo & 0xFFFFFF) >= (MAX_DEVINFO_CNT)) {
-		return -1;
+		return nullptr;
 	}
 	else if ((DevNo & 0xFF000000)&& ((DevNo& 0xFFFFFF) < 0x001001)) {
 		k = 0;
@@ -100,8 +106,8 @@ int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 				}
 			}
 			pDeInf = &DevRemote.Info[k];
-			pDeInf->DevF.Full_ = 1;
 			memset(pDeInf, 0, sizeof(AY_DEVINFO));
+			pDeInf->DevF.Full_ = 1;
 			DevRemoteTOut[k] = DEV_REMOTE_TIMEOUT;
 			printf("AYDEV--> New Device Remote Added DevNo=%d \n", (k+1));
 		}
@@ -132,7 +138,7 @@ int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 				printf("AYDEV--> RAM NOT ENOUGH FREE SPACE !!!! \n");
 				printf("AYDEV--> RAM NOT ENOUGH FREE SPACE !!!! \n");
 				printf("AYDEV--> RAM NOT ENOUGH FREE SPACE !!!! \n");
-				return -1;
+				return nullptr;
 			}
 		}
 		pDeInf = &pDevInfos[(i >> 12)]->Info[i];
@@ -142,7 +148,7 @@ int AYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 		AYCLNT_UpdateDevInfo(pDeInf, pComp, Comp);
 	}
 	//=======================================================================================================//
-	return 1;
+	return pDeInf;
 }
 /*
 *
@@ -715,6 +721,44 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId) {
 	return pLocConn;
 }
 
+
+/****************************************************************************/
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId)
+**
+** \brief		        find Local Connection address for determined PI Header packet
+**
+** \param    			pIPA -> PI Header packet
+**
+** \return				pLocConn	: Local Connection Address
+** 						pId			: Local Connection no
+**
+*****************************************************************************/
+AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId) {
+	AY_LOCCONNINFO	*pLocConn = nullptr;
+	ip_headerAll IPA;
+	Ui32 i, j;
+	Ui08 *p;
+
+	if (pId != 0) { *pId = -1; }
+	IPA.saddr = pIPA->daddr;
+	IPA.daddr = pIPA->saddr;
+	IPA.dport = pIPA->dport;
+	IPA.sport = pIPA->sport;
+	AYCLNT_LocConn_Cnt = AYCLNT_CalcLocConnCnt(0);
+	for (i = 0; i < AYCLNT_LocConn_Cnt; i++) {
+		pLocConn = pAYCLNT_LocConnById(i);
+		if (pLocConn != nullptr) {
+			if (pLocConn->LocConnF.Full_) {
+				if (memcmp(&pLocConn->IPA_Hdr, &IPA, sizeof(ip_headerAll)) == 0) {
+					if (pId != 0) { *pId = i; }
+					return pLocConn;
+				}
+			}
+		}
+	}
+	return pLocConn;
+}
+
 /****************************************************************************/
 /*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
 **
@@ -1021,11 +1065,27 @@ void AYCLNT_CoreDoTask(void) {
 					pGw0 = pAYCLNT_FindGwByUnique((Ui32 *)&pQue->pInfo->DevRead._Unique[0], &tmp);
 					if (pGw0 != nullptr) {
 						pQue->pGw = pGw0;
-						pQue->Status = _PRE_SEND_PCKT;
+						//AY_Client_ChngServerConn = 0;
+						pQue->Status = _CHNG_SERVER_CONN;
 					}
-					else {
+					else if(pQue->pInfo->DevRead._Type == _MIRROR_){
 						AY_SendGwInfoRequest(pQue,i);
 						pQue->Status = _WAIT_SERVER_FOR_GW;
+					}
+					else {///< SIDE connection and unknown destination so discard packet
+						AYCLNT_QueueReleaseSlot(pQue);
+					}
+				break;
+				case _FIND_GW2:///< first step for quest packet
+					pGw0 = pAYCLNT_FindGwByUnique( (Ui32 *)&pQue->pInfo->DevRead._Unique[0], &tmp);
+					if (pGw0 != nullptr) {
+						pQue->pGw = pGw0;
+						AY_SendGwInfoSend2(pQue, i);
+						//AY_Client_ChngServerConn = 0;
+						pQue->Status = _PRE_SEND_PCKT;
+					}
+					else {///< SIDE connection and unknown destination so discard packet
+						AYCLNT_QueueReleaseSlot(pQue);
 					}
 				break;
 				case _ASK_FOR_GW:
@@ -1039,9 +1099,15 @@ void AYCLNT_CoreDoTask(void) {
 					}
 				break;
 				case _PRE_SEND_PCKT:
+					if (pQue->pInfo->DevRead._Type == _REAL_) {
+					}
 				default:
 					AYCLNT_QueueReleaseSlot(pQue);
 				break;
+				//===========================================================//
+				//============== 
+				//case _FIND_GW2:
+				//	break;
 				};
 				//---------- Test Timeouts -------------//
 				pQue->TimeOut--;

@@ -40,6 +40,8 @@ static ifstream fin;
 const char AddIP_File0[] = "file/AddIP.bat";
 const char AddIP_File1[] = "file/AddIP1.bat";
 const char AddIP_File2[] = "file/AddIP2.bat";
+const char AddIP_File3[] = "file/AddIP3.bat";
+const char AddIP_File4[] = "file/AddIP4.bat";
 const char *AddIP_File;
 
 int AYFILE_OpenFile(char *pFile) {
@@ -188,11 +190,14 @@ int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt,
 const char cfg_file0[] = "file/cfg.xml";
 const char cfg_file1[] = "file/cfg1.xml";
 const char cfg_file2[] = "file/cfg2.xml";
+const char cfg_file3[] = "file/cfg3.xml";
+const char cfg_file3[] = "file/cfg4.xml";
 const char *cfg_file;
 int AYFILE_SelectConfigFile(Ui08 FileNo) {
 	switch (FileNo) {
 	case 1:		cfg_file = &cfg_file1[0];	AddIP_File = &AddIP_File1[0];  break;
 	case 2:		cfg_file = &cfg_file2[0];	AddIP_File = &AddIP_File2[0];  break;
+	case 3:		cfg_file = &cfg_file3[0];	AddIP_File = &AddIP_File3[0];  break;
 	default:	cfg_file = &cfg_file0[0];	AddIP_File = &AddIP_File0[0];  break;
 	}
 	return 1;

@@ -51,6 +51,8 @@ AY_DeviceRead			*pAY_Demos;
 static udp_headerAll	AY_UDPheader;
 static Ui32				AY_DemoInitLoop;
 static char				GetVal;
+static char				DeviceType;
+static udp_headerAll	UDPheader_Buff;
 
 //struct timeval {
 //	long    tv_sec;         /* seconds */
@@ -64,51 +66,23 @@ struct pcap_pkthdr {
 
 
 void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const Ui08 *pkt_data) {
-	struct tm *ltime;
-	char timestr[16];
-	ip_header *ih;
-	udp_header *uh;
-	Ui32 ip_len;
-	Ui16 sport, dport;
-	time_t local_tv_sec;
+	uip_eth_hdr		*pHdr;
+	ip_header		*ih;
+	udp_headerAll	*pUDP;
+	struct DNS_HEADER *dns = NULL;
 
 	printf("Main Socket Callback\n");
-	/*
-	 * unused parameter
-	 */
-	(void)(param);
 
-	/* convert the timestamp to readable format */
-	local_tv_sec = header->ts.tv_sec;
-	ltime = localtime(&local_tv_sec);
-	strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
-
-	/* print timestamp and length of the packet */
-	printf("%s.%.6d len:%d ", timestr, header->ts.tv_usec, header->len);
-
-	/* retireve the position of the ip header */
+	/* retireve the position of the ethernet header */
+	pHdr = (uip_eth_hdr *)(pkt_data + 0); // ethernet header
 	ih = (ip_header *)(pkt_data + 14); //length of ethernet header
+	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
 
-	/* retireve the position of the udp header */
-	ip_len = (ih->ver_ihl & 0xf) * 4;
-	uh = (udp_header *)((ui08*)ih + ip_len);
-
-	/* convert from network byte order to host byte order */
-	sport = _HTONS(uh->sport);
-	dport = _HTONS(uh->dport);
-
-	/* print ip addresses and udp ports */
-	printf("%d.%d.%d.%d.%d -> %d.%d.%d.%d.%d\n",
-		ih->saddr.byte1,
-		ih->saddr.byte2,
-		ih->saddr.byte3,
-		ih->saddr.byte4,
-		sport,
-		ih->daddr.byte1,
-		ih->daddr.byte2,
-		ih->daddr.byte3,
-		ih->daddr.byte4,
-		dport);
+	
+	
+	
+	
+	
 }
 
 void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const Ui08 *pkt_data) {
@@ -480,6 +454,47 @@ int AY_StartSlaveListen(void) {
 	return 1;
 }
 
+
+int AY_StartDemoListen(void) {
+	//============= SET FILTER ==========================//
+	// //ip.src != 192.168.2.144 && ip.dst != 192.168.2.144
+	AYSCKT_FilterFreeA(_MAIN_SCKT);
+	AYSCKT_FilterFreeA(_SLVS_SCKT);
+	strcpy((char *)&MySocketBuff[0], "ip dst host ");
+	AY_ConvertIPAddToStrRet((Ui08*)&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
+	AYSCKT_FilterSetA(_MAIN_SCKT, (char *)&MySocketBuff[0]);
+	return 1;
+}
+
+int AYDEMO_SendDemoPacket(void) {
+	udp_headerAll		UDPheader;
+	Ui16				oLen;
+	//------- SEND
+	UDP_header_init(&UDPheader);
+	UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyDemoInstPort);
+	oLen = sizeof(DEMO_STR_1);
+	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&DEMO_STR_1, oLen/*sizeof(AY_DeviceStart)*/));
+}
+
+int AYDEMO_SendDemoPacket2(void) {
+	udp_headerAll		UDPheader;
+	Ui16				oLen;
+
+	UDPheader = UDPheader_Buff;
+	UDPheader._ethHeader.dest = UDPheader_Buff._ethHeader.src;
+	UDPheader._ethHeader.src = MyEth_Address;// UDPheader_Buff._ethHeader.dest;
+	UDPheader._ipHeader.daddr = UDPheader_Buff._ipHeader.saddr;
+	UDPheader._ipHeader.saddr = UDPheader_Buff._ipHeader.daddr;
+	UDPheader._udpHeader.dport = UDPheader_Buff._udpHeader.sport;
+	UDPheader._udpHeader.sport = UDPheader_Buff._udpHeader.dport;
+
+	//------- SEND
+	//UDP_header_init(&UDPheader);
+	//UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyDemoInstPort);
+	oLen = sizeof(DEMO_STR_2);
+	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&DEMO_STR_2, oLen/*sizeof(AY_DeviceStart)*/));
+}
+
 int main(void)//(int argc, char **argv)
 {
 #if DK_DEMO
@@ -554,9 +569,9 @@ int main(void)//(int argc, char **argv)
 			GetVal = 0;
 #if Demo_DEMO2
 			printf("============ Demo DEMO PROJECT =================\n\n");
-			printf("Enter Demo No (1-2)\n\n");
+			printf("Enter Demo No (1-2-3-4)\n\n");
 			GetVal = getchar();
-			if ((GetVal != '1') && (GetVal != '2')) {
+			if ((GetVal != '1') && (GetVal != '2') && (GetVal != '3') && (GetVal != '4')) {
 				GetVal = 0;
 			}
 			else {
@@ -566,6 +581,7 @@ int main(void)//(int argc, char **argv)
 #endif
 			printf("============ Demo PROJECT =================\n\n");
 			printf("================ START =================\n\n");
+			DeviceType = GetVal;
 			AYFILE_SelectConfigFile(GetVal);
 			AYFILE_TestCertFile(1);
 			AYFILE_ReadCertFile();
@@ -620,7 +636,29 @@ int main(void)//(int argc, char **argv)
 #endif
 			}
 		}
-		else if (!AY_Demo_GetSrvIPadr) {			
+		else if (!AY_Demo_SendPacket) {
+			if (!AY_Demo_DemoListen) {
+				AY_StartDemoListen();
+				AY_Demo_DemoListen = 1;
+			}
+			if (++j < 100) {
+				AY_Delay(100);
+			}
+			else {
+				if (DeviceType == 3) {
+					AYDEMO_SendDemoPacket();
+				}
+				else if(AY_Demo_DemoPacketReceived){
+					AYDEMO_SendDemoPacket2();
+					AY_Demo_DemoPacketReceived = 0;
+				}
+			}
+		}
+
+
+
+
+		/*else if (!AY_Demo_GetSrvIPadr) {			
 			if (AY_IsStringToIP((char *)CngFile.ServerDns)) {
 				p = (char *)CngFile.ServerDns;
 				*((Ui32 *)&SrvIP_Address) = AY_ConvertStringToIP(&p);
@@ -642,37 +680,37 @@ int main(void)//(int argc, char **argv)
 					}
 				}
 			}
-		}
+		}*/
 #endif
-		else if (!AY_Demo_SendServer) {
-			AY_Ram.AY_DeviceCnt = 0;
-			AY_Ram.AY_DevPcktNo = 0;
-			AYFILE_ClearFile((char*)&AddIP_File[0]);
-			AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0, 0, 0, 1);
-			AY_SendDeviceStartToServer();			
-			
-			AY_Demo_SendServer = 1;
-		}
-		else if (!AY_Demo_RecvServer) {
-			//.. wait
-		}
-		else if (!AY_Demo_GenerateRemoteDevs) {
-			AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0xFFFF, 0, 0, 1);
-			AYFILE_CloseFile((char*)&AddIP_File[0]);
-			if (AY_Ram.AY_DevPcktNo >0) {
-				AY_Demo_GenerateRemoteDevs = 1;
-			}
-			else {
-				AY_Demo_SendServer = 0;
-			}			
-		}
-		else if (!AY_Demo_ListenThreads) {
-			AY_StartSlaveListen();
-			AY_Demo_ListenThreads = 1;
-		}
-		else {
-				///< check processes
-		}
+		//else if (!AY_Demo_SendServer) {
+		//	AY_Ram.AY_DeviceCnt = 0;
+		//	AY_Ram.AY_DevPcktNo = 0;
+		//	AYFILE_ClearFile((char*)&AddIP_File[0]);
+		//	AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0, 0, 0, 1);
+		//	AY_SendDeviceStartToServer();			
+		//	
+		//	AY_Demo_SendServer = 1;
+		//}
+		//else if (!AY_Demo_RecvServer) {
+		//	//.. wait
+		//}
+		//else if (!AY_Demo_GenerateRemoteDevs) {
+		//	AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0xFFFF, 0, 0, 1);
+		//	AYFILE_CloseFile((char*)&AddIP_File[0]);
+		//	if (AY_Ram.AY_DevPcktNo >0) {
+		//		AY_Demo_GenerateRemoteDevs = 1;
+		//	}
+		//	else {
+		//		AY_Demo_SendServer = 0;
+		//	}			
+		//}
+		//else if (!AY_Demo_ListenThreads) {
+		//	AY_StartSlaveListen();
+		//	AY_Demo_ListenThreads = 1;
+		//}
+		//else {
+		//		///< check processes
+		//}
 
 	}
 

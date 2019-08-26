@@ -144,4 +144,30 @@ const Ui08 * const SERVER_PR_KEY = (unsigned char *)
 "-----END RSA PRIVATE KEY-----\n";
 
 const char TestData[65] = "Merhaba Dunya. Test data test. Aykut Yakisir tarafindan yapilan ";
+
+const Ui08 * const DEMO_STR_1 = (unsigned char *)
+"README FOR IDLE TESTS IN IDLELIB.IDLE_TEST\n"
+"0. Quick Start\n"
+"Automated unit tests were added in 3.3 for Python 3.x.\n"
+"To run the tests from a command line :\n"
+"python - m test.test_idle\n"
+"Human - mediated tests were added later in 3.4.\n"
+"python - m idlelib.idle_test.htest\n"
+"1. Test Files\n"
+"The idle directory, idlelib, has over 60 xyz.py files.The idle_test\n"
+"subdirectory contains test_xyz.py for each implementation file xyz.py.\n"
+"To add a test for abc.py, open idle_test / template.py and immediately\n"
+"Save As test_abc.py.Insert 'abc' on the first line, and replace\n";
+
+const Ui08 * const DEMO_STR_2 = (unsigned char *)
+"Remove the imports of requires and tkinter if not needed.Otherwise,\n"
+"add to the tkinter imports as needed.\n"
+"Add a prefix to 'Test' for the initial test class.The template class\n"
+"contains code needed or possibly needed for gui tests.See the next\n"
+"section if doing gui tests.If not, and not needed for further classes,\n"
+"this code can be removed.\n"
+"Add the following at the end of abc.py.If an htest was added first,\n"
+"insert the import and main lines before the htest lines.\n";
+
+
 const Ui08 DemoAESkey[16] = { 0xDE,0x37,0x09,0x9B,0x9C,0x58,0xD0,0xF3,0xDD,0x4D,0x6E,0x8E,0xAD,0x47,0xC2,0x91 };

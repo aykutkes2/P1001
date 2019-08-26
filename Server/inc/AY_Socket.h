@@ -119,6 +119,21 @@ typedef struct udp_headerAll
 	udp_header		_udpHeader;		// UDP Header		8 bytes
 }udp_headerAll;						// total			42 bytes
 
+/* TCP header complete */
+typedef struct tcp_headerAll
+{
+	uip_eth_hdr		_ethHeader;		// ETHERNET Header	14 bytes
+	ip_header		_ipHeader;		// IP Header		20 bytes
+	tcp_header		_tcpHeader;		// TCP Header		20 bytes
+}tcp_headerAll;						// total			54 bytes
+
+/* ICMP header complete */
+typedef struct icmp_headerAll
+{
+	uip_eth_hdr		_ethHeader;		// ETHERNET Header	14 bytes
+	ip_header		_ipHeader;		// IP Header		20 bytes
+}icmp_headerAll;						// total			34 bytes
+
 /* TCP/IP header info */
 typedef struct ip_headerAll
 {
@@ -167,6 +182,8 @@ extern int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char
 extern int UDP_header_init(udp_headerAll * UDP_header);
 extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
 extern int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len);
+extern int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len);
+extern int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len);
 extern int UDP_packet_check(Ui08 *pBuff, int *pLen);
 
 extern int AYSCKT_FilterSetA(Ui08 idx, char *pfilter);

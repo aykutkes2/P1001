@@ -11,6 +11,11 @@ typedef union _AY_FLGS {
 		Ui32	_DemoInited : 1;
 		Ui32	_GetMACadr : 1;
 		Ui32	_WaitMACadr : 1;
+		
+		Ui32	_DemoListen : 1;
+		Ui32	_SendPacket : 1;
+		Ui32	_DemoPacketReceived : 1;
+		
 		Ui32	_GetSrvIPadr : 1;
 		Ui32	_WaitSrvIPadr : 1;
 		Ui32	_SendServer : 1;
@@ -36,14 +41,19 @@ extern	AY_GlobalRAM	AY_Ram;
 
 #define AY_Demo_Flags					AY_Ram.AY_Flgs._Flgs
 #define AY_Demo_Intro					AY_Ram.AY_Flgs._IntroF
-#define AY_Demo_Initied				AY_Ram.AY_Flgs._DemoInited
+#define AY_Demo_Initied					AY_Ram.AY_Flgs._DemoInited
 #define AY_Demo_GetMACadr				AY_Ram.AY_Flgs._GetMACadr
-#define AY_Demo_WaitMACadr			AY_Ram.AY_Flgs._WaitMACadr
-#define AY_Demo_GetSrvIPadr			AY_Ram.AY_Flgs._GetSrvIPadr
+#define AY_Demo_WaitMACadr				AY_Ram.AY_Flgs._WaitMACadr
+
+#define AY_Demo_DemoListen				AY_Ram.AY_Flgs._DemoListen
+#define AY_Demo_SendPacket				AY_Ram.AY_Flgs._SendPacket
+#define AY_Demo_DemoPacketReceived		AY_Ram.AY_Flgs._DemoPacketReceived
+
+#define AY_Demo_GetSrvIPadr				AY_Ram.AY_Flgs._GetSrvIPadr
 #define AY_Demo_WaitSrvIPadr			AY_Ram.AY_Flgs._WaitSrvIPadr
-#define AY_Demo_SendServer			AY_Ram.AY_Flgs._SendServer
-#define AY_Demo_RecvServer			AY_Ram.AY_Flgs._RecvServer
-#define AY_Demo_GenerateRemoteDevs	AY_Ram.AY_Flgs._GenerateRemoteDevs
+#define AY_Demo_SendServer				AY_Ram.AY_Flgs._SendServer
+#define AY_Demo_RecvServer				AY_Ram.AY_Flgs._RecvServer
+#define AY_Demo_GenerateRemoteDevs		AY_Ram.AY_Flgs._GenerateRemoteDevs
 #define AY_Demo_ListenThreads			AY_Ram.AY_Flgs._ListenThreads
 
 
@@ -53,7 +63,7 @@ extern	AY_GlobalRAM	AY_Ram;
 #pragma pack(pop)
 
 #define Demo_DEMO					0//1
-#define Demo_DEMO2				1				
+#define Demo_DEMO2					1				
 
 #define AYCMD_SystemWrite(pSys)				(1)//system(pSys)
 

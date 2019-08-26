@@ -25,7 +25,13 @@ typedef struct _AY_DeviceStart {
 }AY_DeviceStart;
 
 typedef struct _AY_DeviceRead {
-	Ui32		_id;					///< row number on this gateway ( bu gatewaydeki sira numrasi)
+	union {
+		Ui32		_id;					///< row number on this gateway ( bu gatewaydeki sira numrasi)
+		struct {
+			Ui16	_sport;					///< source port no for guest connection
+			Ui16	_dport;					///< dest port no for guest connection
+		};
+	};
 	Ui32		_Unique[3];				///< Gateway's Unique ID ( This gateway for local and remote gateway ID for remote type device)
 	union {
 		Ui32		_typ_prnt;
@@ -93,16 +99,17 @@ typedef struct _AY_GWRENTRQST {
 }AY_GWRENTRQST;
 
 typedef struct _AY_GWDATAHDR {
-	Ui32		_Test6;
-	Ui32		_Test7;
-	Ui32		_DevNoOnTrgt;	
+	Ui32		_Test6;///< _Test8 for guest connecetion
+	Ui32		_Test7;///< _Test9 for guest connecetion
+	Ui32		_DevNoOnTrgt;///< DeviceNo for Mirror or Locap IP no for Guest Connection	
 }AY_GWDATAHDR;
 
 #pragma pack(pop)
 
 enum _DEVTYPES {
 	_REAL_,
-	_MIRROR_
+	_MIRROR_,
+	_GUEST_,
 };
 
 extern unsigned char	*_AY_MallocMemory(Ui32 Cnt);

@@ -69,3 +69,10 @@ enum _SRVSTRT_TYP {
 	_GNRT_NEW
 };
 extern int AY_SendDeviceStartToServer(Ui08 Filter);
+
+
+
+
+
+
+
