@@ -4,6 +4,11 @@
 
 #pragma pack(push, 1)
 
+typedef union _UNIQUE_ID {
+	Ui32		_UniqueL[3];
+	Ui08		_Unique[12];
+}UNIQUE_ID;
+
 typedef struct _AY_DeviceStart {
 	Ui32		_Test0;
 	Ui32		_Test1;

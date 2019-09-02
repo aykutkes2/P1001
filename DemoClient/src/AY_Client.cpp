@@ -5,14 +5,14 @@
 									|192.168.2.149|(SRV)
 				|192.168.2.145|(GW1)						|192.168.2.146|(GW2)
 				<|192.168.2.147|>(GHS1)							||192.168.2.148||(DEV1)
+<<192.168.2.150>>
 
-
-Server IP				192.168.2.149	
-Client 1				192.168.2.145	74-D4-35-3C-4A-B2		74-D4-35-3C-4A-B2-74-D4-35-3C-4A-B2		
-Client 2				192.168.2.146	74-D4-35-3C-4A-B3		74-D4-35-3C-4A-B3-74-D4-35-3C-4A-B3
-Device 1	Ghost		192.168.2.147	(Client 1)
-Device 1 				192.168.2.148	(Client 2)
-Demo-1					192.168.2.150
+Server IP				192.168.2.149
+Client 1				192.168.2.145	(1)		74-D4-35-3C-4A-B2		74-D4-35-3C-4A-B2-74-D4-35-3C-4A-B2
+Client 2				192.168.2.146	(2)		74-D4-35-3C-4A-B3		74-D4-35-3C-4A-B3-74-D4-35-3C-4A-B3
+Device 1 Ghost			192.168.2.147	()		(Client 2)
+Device 1 				192.168.2.148	(4)		(Client 1)
+Demo-1					192.168.2.150	(3)
 
 PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror Device)
 PACKET (2)				GW1		--->	GW2			(Send request packet to GW includes real device)

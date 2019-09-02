@@ -147,6 +147,48 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 	return 0;///< not me
 }
 
+int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
+	udp_headerAll	*pUDP;
+	AY_GWINFORQST	*pInfoRqst;
+	AY_DEVSTRTIN	*pDevStrtIn;
+	Ui08			*pOut;
+	Ui16			i;
+
+	pInfoRqst = (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll));
+	if ((pInfoRqst->_Test2 == PACKET_TEST_DATA2) && (pInfoRqst->_Test3 == PACKET_TEST_DATA3)) {
+		printf("AYDVSTRT--> Packet type is Info Request\n");
+		if (Len == sizeof(AY_DeviceStart)) {
+			pOut = (Ui08	*)_AY_MallocMemory(256);
+			pDevStrt = (AY_DeviceStart	*)_AY_MallocMemory(sizeof(AY_DeviceStart));
+			memcpy(pDevStrt, (AY_DeviceStart	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_DeviceStart));
+			///<===== Check Client's Sign ===================
+			AY_Crypt_RSAVerify((Ui08 *)&CLIENT_PUB_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)&pDevStrt->_Sign[0]);
+			///<===== Decrpt Data ===================
+			AY_Crypt_RSADecrpt((Ui08 *)&SERVER_PR_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)pOut, &i);
+			memcpy(&pDevStrt->_Input[0], pOut, 256);
+			_AY_FreeMemory((unsigned char*)pOut);
+			//======= Generate AY_DEVSTRTIN
+			pUDP = (udp_headerAll *)(pPtr + 0); // udp all header
+			pDevStrtIn = (AY_DEVSTRTIN	*)_AY_MallocMemory(sizeof(AY_DEVSTRTIN));
+			memcpy(&pDevStrtIn->_UDPh, pUDP, sizeof(udp_headerAll));
+			pDevStrtIn->_LocalCertNo = pDevStrt->_LocalCertNo;
+			pDevStrtIn->_ServerCertNo = pDevStrt->_ServerCertNo;
+			memcpy(&pDevStrtIn->_MAC, &pDevStrt->_MAC, 6);
+			memcpy(&pDevStrtIn->_Name, &pDevStrt->_Name, 45);
+			memcpy(&pDevStrtIn->_Pswd, &pDevStrt->_Pswd, 45);
+			memcpy(&pDevStrtIn->_SessionKey, &pDevStrt->_SessionKey, 16);
+			printf("AYDVSTRT--> SSK = "); AY_HexValPrint(&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
+			memcpy(&pDevStrtIn->_Unique, &pDevStrt->_Unique, 12);
+			//======= Release AY_DeviceStart
+			_AY_FreeMemory((unsigned char*)pDevStrt);
+			//======= Load to Queue
+			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pDevStrtIn, sizeof(AY_DEVSTRTIN), QTARGET_CLIENT_CONN, 0));
+		}
+		printf("AYDVSTRT--> Packet fail\n");
+	}
+	return 0;///< not me
+}
+
 
 //============================================================================================================
 //====================== CONNECTIONS =========================================================================

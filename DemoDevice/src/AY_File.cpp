@@ -191,13 +191,14 @@ const char cfg_file0[] = "file/cfg.xml";
 const char cfg_file1[] = "file/cfg1.xml";
 const char cfg_file2[] = "file/cfg2.xml";
 const char cfg_file3[] = "file/cfg3.xml";
-const char cfg_file3[] = "file/cfg4.xml";
+const char cfg_file4[] = "file/cfg4.xml";
 const char *cfg_file;
 int AYFILE_SelectConfigFile(Ui08 FileNo) {
 	switch (FileNo) {
 	case 1:		cfg_file = &cfg_file1[0];	AddIP_File = &AddIP_File1[0];  break;
 	case 2:		cfg_file = &cfg_file2[0];	AddIP_File = &AddIP_File2[0];  break;
 	case 3:		cfg_file = &cfg_file3[0];	AddIP_File = &AddIP_File3[0];  break;
+	case 4:		cfg_file = &cfg_file4[0];	AddIP_File = &AddIP_File4[0];  break;
 	default:	cfg_file = &cfg_file0[0];	AddIP_File = &AddIP_File0[0];  break;
 	}
 	return 1;

@@ -45,3 +45,68 @@ extern	Ui16					AY_QueueIdx;
 extern int AYSRV_QueueFindFirstFreeRow(void);
 extern int AYSRV_QueueLoad(int ql, Ui08 *pIn, Ui16 InLen, Ui08 Target, Ui08 Type);
 extern void AYSRV_QueueInit(void);
+
+//============================================================//
+//==============================================================//
+#pragma pack(push, 1)
+typedef union _UNIQ_Q_FLG {
+	Ui08	AllFlgs;
+	struct {
+		Ui08		Full_ : 1;
+		Ui08		Finished : 1;
+	};
+}UNIQ_Q_FLG;
+typedef struct _AY_UNIQUE_QUEUE {///< 12 + 12 + 4 + 4 + 4- = 36 Bytes
+	UNIQUE_ID		SrcUniq;
+	UNIQUE_ID		DstUniq;
+	Si32			TimeOut;
+	UNIQ_Q_FLG		UniqQFlg;
+	Ui08			UniqFnc;
+	Ui16			DataLen;
+	Ui08			*pData;
+}AY_UNIQUE_QUEUE;
+#define UNIQUE_QUEUE_LEN			4096
+typedef struct  _AY_UNIQ_QUEUELST {///< 4096*36 = 144 KBytes
+	AY_UNIQUE_QUEUE	UniqQ[UNIQUE_QUEUE_LEN];
+}AY_UNIQ_QUEUELST;
+
+#define UNIQUE_QUEUE_TIMEOUT		5000;
+
+enum _UNIQUE_Q_FUNC {
+	_UNIQUE_Q_UNDEF,
+	_UNIQUE_Q_RENT,
+};
+
+#pragma pack(pop)
+
+/****************************************************************************/
+/*! \fn int AYSRV_UniqQ_FindFirstFreeRow(void)
+** \brief		        find first free row
+*****************************************************************************/
+extern int AYSRV_UniqQ_FindFirstFreeRow(void);
+
+/****************************************************************************/
+/*! \fn int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData )
+** \brief		        load unique queue
+*****************************************************************************/
+extern int AYSRV_UniqQ_Load(int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData);
+
+/****************************************************************************/
+/*! \fn void AYSRV_UniqQ_InitAll(void)
+** \brief		        initialize all
+*****************************************************************************/
+extern void AYSRV_UniqQ_InitAll(void);
+
+/****************************************************************************/
+/*! \fn void AYSRV_UniqQ_Init(int ql)
+** \brief		        initialize row
+*****************************************************************************/
+extern void AYSRV_UniqQ_Init(int ql);
+
+/****************************************************************************/
+/*! \fn int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func)
+** \brief		        find row no for input parameters
+*****************************************************************************/
+extern int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func);
+
+

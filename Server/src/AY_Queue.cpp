@@ -148,4 +148,133 @@ void AYSRV_QueueInit(void) {
 	}	
 }
 
+//========================================================//
+//========== UNIQUE QUEUE =================================//
+static AY_UNIQ_QUEUELST	UniqQ_Lst;
+
+/****************************************************************************/
+/*! \fn int AYSRV_UniqQ_FindFirstFreeRow(void)
+**
+** \brief		        find first free row 
+**
+** \param    			-
+**
+** \return				0-UNIQUE_QUEUE_LEN	: Row
+** 						-					: there is something wrong
+**
+*****************************************************************************/
+int AYSRV_UniqQ_FindFirstFreeRow(void) {
+	int i;
+	for (i = 0; i < UNIQUE_QUEUE_LEN; i++) {
+		if (UniqQ_Lst.UniqQ[i].UniqQFlg.Full_ == 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+/****************************************************************************/
+/*! \fn int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData )
+**
+** \brief		        load unique queue
+**
+** \param    			ql			:	row no
+**						Src			:	source GW unique id
+**						Dst			:	destination GW unique id
+**						Func		:	function
+**						Len			:	data length
+**						pData		:	data start address
+**
+** \return				0-UNIQUE_QUEUE_LEN	: Row
+** 						-					: there is something wrong
+**
+*****************************************************************************/
+int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData ) {
+	
+	if ((ql >= UNIQUE_QUEUE_LEN) || (ql < 0)) {
+		printf("AYQUEUE--> UNIQUE_QUEUE Depth Fail ql = %d \n", ql);
+		return -1;
+	}
+	if (UniqQ_Lst.UniqQ[ql].UniqQFlg.Full_ != 0) {
+		printf("AYQUEUE--> UNIQUE_QUEUE Fail it is full ql = %d \n", ql);
+		return -2;
+	}
+	memset((Ui08 *)&UniqQ_Lst.UniqQ[ql], 0, sizeof(AY_UNIQUE_QUEUE));
+
+	UniqQ_Lst.UniqQ[ql].UniqQFlg.Full_ = 1;
+	UniqQ_Lst.UniqQ[ql].SrcUniq = Src;
+	UniqQ_Lst.UniqQ[ql].DstUniq = Dst;
+	UniqQ_Lst.UniqQ[ql].UniqFnc = Func;
+	UniqQ_Lst.UniqQ[ql].DataLen = Len;
+	UniqQ_Lst.UniqQ[ql].pData = pData;
+	UniqQ_Lst.UniqQ[ql].TimeOut = UNIQUE_QUEUE_TIMEOUT;
+
+	printf("AYQUEUE--> UNIQUE_QUEUE ql =%d\n Func = %d\n Src =  0x%08x , 0x%08x, 0x%08x\n Dst =  0x%08x , 0x%08x, 0x%08x\n", ql, Func, Src._UniqueL[0], Src._UniqueL[1], Src._UniqueL[2], Dst._UniqueL[0], Dst._UniqueL[1], Dst._UniqueL[2]);
+		
+	return ql;
+}
+
+/****************************************************************************/
+/*! \fn void AYSRV_UniqQ_InitAll(void)
+**
+** \brief		        initialize all
+**
+** \param    			-
+**
+** \return				-
+**
+*****************************************************************************/
+void AYSRV_UniqQ_InitAll(void) {
+	int i;
+	for (i = 0; i < UNIQUE_QUEUE_LEN; i++) {
+		memset((Ui08 *)&UniqQ_Lst.UniqQ[i], 0, sizeof(AY_UNIQUE_QUEUE));
+		UniqQ_Lst.UniqQ[i].TimeOut = UNIQUE_QUEUE_TIMEOUT;
+	}	
+}
+
+/****************************************************************************/
+/*! \fn void AYSRV_UniqQ_Init(int ql)
+**
+** \brief		        initialize row
+**
+** \param    			ql			:	row no
+**
+** \return				-
+**
+*****************************************************************************/
+void AYSRV_UniqQ_Init(int ql) {
+	memset((Ui08 *)&UniqQ_Lst.UniqQ[ql], 0, sizeof(AY_UNIQUE_QUEUE));
+	UniqQ_Lst.UniqQ[ql].TimeOut = UNIQUE_QUEUE_TIMEOUT;
+}
+
+/****************************************************************************/
+/*! \fn int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func)
+**
+** \brief		        find row no for input parameters
+**
+** \param    			Src			:	source GW unique id
+**						Dst			:	destination GW unique id
+**						Func		:	function
+**
+** \return				0-UNIQUE_QUEUE_LEN	: Row
+** 						-					: there is something wrong
+**
+*****************************************************************************/
+int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func) {
+	int i;
+	for (i = 0; i < UNIQUE_QUEUE_LEN; i++) {
+		if (UniqQ_Lst.UniqQ[i].UniqQFlg.Full_) {
+			if (memcmp(&UniqQ_Lst.UniqQ[i].DstUniq, &Dst, sizeof(AY_UNIQUE_QUEUE)) == 0) {
+				if (memcmp(&UniqQ_Lst.UniqQ[i].SrcUniq, &Src, sizeof(AY_UNIQUE_QUEUE)) == 0) {
+					return i;
+				}
+			}
+		}
+	}
+	return -1;
+}
+
+
+
+
 

@@ -43,8 +43,21 @@ enum _MYSOCKETS {
 	_SLVS_SCKT
 };
 
-#define PACKET_TEST_DATA0			0x1EB99AB7
+/*
+5c7980f152b1c6afd822673ed49c9668
+9aca50a97243bed4929df23bda9a4971
+8fcf78689296b90bfb8199e1a7e6f030
+*/
+#define PACKET_TEST_DATA0			0x1EB99AB7		///< GW Device List 
 #define PACKET_TEST_DATA1			0x92D1D121
+#define PACKET_TEST_DATA2			0x27c0362f		///< GW Info Request 
+#define PACKET_TEST_DATA3			0x64879a38
+#define PACKET_TEST_DATA4			0xb64dcdb4		///< GW Port Rent
+#define PACKET_TEST_DATA5			0x77f7bd3c
+#define PACKET_TEST_DATA6			0xb8afb28d		///< New Remote Packet
+#define PACKET_TEST_DATA7			0x3ab96c05
+#define PACKET_TEST_DATA8			0x54675c92		///< New Remote Response
+#define PACKET_TEST_DATA9			0x873ed73d
 
 extern const MYSQL_STRS MySQLParams;
 
