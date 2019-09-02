@@ -149,7 +149,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 
 int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 	udp_headerAll	*pUDP;
-	AY_GWINFORQST	*pInfoRqst;
+	AY_GWINFORQST	*pInfoRqst, *pInfoRqst2;
 	AY_DEVSTRTIN	*pDevStrtIn;
 	Ui08			*pOut;
 	Ui16			i;
@@ -157,10 +157,15 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 	pInfoRqst = (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll));
 	if ((pInfoRqst->_Test2 == PACKET_TEST_DATA2) && (pInfoRqst->_Test3 == PACKET_TEST_DATA3)) {
 		printf("AYDVSTRT--> Packet type is Info Request\n");
-		if (Len == sizeof(AY_DeviceStart)) {
+		if (Len == sizeof(AY_GWINFORQST)) {
 			pOut = (Ui08	*)_AY_MallocMemory(256);
-			pDevStrt = (AY_DeviceStart	*)_AY_MallocMemory(sizeof(AY_DeviceStart));
-			memcpy(pDevStrt, (AY_DeviceStart	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_DeviceStart));
+			pInfoRqst2 = (AY_GWINFORQST	*)_AY_MallocMemory(sizeof(AY_GWINFORQST));
+			memcpy(pInfoRqst2, (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_GWINFORQST));
+			//---------------------------//
+			AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)GwRqst._InfoCont[0], sizeof(GwRqst._InfoCont));
+			
+			
+			
 			///<===== Check Client's Sign ===================
 			AY_Crypt_RSAVerify((Ui08 *)&CLIENT_PUB_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)&pDevStrt->_Sign[0]);
 			///<===== Decrpt Data ===================
