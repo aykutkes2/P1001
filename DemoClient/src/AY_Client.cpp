@@ -743,28 +743,6 @@ int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRqst, oLen));
 }
 
-int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst) {
-	udp_headerAll UDP0 = *pUDP;
-
-	pUDP->_ethHeader.dest = UDP0._ethHeader.src;
-	pUDP->_ethHeader.src = UDP0._ethHeader.dest;
-	if (pEth != 0) {
-		if (SrcDst == _ETH_SRC_) {
-			pUDP->_ethHeader.src = *pEth;
-		}
-		else if (SrcDst == _ETH_DST_) {
-			pUDP->_ethHeader.dest = *pEth;
-		}
-	}
-
-	pUDP->_ipHeader.daddr = UDP0._ipHeader.saddr;
-	pUDP->_ipHeader.saddr = UDP0._ipHeader.daddr;
-
-	pUDP->_udpHeader.dport = UDP0._udpHeader.sport;
-	pUDP->_udpHeader.sport = UDP0._udpHeader.dport;
-
-	return 1;
-}
 int AY_SendGwInfoSend(AY_CLNTQUEUE *pQue, Si32 row) {
 	AY_GWDATAHDR		*pGwDH;
 	AY_GWINFORQST		GwRqst;

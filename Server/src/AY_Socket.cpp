@@ -530,3 +530,27 @@ int UDP_packet_check(Ui08 *pBuff, int *pLen) {
 	}
 }
 
+
+int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst) {
+	udp_headerAll UDP0 = *pUDP;
+
+	pUDP->_ethHeader.dest = UDP0._ethHeader.src;
+	pUDP->_ethHeader.src = UDP0._ethHeader.dest;
+	if (pEth != 0) {
+		if (SrcDst == _ETH_SRC_) {
+			pUDP->_ethHeader.src = *pEth;
+		}
+		else if (SrcDst == _ETH_DST_) {
+			pUDP->_ethHeader.dest = *pEth;
+		}
+	}
+
+	pUDP->_ipHeader.daddr = UDP0._ipHeader.saddr;
+	pUDP->_ipHeader.saddr = UDP0._ipHeader.daddr;
+
+	pUDP->_udpHeader.dport = UDP0._udpHeader.sport;
+	pUDP->_udpHeader.sport = UDP0._udpHeader.dport;
+
+	return 1;
+}
+

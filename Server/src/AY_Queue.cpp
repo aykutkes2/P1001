@@ -174,13 +174,14 @@ int AYSRV_UniqQ_FindFirstFreeRow(void) {
 }
 
 /****************************************************************************/
-/*! \fn int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData )
+/*! \fn int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui32 PrcsNo, Ui08 Func, Ui16 Len, Ui08 *pData )
 **
 ** \brief		        load unique queue
 **
 ** \param    			ql			:	row no
 **						Src			:	source GW unique id
 **						Dst			:	destination GW unique id
+**						PrcsNo		:	process no ( RowNo)
 **						Func		:	function
 **						Len			:	data length
 **						pData		:	data start address
@@ -189,7 +190,7 @@ int AYSRV_UniqQ_FindFirstFreeRow(void) {
 ** 						-					: there is something wrong
 **
 *****************************************************************************/
-int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData ) {
+int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui32 PrcsNo, Ui08 Func, Ui16 Len, Ui08 *pData ) {
 	
 	if ((ql >= UNIQUE_QUEUE_LEN) || (ql < 0)) {
 		printf("AYQUEUE--> UNIQUE_QUEUE Depth Fail ql = %d \n", ql);
@@ -204,6 +205,7 @@ int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len,
 	UniqQ_Lst.UniqQ[ql].UniqQFlg.Full_ = 1;
 	UniqQ_Lst.UniqQ[ql].SrcUniq = Src;
 	UniqQ_Lst.UniqQ[ql].DstUniq = Dst;
+	UniqQ_Lst.UniqQ[ql].PrcsNo = PrcsNo;
 	UniqQ_Lst.UniqQ[ql].UniqFnc = Func;
 	UniqQ_Lst.UniqQ[ql].DataLen = Len;
 	UniqQ_Lst.UniqQ[ql].pData = pData;

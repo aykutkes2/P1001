@@ -34,12 +34,15 @@ struct uip_tcpip_hdr {
 };
 
 /* 4 bytes IP address */
-typedef struct ip_address
+typedef union ip_address
 {
-	uint8_t byte1;
-	uint8_t byte2;
-	uint8_t byte3;
-	uint8_t byte4;
+	uint32_t longip;
+	struct {
+		uint8_t byte1;
+		uint8_t byte2;
+		uint8_t byte3;
+		uint8_t byte4;
+	};
 }ip_address;
 
 /* 4 IP addresses */
@@ -185,6 +188,13 @@ extern int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, in
 extern int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len);
 extern int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len);
 extern int UDP_packet_check(Ui08 *pBuff, int *pLen);
+
+enum _AYSCKT_ETH_ {
+	_ETH_NULL_,
+	_ETH_SRC_,
+	_ETH_DST_
+};
+extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst);
 
 extern int AYSCKT_FilterSetA(Ui08 idx, char *pfilter);
 extern int AYSCKT_FilterFreeA(Ui08 idx);

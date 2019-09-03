@@ -56,9 +56,10 @@ typedef union _UNIQ_Q_FLG {
 		Ui08		Finished : 1;
 	};
 }UNIQ_Q_FLG;
-typedef struct _AY_UNIQUE_QUEUE {///< 12 + 12 + 4 + 4 + 4- = 36 Bytes
+typedef struct _AY_UNIQUE_QUEUE {///< 12 + 12 + 4  + 4 + 4 + 4- = 40 Bytes
 	UNIQUE_ID		SrcUniq;
 	UNIQUE_ID		DstUniq;
+	Ui32			PrcsNo;
 	Si32			TimeOut;
 	UNIQ_Q_FLG		UniqQFlg;
 	Ui08			UniqFnc;
@@ -86,10 +87,10 @@ enum _UNIQUE_Q_FUNC {
 extern int AYSRV_UniqQ_FindFirstFreeRow(void);
 
 /****************************************************************************/
-/*! \fn int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData )
+/*! \fn int AYSRV_UniqQ_Load( int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui32 PrcsNo, Ui08 Func, Ui16 Len, Ui08 *pData )
 ** \brief		        load unique queue
 *****************************************************************************/
-extern int AYSRV_UniqQ_Load(int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func, Ui16 Len, Ui08 *pData);
+extern int AYSRV_UniqQ_Load(int ql, UNIQUE_ID Src, UNIQUE_ID Dst, Ui32 PrcsNo, Ui08 Func, Ui16 Len, Ui08 *pData);
 
 /****************************************************************************/
 /*! \fn void AYSRV_UniqQ_InitAll(void)

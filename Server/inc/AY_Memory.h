@@ -4,6 +4,11 @@
 
 #pragma pack(push, 1)
 
+typedef union _SSK_ {
+	Ui32		_Ssk_L[4];
+	Ui08		_Ssk[16];
+}SSK_;
+
 typedef union _UNIQUE_ID {
 	Ui32		_UniqueL[3];
 	Ui08		_Unique[12];

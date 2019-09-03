@@ -41,7 +41,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	Ui32				m, n;//test sil !!!
 
 	pDevStrtIn = (AY_DEVSTRTIN	*)pQ->pIn;
-	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_UDPh, AY_CONN_UPDATE);
+	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_UDPh, &pDevStrtIn->_SessionKey[0], AY_CONN_UPDATE);
 	printf("AYDVSTRT--> Connection ID ConnId=%d \n", i);
 	MYSQL_AddNewGateway((char *)pDevStrtIn->_Name, (char *)pDevStrtIn->_Pswd, (Ui32 *)&pDevStrtIn->_Unique, *((Ui64 *)&pDevStrtIn->_MAC), i, pDevStrtIn->_ServerCertNo, &pDevStrtIn->_SessionKey[0], _GATEWAY_UPDATE_);
 	//----------------------------//
@@ -134,7 +134,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			memcpy(&pDevStrtIn->_MAC, &pDevStrt->_MAC, 6);
 			memcpy(&pDevStrtIn->_Name, &pDevStrt->_Name, 45);
 			memcpy(&pDevStrtIn->_Pswd, &pDevStrt->_Pswd, 45);
-			memcpy(&pDevStrtIn->_SessionKey, &pDevStrt->_SessionKey, 16);
+			memcpy(&pDevStrtIn->_SessionKey, &pDevStrt->_SessionKey, sizeof(SSK_));
 			printf("AYDVSTRT--> SSK = "); AY_HexValPrint(&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
 			memcpy(&pDevStrtIn->_Unique, &pDevStrt->_Unique, 12);
 			//======= Release AY_DeviceStart
@@ -148,48 +148,50 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 }
 
 int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
-	udp_headerAll	*pUDP;
-	AY_GWINFORQST	*pInfoRqst, *pInfoRqst2;
-	AY_DEVSTRTIN	*pDevStrtIn;
-	Ui08			*pOut;
-	Ui16			i;
+	AY_GWINFORQST	*pInfoRqst;
+	Si32			i;
 
 	pInfoRqst = (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll));
 	if ((pInfoRqst->_Test2 == PACKET_TEST_DATA2) && (pInfoRqst->_Test3 == PACKET_TEST_DATA3)) {
 		printf("AYDVSTRT--> Packet type is Info Request\n");
 		if (Len == sizeof(AY_GWINFORQST)) {
-			pOut = (Ui08	*)_AY_MallocMemory(256);
-			pInfoRqst2 = (AY_GWINFORQST	*)_AY_MallocMemory(sizeof(AY_GWINFORQST));
-			memcpy(pInfoRqst2, (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_GWINFORQST));
-			//---------------------------//
-			AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)GwRqst._InfoCont[0], sizeof(GwRqst._InfoCont));
-			
-			
-			
-			///<===== Check Client's Sign ===================
-			AY_Crypt_RSAVerify((Ui08 *)&CLIENT_PUB_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)&pDevStrt->_Sign[0]);
-			///<===== Decrpt Data ===================
-			AY_Crypt_RSADecrpt((Ui08 *)&SERVER_PR_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)pOut, &i);
-			memcpy(&pDevStrt->_Input[0], pOut, 256);
-			_AY_FreeMemory((unsigned char*)pOut);
-			//======= Generate AY_DEVSTRTIN
-			pUDP = (udp_headerAll *)(pPtr + 0); // udp all header
-			pDevStrtIn = (AY_DEVSTRTIN	*)_AY_MallocMemory(sizeof(AY_DEVSTRTIN));
-			memcpy(&pDevStrtIn->_UDPh, pUDP, sizeof(udp_headerAll));
-			pDevStrtIn->_LocalCertNo = pDevStrt->_LocalCertNo;
-			pDevStrtIn->_ServerCertNo = pDevStrt->_ServerCertNo;
-			memcpy(&pDevStrtIn->_MAC, &pDevStrt->_MAC, 6);
-			memcpy(&pDevStrtIn->_Name, &pDevStrt->_Name, 45);
-			memcpy(&pDevStrtIn->_Pswd, &pDevStrt->_Pswd, 45);
-			memcpy(&pDevStrtIn->_SessionKey, &pDevStrt->_SessionKey, 16);
-			printf("AYDVSTRT--> SSK = "); AY_HexValPrint(&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
-			memcpy(&pDevStrtIn->_Unique, &pDevStrt->_Unique, 12);
-			//======= Release AY_DeviceStart
-			_AY_FreeMemory((unsigned char*)pDevStrt);
-			//======= Load to Queue
-			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pDevStrtIn, sizeof(AY_DEVSTRTIN), QTARGET_CLIENT_CONN, 0));
+			AY_CONNTYPE	*pSrc, *pDst;
+			AY_GWRENTRQST	GwRent;
+			pSrc = pFindConnByUDPheader((udp_headerAll *)pPtr);
+			if (pSrc != nullptr) {
+				i = AYSRV_UniqQ_FindFirstFreeRow();
+				if (i != -1) {
+					pInfoRqst = (AY_GWINFORQST	*)_AY_MallocMemory(sizeof(AY_GWINFORQST) + 16);
+					memcpy(pInfoRqst, (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_GWINFORQST));
+					//---------------------------//
+					AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], (Ui08 *)pInfoRqst->_InfoCont[0], sizeof(pInfoRqst->_InfoCont));
+					pDst = pFindConnByUniqueID((UNIQUE_ID *)pInfoRqst->_Unique[0]);
+					if (pDst != nullptr) {
+						udp_headerAll		UDPheader;
+						Ui16 oLen;
+						//---------------------------//
+						AYSRV_UniqQ_Load(i, *((UNIQUE_ID *)pSrc->_UnqiueId[0]), *((UNIQUE_ID *)pInfoRqst->_Unique[0]), pInfoRqst->_QueRowNo, _UNIQUE_Q_RENT, 0, 0);
+						//---------------------------//
+						GwRent._Test4 = PACKET_TEST_DATA4;
+						GwRent._Test5 = PACKET_TEST_DATA5;
+						GwRent._LastUpdateMin = AYCONN_ThisMinute();
+						memcpy(&GwRent._UDPh, (udp_headerAll *)pPtr, sizeof(udp_headerAll));
+						memcpy(&GwRent._SessionKey, &pSrc->_SessionKey, sizeof(SSK_));
+						memcpy(&GwRent._Unique, &pSrc->_UnqiueId, sizeof(UNIQUE_ID));
+						AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)pInfoRqst->_InfoCont[0], sizeof(pInfoRqst->_InfoCont));
+						//---------------------------//
+						memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
+						AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
+						oLen = sizeof(AY_GWRENTRQST);
+						i =  UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRent, oLen);
+						_AY_FreeMemory((unsigned char *)pInfoRqst);
+						return i;
+					}
+					_AY_FreeMemory((unsigned char *)pInfoRqst);
+				}				
+			}
 		}
-		printf("AYDVSTRT--> Packet fail\n");
+		printf("AYGWINFORQST--> Packet fail\n");
 	}
 	return 0;///< not me
 }
@@ -208,7 +210,7 @@ int AYCONN_TestMinute(Ui32 RecMin, Ui32 TimeOut) {
 	if (Val > TimeOut) { return 1; }
 	else { return 0; }
 }
-Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAll *pUDP, Ui08 Func) {
+Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAll *pUDP, Ui08 *pSSK, Ui08 Func) {
 	void *ptr;
 	AY_CONNADR	*pConnList;
 	AY_CONNTYPE	*pConnTyp;
@@ -288,6 +290,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAl
 			printf("AYCONN--> Conn found FirstFree=%d \n", i);
 			if (Func == AY_CONN_UPDATE) {
 				memcpy(&pConnTyp->_UDPh, pUDP, sizeof(udp_headerAll));
+				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
 			}
 			else if (Func == AY_CONN_DELETE) {
 				_AY_FreeMemory((unsigned char *)pConnTyp);
@@ -303,6 +306,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAl
 				((AY_CONNADR	*)ptr)->pConnAdr[i3] = _AY_MallocMemory(sizeof(AY_CONNTYPE));
 				pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index
 				memcpy(&pConnTyp->_UDPh, pUDP, sizeof(udp_headerAll));
+				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
 				pConnTyp->_LastUpdateMin = AYCONN_ThisMinute();
 				ConnectionCount++;
 				printf("AYCONN--> Conn new added ConnectionCount=%d \n", ConnectionCount);
@@ -348,6 +352,72 @@ Ui32 AYCONN_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd) {
 	}
 	printf("AYCONN--> Conn There is something wrong ! \n");
 	return 0xFFFFFFFF;
+}
+
+AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId) {
+	void *ptr;
+	AY_CONNTYPE	*pConnTyp;
+	Ui32 i;
+
+#define i0		((i>>24)&0xFF)
+#define i1		((i>>16)&0xFF)
+#define i2		((i>>8)&0xFF)
+#define i3		((i>>0)&0xFF)
+	i = ConnId;
+	ptr = ConnLevel1.pConnAdr[i0];
+	if (ptr != 0) {
+		//printf("AYCONN--> Conn Test Level 1 i0=%d \n", i0);
+		ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i1];
+		if (ptr != 0) {
+			//printf("AYCONN--> Conn Test Level 2 i1=%d \n", i1);
+			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
+			if (ptr != 0) {///< valid address
+				//printf("AYCONN--> Conn Test Level 3 i2=%d \n", i2);
+				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
+				if (pConnTyp != 0) {///< valid connecton
+					printf("AYCONN--> Conn found - Conn Test Level 4 i=%d \n", i);
+					//memcpy(pConnRd, pConnTyp, sizeof(AY_CONNTYPE));
+					return pConnTyp;
+				}
+			}
+		}
+	}
+	printf("AYCONN--> Conn Not found - Conn There is something wrong ! i=%d \n", i);
+	return nullptr;
+}
+
+AY_CONNTYPE	*pFindConnByUDPheader(udp_headerAll *pUDP) {
+	AY_CONNTYPE	*pConnTyp = nullptr;
+	Ui32 i;
+
+	for (i = 0; i < ConnectionCount; i++) {
+		pConnTyp = pAYCONN_ReadConn(i);
+		if (pConnTyp != nullptr) {
+			if ((pConnTyp->_UDPh._ipHeader.saddr.longip == pUDP->_ipHeader.saddr.longip) && (pConnTyp->_UDPh._udpHeader.sport == pUDP->_udpHeader.sport)) {
+				printf("AYCONN--> Conn found - UDP header matched i=%d \n", i);
+				return pConnTyp;
+			}
+		}
+	}
+	printf("AYCONN--> Conn not found - UDP header not matched i=%d \n", i);
+	return nullptr;
+}
+
+AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique) {
+	AY_CONNTYPE	*pConnTyp = nullptr;
+	Ui32 i;
+
+	for (i = 0; i < ConnectionCount; i++) {
+		pConnTyp = pAYCONN_ReadConn(i);
+		if (pConnTyp != nullptr) {
+			if ((pConnTyp->_UnqiueId[0] == pUnique->_UniqueL[0]) && (pConnTyp->_UnqiueId[1] == pUnique->_UniqueL[1]) && (pConnTyp->_UnqiueId[2] == pUnique->_UniqueL[2])) {///< device found 
+				printf("AYCONN--> Conn found - Unique ID matched i=%d \n", i);
+				return pConnTyp;
+			}
+		}
+	}
+	printf("AYCONN--> Conn not found - Unique ID not matched i=%d \n", i);
+	return nullptr;
 }
 
 int AYCONN_UpdateTime(Ui32 ConnId) {

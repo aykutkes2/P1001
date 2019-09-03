@@ -262,11 +262,6 @@ enum _AYCLNT_STATUS {
 	_FIND_GW2=16,
 };
 
-enum _AYCLIENT_ETH_ {
-	_ETH_NULL_,
-	_ETH_SRC_, 
-	_ETH_DST_
-};
 //================== Extrenals ===========================//
 extern int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row);
 extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr eth, Ui08 SrcDst);
