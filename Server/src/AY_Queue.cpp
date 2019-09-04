@@ -53,6 +53,13 @@ void QUEUE_Process(int ql) {
 
 }
 
+void TIMEOUT_Process(int ql) {
+	while (1) {
+		TimeoutDoTask(ql);
+		Sleep(1);
+	}
+}
+
 #if (QUEUE_DEPTH>0)
 void QUEUE_Thread_0(void *pParams) { printf("THREAD=0 In thread function \n"); QUEUE_Process(0);	printf("THREAD=0 Thread function ends \n");	_endthread();}
 void QUEUE_Thread_1(void *pParams) { printf("THREAD=1 In thread function \n"); QUEUE_Process(1);	printf("THREAD=1 Thread function ends \n");	_endthread(); }
@@ -150,7 +157,7 @@ void AYSRV_QueueInit(void) {
 
 //========================================================//
 //========== UNIQUE QUEUE =================================//
-static AY_UNIQ_QUEUELST	UniqQ_Lst;
+AY_UNIQ_QUEUELST	UniqQ_Lst;
 
 /****************************************************************************/
 /*! \fn int AYSRV_UniqQ_FindFirstFreeRow(void)
@@ -256,7 +263,7 @@ void AYSRV_UniqQ_Init(int ql) {
 **
 ** \param    			Src			:	source GW unique id
 **						Dst			:	destination GW unique id
-**						Func		:	function
+**						Func		:	function 0x40 --> don't check dest.  0x80 --> don't check src.
 **
 ** \return				0-UNIQUE_QUEUE_LEN	: Row
 ** 						-					: there is something wrong
@@ -266,14 +273,66 @@ int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func) {
 	int i;
 	for (i = 0; i < UNIQUE_QUEUE_LEN; i++) {
 		if (UniqQ_Lst.UniqQ[i].UniqQFlg.Full_) {
-			if (memcmp(&UniqQ_Lst.UniqQ[i].DstUniq, &Dst, sizeof(AY_UNIQUE_QUEUE)) == 0) {
-				if (memcmp(&UniqQ_Lst.UniqQ[i].SrcUniq, &Src, sizeof(AY_UNIQUE_QUEUE)) == 0) {
+			if ( (memcmp(&UniqQ_Lst.UniqQ[i].DstUniq, &Dst, sizeof(AY_UNIQUE_QUEUE)) == 0) || (Func & _UNIQ_NOT_DST) ){
+				if ( (memcmp(&UniqQ_Lst.UniqQ[i].SrcUniq, &Src, sizeof(AY_UNIQUE_QUEUE)) == 0) || (Func & _UNIQ_NOT_SRC) ) {
 					return i;
 				}
 			}
 		}
 	}
 	return -1;
+}
+
+/****************************************************************************/
+/*! \fn UNIQUE_ID AYSRV_ReadUniqQ(int _Id, int SrcOrDst)
+**
+** \brief		        read uniqQ row
+**
+** \param    			_Id			:	id
+**						SrcOrDst	:	0:Source 1: Destination
+**
+** \return				UNIQUE_ID	: Unique ID
+**
+*****************************************************************************/
+UNIQUE_ID AYSRV_ReadUniqQ(int _Id, int SrcOrDst) {	
+	if (SrcOrDst == 0) {
+		return UniqQ_Lst.UniqQ[_Id].SrcUniq;
+	} 
+	else {
+		return UniqQ_Lst.UniqQ[_Id].DstUniq;
+	}
+}
+
+/****************************************************************************/
+/*! \fn void AYSRV_TimeoutTestUniqQ(void)
+**
+** \brief		        timeout function for uniqQ queue members
+**
+** \param    			-
+**
+** \return				-
+**
+*****************************************************************************/
+Ui08	UniqQ_TimeOut_Task = 0;
+#define UNIQQ_MAX_TASK				((UNIQUE_QUEUE_LEN+31)/32)	
+#define UNIQQ_TASK_CNT				32
+void AYSRV_TimeoutTestUniqQ(void) {
+	int i,j;
+	j = (UniqQ_TimeOut_Task* UNIQQ_TASK_CNT);
+	for (i = j; i < (j+ UNIQQ_TASK_CNT); i++) {
+		if (UniqQ_Lst.UniqQ[i].UniqQFlg.Full_) {
+			if (UniqQ_Lst.UniqQ[i].TimeOut) {
+				UniqQ_Lst.UniqQ[i].TimeOut--;
+			}
+			else {
+				AYSRV_UniqQ_Init(i);
+			}
+		}
+	}
+	UniqQ_TimeOut_Task++;
+	if (UniqQ_TimeOut_Task >= UNIQQ_MAX_TASK) {
+		UniqQ_TimeOut_Task = 0;
+	}
 }
 
 

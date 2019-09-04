@@ -110,7 +110,8 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 	AY_DeviceStart	*pDevStrt;
 	AY_DEVSTRTIN	*pDevStrtIn;
 	Ui08			*pOut;
-	Ui16			i;
+	Ui16			j;
+	Si32			i;
 
 	pDevStrt = (AY_DeviceStart	*)(pPtr + sizeof(udp_headerAll));
 	if ((pDevStrt->_Test0 == PACKET_TEST_DATA0) && (pDevStrt->_Test1 == PACKET_TEST_DATA1)) {
@@ -122,7 +123,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			///<===== Check Client's Sign ===================
 			AY_Crypt_RSAVerify((Ui08 *)&CLIENT_PUB_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)&pDevStrt->_Sign[0]);
 			///<===== Decrpt Data ===================
-			AY_Crypt_RSADecrpt((Ui08 *)&SERVER_PR_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)pOut, &i);
+			AY_Crypt_RSADecrpt((Ui08 *)&SERVER_PR_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)pOut, &j);
 			memcpy(&pDevStrt->_Input[0], pOut, 256);
 			_AY_FreeMemory((unsigned char*)pOut);
 			//======= Generate AY_DEVSTRTIN
@@ -139,6 +140,37 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			memcpy(&pDevStrtIn->_Unique, &pDevStrt->_Unique, 12);
 			//======= Release AY_DeviceStart
 			_AY_FreeMemory((unsigned char*)pDevStrt);
+			//==================== Test & Response if There is a waiting GWInfo Request
+			AY_CONNTYPE	*pSrc, *pDst;
+			pDst = pFindConnByUniqueID((UNIQUE_ID *)pDevStrtIn->_Unique[0]);
+			if (pDst != nullptr) {
+				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
+				if (i >= 0) {
+					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
+						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].DstUniq);
+						if (pSrc != nullptr) {
+							AY_GWINFORESP		GwRsp;
+							udp_headerAll		UDPheader;
+							Ui16				oLen;
+
+							GwRsp._Test2 = PACKET_TEST_DATA2;
+							GwRsp._Test3 = PACKET_TEST_DATA3;
+							GwRsp._LastUpdateMin =  AYCONN_ThisMinute();
+							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
+							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
+							memcpy(&GwRsp._UDPh, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
+							AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
+							//--------------
+							memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
+							AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
+							oLen = sizeof(AY_GWINFORESP);
+							UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRsp, oLen);
+							//--------------
+							AYSRV_UniqQ_Init(i);
+						}
+					}
+				}
+			}
 			//======= Load to Queue
 			return( AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pDevStrtIn, sizeof(AY_DEVSTRTIN), QTARGET_CLIENT_CONN, 0));
 		}
@@ -453,6 +485,11 @@ int AYCONN_UpdateTime(Ui32 ConnId) {
 }
 
 void AYCONN_ClientConnTimeoutTest(void) {
+	/*while (1) {		
+		Sleep(1);
+	}*/
+
+
 //	void *ptr;
 //	AY_CONNADR	*pConnList;
 //	AY_CONNTYPE	*pConnTyp;
@@ -534,13 +571,17 @@ void AYCONN_ClientConnTimeoutTest(void) {
 //		}
 //		pConnTyp++;
 //	};
-	printf("AYCONN--> Tout There is something wrong ! \n");
+//	printf("AYCONN--> Tout There is something wrong ! \n");
 //	Sleep(AYCONN_TIMEOUT_SLEEP_mSEC);///< thread sleep
 }
 //extern int AYSCKT_StartThread(void *pCallBack);
 int AYCONN_ClientConnInit(void) {
 	memset(&ConnLevel1, 0, sizeof(AY_CONNADR));
-	AYSCKT_StartThread(AYCONN_ClientConnTimeoutTest);
+	AYSCKT_StartThread(TIMEOUT_Process);
 	return 1;
+}
+
+void TimeoutDoTask(int ql) {
+	AYCONN_ClientConnTimeoutTest();
 }
 

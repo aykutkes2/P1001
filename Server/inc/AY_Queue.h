@@ -80,6 +80,8 @@ enum _UNIQUE_Q_FUNC {
 
 #pragma pack(pop)
 
+extern AY_UNIQ_QUEUELST	UniqQ_Lst;
+
 /****************************************************************************/
 /*! \fn int AYSRV_UniqQ_FindFirstFreeRow(void)
 ** \brief		        find first free row
@@ -108,6 +110,25 @@ extern void AYSRV_UniqQ_Init(int ql);
 /*! \fn int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func)
 ** \brief		        find row no for input parameters
 *****************************************************************************/
+enum _UNIQ_TEST {
+	_UNIQ_ALL = 0x00,
+	_UNIQ_NOT_SRC = 0x40,
+	_UNIQ_NOT_DST = 0x80,
+};
 extern int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func);
 
 
+/****************************************************************************/
+/*! \fn UNIQUE_ID AYSRV_ReadUniqQ(int _Id, int SrcOrDst)
+** \brief		        read uniqQ row  - SrcOrDst	:	0:Source 1: Destination
+*****************************************************************************/
+extern UNIQUE_ID AYSRV_ReadUniqQ(int _Id, int SrcOrDst);
+
+
+/****************************************************************************/
+/*! \fn void AYSRV_TimeoutTestUniqQ(void)
+** \brief		        timeout function for uniqQ queue members
+*****************************************************************************/
+extern void AYSRV_TimeoutTestUniqQ(void);
+
+extern void TIMEOUT_Process(int ql);

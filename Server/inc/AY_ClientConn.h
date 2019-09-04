@@ -54,6 +54,7 @@ extern AY_CONNTYPE	*pFindConnByUDPheader(udp_headerAll *pUDP);
 extern AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique);
 extern int AYCONN_UpdateTime(Ui32 ConnId);
 extern int AYCONN_ClientConnInit(void);
+extern void TimeoutDoTask(int ql);
 
 //----------test sil !!!!
 extern void AYSRV_TestMySql(void);
