@@ -195,6 +195,7 @@ enum _AYSCKT_ETH_ {
 	_ETH_DST_
 };
 extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst);
+extern void AYPRINT_UDP_Header(udp_headerAll *pUDP);
 
 extern int AYSCKT_FilterSetA(Ui08 idx, char *pfilter);
 extern int AYSCKT_FilterFreeA(Ui08 idx);

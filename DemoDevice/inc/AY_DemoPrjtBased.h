@@ -51,7 +51,7 @@ extern const Ui08			MyMac[6];
 //--------------------------------------------------------------------------------------//
 extern const Ui08 * const SERVER_PUB_KEY;
 extern const Ui08 * const SERVER_PR_KEY;
-extern const Ui08 DEMO_CLNT_MAC[3][6];
+extern const Ui08 DEMO_CLNT_MAC[5][6];
 extern const char TestData[65];
 extern const Ui08 DemoAESkey[16];
 

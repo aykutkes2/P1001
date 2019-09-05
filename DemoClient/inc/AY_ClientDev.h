@@ -125,10 +125,7 @@ extern int AYCLNT_UpdateDevInfo(AY_DEVINFO	*pDeInf, Ui08 *pComp, Ui08 Comp);
 extern AY_DEVINFO *pAYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp);
 extern AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo);
 extern AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP);
-extern AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst);
-#define pAY_FindRmtDevInfoBySrcMAC(pMac)			pAY_FindRmtDevInfoByMAC(pMac, 0)
-#define pAY_FindRmtDevInfoByDstMAC(pMac)			pAY_FindRmtDevInfoByMAC(pMac, 1)
-
+extern AY_DEVINFO *pAY_FindRmtDevInfoByAll(AY_DEVINFO *pInfo);
 
 
 //============================ GW LISTS ================================================================//

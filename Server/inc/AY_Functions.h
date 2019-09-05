@@ -7,6 +7,7 @@
 
 #pragma pack(pop)
 
+#define STEP_TEST						1
 
 extern Si64 AY_ConvertStringToSi64(char *ptr);
 extern Ui64 AY_ConvertStringToUi64(char *ptr);

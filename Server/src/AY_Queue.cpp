@@ -318,7 +318,7 @@ Ui08	UniqQ_TimeOut_Task = 0;
 #define UNIQQ_TASK_CNT				32
 void AYSRV_TimeoutTestUniqQ(void) {
 	int i,j;
-	j = (UniqQ_TimeOut_Task* UNIQQ_TASK_CNT);
+	j = ((int)UniqQ_TimeOut_Task* UNIQQ_TASK_CNT);
 	for (i = j; i < (j+ UNIQQ_TASK_CNT); i++) {
 		if (UniqQ_Lst.UniqQ[i].UniqQFlg.Full_) {
 			if (UniqQ_Lst.UniqQ[i].TimeOut) {

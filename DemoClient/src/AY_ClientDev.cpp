@@ -8,19 +8,23 @@
 #include <AY_Memory.h>
 #include <AY_Client.h>
 #include <AY_ClientDev.h>
-			
+
+#define RMTDEV_MAX_CNT			4096
 AY_DEVINFOLST	DevLevel1;
 AY_DEVINFOLST	DevRemote;
-udp_headerAll	DevRemote_UDP_Hdr[4096];
-Ui16			DevRemoteTOut[4096];
+Ui16			DevRemoteTOut[RMTDEV_MAX_CNT];
 AY_DEVINFOLST	*pDevInfos[((MAX_DEVINFO_CNT/4096)-1)];///< total 4096 * (15+1) = 65536 devices supported
 
 /*
 *
 */
+Ui08	RmtDev_TimeOut_Task = 0;
+#define RMTDEV_MAX_TASK				((RMTDEV_MAX_CNT+31)/32)	
+#define RMTDEV_TASK_CNT				32
 int AYCLNT_RemoteDevTimeoutTest(void) {
-	int i;
-	for (i = 0; i < 4096; i++) {
+	int i, j;
+	j = ((int)RmtDev_TimeOut_Task* RMTDEV_TASK_CNT);
+	for (i = j; i < (j + RMTDEV_TASK_CNT); i++) {
 		if (DevRemoteTOut[i]) {
 			DevRemoteTOut[i] --;
 			if (DevRemoteTOut[i] == 0) {
@@ -28,6 +32,10 @@ int AYCLNT_RemoteDevTimeoutTest(void) {
 				DevRemote.Info[i].DevF.Full_ = 0;
 			}
 		}
+	}
+	RmtDev_TimeOut_Task++;
+	if (RmtDev_TimeOut_Task >= RMTDEV_MAX_TASK) {
+		RmtDev_TimeOut_Task = 0;
 	}
 	return 1;
 }
@@ -88,17 +96,17 @@ AY_DEVINFO	*pAYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp) {
 	else if ((DevNo & 0xFF000000)&& ((DevNo& 0xFFFFFF) < 0x001001)) {
 		k = 0;
 		DevNo &= 0xFFFFFF;
-		if (DevNo == 4096) {///< find empty slot
+		if (DevNo == RMTDEV_MAX_CNT) {///< find empty slot
 			pDeInf = &DevRemote.Info[0];
-			for (i = 0; i < 4096; i++) {
+			for (i = 0; i < RMTDEV_MAX_CNT; i++) {
 				if (!pDeInf->DevF.Full_) {
 					k = i;
 					break;
 				}
 			}
-			if (i == 4096) {///< all full, find oldest and use it
+			if (i == RMTDEV_MAX_CNT) {///< all full, find oldest and use it
 				j = 0xFFFF;
-				for (i = 0; i < 4096; i++) {
+				for (i = 0; i < RMTDEV_MAX_CNT; i++) {
 					if (DevRemoteTOut[i] < j) {
 						j = DevRemoteTOut[i];
 						k = i;
@@ -159,7 +167,7 @@ AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo) {
 	if ((DevNo & 0xFFFFFF) >= (MAX_DEVINFO_CNT)) {
 		return 0;
 	}
-	else if ((DevNo & 0xFF000000) && ((DevNo & 0xFFFFFF) < 0x001001)) {
+	else if ((DevNo & 0xFF000000) && ((DevNo & 0xFFFFFF) < (RMTDEV_MAX_CNT))) {
 		DevNo &= 0xFFFFFF;
 		pDeInf = &DevRemote.Info[DevNo];
 	}
@@ -194,25 +202,17 @@ AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP) {
 	return nullptr;///< not found
 }
 
-/* 
+/*
 *
 */
-AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst) {
-	udp_headerAll		*pHdr;
+AY_DEVINFO *pAY_FindRmtDevInfoByAll(AY_DEVINFO *pInfo) {
 	Ui32 i;
 	AY_DEVINFO	*pDeInf;
-	Ui08 *pM;
-	for (i = 0; i < 4096; i++) {
-		pDeInf = pAY_FindDevInfoByDevNo(i+0xFF000000);
+	for (i = 0; i < RMTDEV_MAX_CNT; i++) {
+		pDeInf = pAY_FindDevInfoByDevNo(i + 0xFF000000);
 		if (pDeInf) {
 			if (pDeInf->DevF.Full_) {
-				if (SrcDst == 0) {///< SRC
-					pM = (Ui08 *)&DevRemote_UDP_Hdr[i]._ethHeader.src;
-				}
-				else {///< DST
-					pM = (Ui08 *)&DevRemote_UDP_Hdr[i]._ethHeader.src;
-				}
-				if( memcmp(pM, pMac,sizeof(uip_eth_addr)) == 0){
+				if (memcmp(pDeInf, pInfo, sizeof(AY_DEVINFO)) == 0) {
 					return pDeInf;
 				}
 			}
@@ -220,9 +220,6 @@ AY_DEVINFO *pAY_FindRmtDevInfoByMAC(Ui08 *pMac, Ui08 SrcDst) {
 	}
 	return nullptr;///< not found
 }
-
-
-
 
 
 //============================ GW LISTS ================================================================//
@@ -1094,7 +1091,7 @@ void AYCLNT_CoreDoTask(void) {
 				break;
 				case _CHNG_SERVER_CONN:
 					if (!AY_Client_ChngServerConn) {
-						AY_SendGwInfoSend(pQue, i);
+						AY_SendGwInfoSend(pQue, i);///< Ready To Send Packet To Destination
 						pQue->Status = _PRE_SEND_PCKT;
 					}
 				break;

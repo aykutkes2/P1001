@@ -554,3 +554,16 @@ int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst) {
 	return 1;
 }
 
+void AYPRINT_UDP_Header(udp_headerAll *pUDP) {
+	char Buff0[32], Buff1[32];
+	printf("\t\t***************\tPACKET HEADER\t******************\n");
+	printf("\t\tPROTOCOL:\t\t%d\n", pUDP->_ipHeader.proto);
+	printf("\t\t\t--------- SOURCE ----------\t\t\t--------- DESTINATION ----------\n");
+	Buff0[0] = 0; AY_HexToStr(&Buff0[0], &pUDP->_ethHeader.src.addr[0], 6, 3);
+	Buff1[0] = 0; AY_HexToStr(&Buff1[0], &pUDP->_ethHeader.dest.addr[0], 6, 3);
+	printf("\tETH:\t\t%s\tETH:\t\t%s\n", Buff0, Buff1);
+	Buff0[0] = 0; AY_ConvertIPToStr(&pUDP->_ipHeader.saddr.byte1 , &Buff0[0]);
+	Buff1[0] = 0; AY_ConvertIPToStr(&pUDP->_ipHeader.daddr.byte1, &Buff1[0]);
+	printf("\tIP:\t\t%s\tIP:\t\t%s\n", Buff0, Buff1);
+	printf("\tPORT:\t\t%d\tPORT:\t\t%d\n", pUDP->_udpHeader.sport, pUDP->_udpHeader.sport);
+}

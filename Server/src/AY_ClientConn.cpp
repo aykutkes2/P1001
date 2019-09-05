@@ -128,6 +128,10 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			_AY_FreeMemory((unsigned char*)pOut);
 			//======= Generate AY_DEVSTRTIN
 			pUDP = (udp_headerAll *)(pPtr + 0); // udp all header
+#if STEP_TEST==1
+			printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
+			AYPRINT_UDP_Header(pUDP);
+#endif
 			pDevStrtIn = (AY_DEVSTRTIN	*)_AY_MallocMemory(sizeof(AY_DEVSTRTIN));
 			memcpy(&pDevStrtIn->_UDPh, pUDP, sizeof(udp_headerAll));
 			pDevStrtIn->_LocalCertNo = pDevStrt->_LocalCertNo;
@@ -164,6 +168,10 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
 							AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
 							oLen = sizeof(AY_GWINFORESP);
+#if STEP_TEST==1
+							printf("********* STEP 6 *************\n********* STEP 6 *************\n********* STEP 6 *************\n");
+							AYPRINT_UDP_Header(&UDPheader);
+#endif
 							UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRsp, oLen);
 							//--------------
 							AYSRV_UniqQ_Init(i);
@@ -185,6 +193,10 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 
 	pInfoRqst = (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll));
 	if ((pInfoRqst->_Test2 == PACKET_TEST_DATA2) && (pInfoRqst->_Test3 == PACKET_TEST_DATA3)) {
+#if STEP_TEST==1
+		printf("********* STEP 3 *************\n********* STEP 3 *************\n********* STEP 3 *************\n");
+		AYPRINT_UDP_Header((udp_headerAll *)pPtr);
+#endif
 		printf("AYDVSTRT--> Packet type is Info Request\n");
 		if (Len == sizeof(AY_GWINFORQST)) {
 			AY_CONNTYPE	*pSrc, *pDst;
@@ -215,6 +227,10 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 						memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
 						AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
 						oLen = sizeof(AY_GWRENTRQST);
+#if STEP_TEST==1
+						printf("********* STEP 4 *************\n********* STEP 4 *************\n********* STEP 4 *************\n");
+						AYPRINT_UDP_Header(&UDPheader);
+#endif
 						i =  UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRent, oLen);
 						_AY_FreeMemory((unsigned char *)pInfoRqst);
 						return i;
