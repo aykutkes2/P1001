@@ -47,6 +47,7 @@ extern Ui32 Demo_CERT_NO;
 
 extern const Ui16			MyUDP_StartPort;
 extern const Ui08			MyMac[6];
+extern const Ui08			DefaultMac[6];
 
 //--------------------------------------------------------------------------------------//
 extern const Ui08 * const SERVER_PUB_KEY;

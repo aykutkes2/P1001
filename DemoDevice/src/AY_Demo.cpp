@@ -468,7 +468,7 @@ int AY_StartSlaveListen(void) {
 	}
 #endif
 	if (j) {
-		AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+		AYSCKT_FilterSetA(_MAIN_SCKT, (char *)&MySocketBuff[0]);
 	}
 	else {
 		MySocketBuff[0] = 0;
@@ -482,7 +482,7 @@ int AY_StartDemoListen(void) {
 	//============= SET FILTER ==========================//
 	// //ip.src != 192.168.2.144 && ip.dst != 192.168.2.144
 	AYSCKT_FilterFreeA(_MAIN_SCKT);
-	AYSCKT_FilterFreeA(_SLVS_SCKT);
+	//AYSCKT_FilterFreeA(_SLVS_SCKT);
 	strcpy((char *)&MySocketBuff[0], "ip dst host ");
 	AY_ConvertIPAddToStrRet((Ui08*)&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
 	AYSCKT_FilterSetA(_MAIN_SCKT, (char *)&MySocketBuff[0]);
@@ -635,7 +635,10 @@ int main(void)//(int argc, char **argv)
 				printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _SUBNET_), (char*)&Temp[0]));
 				printf("Subnet mask: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _MASK_), (char*)&Temp[0]));
 				printf("Gateway address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _GW_), (char*)&Temp[0]));
-
+				if (AY_IsStringToIP((char *)CngFile.ServerDns)) {
+					p = (char *)CngFile.ServerDns;
+					*((Ui32 *)&SrvIP_Address) = AY_ConvertStringToIP(&p);
+				}
 				AY_Demo_Initied = 1;
 			}
 		}
@@ -650,7 +653,7 @@ int main(void)//(int argc, char **argv)
 #if Demo_DEMO2
 				if (GetVal > 0) {
 					memcpy(&MyEth_Address.addr[0], &DEMO_CLNT_MAC[GetVal][0], 6);
-					memcpy(&SrvEth_Address.addr[0], &MyMac[0], 6);
+					memcpy(&SrvEth_Address.addr[0], &DefaultMac/*MyMac*/[0], 6);
 					AY_Demo_GetMACadr = 1;
 				}
 
@@ -673,17 +676,19 @@ int main(void)//(int argc, char **argv)
 				AY_StartDemoListen();
 				AY_Demo_DemoListen = 1;
 			}
-			if (++j < 100) {
-				AY_Delay(100);
-			}
-			else {
-				if (DeviceType == 3) {
+			
+			if (DeviceType == 3) {
+				if (++j < 3) {
+					AY_Delay(1000);
+				}
+				else {
+					j = 0;
 					AYDEMO_SendDemoPacket();
 				}
-				else if(AY_Demo_DemoPacketReceived){
-					AYDEMO_SendDemoPacket2();
-					AY_Demo_DemoPacketReceived = 0;
-				}
+			}
+			else if(AY_Demo_DemoPacketReceived){
+				AYDEMO_SendDemoPacket2();
+				AY_Demo_DemoPacketReceived = 0;
 			}
 		}
 

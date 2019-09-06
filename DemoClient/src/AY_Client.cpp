@@ -664,6 +664,7 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 	AY_DeviceStart		DevStrt;
 	Ui08				OutData[256];
 	Ui16				oLen;
+	int					RetVal;
 
 	//============= SET FILTER ==========================//
 	if (Filter == _GNRT_NEW) {
@@ -700,12 +701,12 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 	UDP_header_init(&UDPheader);
 	UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort);
 	oLen = sizeof(AY_DeviceStart);
+	RetVal = UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&DevStrt, oLen/*sizeof(AY_DeviceStart)*/) ;
 #if STEP_TEST==1
 	printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
 	AYPRINT_UDP_Header(&UDPheader);
 #endif
-	return ( UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&DevStrt, oLen/*sizeof(AY_DeviceStart)*/) );
-
+	return RetVal;
 }
 
 int AY_StartSlaveListenA(void) {
@@ -979,7 +980,7 @@ int main(void)//(int argc, char **argv)
 			}
 		}
 		else if (!AY_Client_GetSrvIPadr) {			
-			if (AY_IsStringToIP((char *)CngFile.ServerDns)) {
+			if (AY_IsStringToIP((char *)CngFile.ServerDns) == 1) {
 				p = (char *)CngFile.ServerDns;
 				*((Ui32 *)&SrvIP_Address) = AY_ConvertStringToIP(&p);
 				AY_Client_GetSrvIPadr = 1;

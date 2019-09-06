@@ -65,6 +65,7 @@ extern const Ui16 MyUDP_StartPort;
 extern const Ui16 SERVER_Port;
 extern const Ui08 SERVER_Dns[];
 extern const Ui08 MyMac[6];
+extern const Ui08 DefaultMac[6];
 extern const Ui08 MyUnique[12];
 
 /*

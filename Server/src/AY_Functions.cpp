@@ -168,7 +168,7 @@ int AY_IsStringToIP(char *ptr) {
 	j = 0;
 	while((*p)&&(j<100)){
 		if (!(((*p >= '0') && (*p <= '9')) || (*p == '.'))) {
-			return -1;
+			return 0;
 		}
 		else if (*p == '.') {
 			i++;

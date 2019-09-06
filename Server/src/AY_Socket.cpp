@@ -421,9 +421,10 @@ int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	da
 	return 1;
 }
 
+Ui08 AY_SocketBuff[4096];
 int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) {
 	int i = sizeof(udp_headerAll);
-	Ui08 *ptr = (Ui08	*)_AY_MallocMemory(len+sizeof(udp_headerAll));///< max packet size
+	Ui08 *ptr = &AY_SocketBuff[0];// (Ui08	*)_AY_MallocMemory(len + sizeof(udp_headerAll) + 64);///< max packet size
 	udp_headerAll	*pHdr = (udp_headerAll *)&ptr[0];
 	
 	memcpy(&ptr[0], UDP_header, i);
@@ -440,12 +441,12 @@ int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) 
 	if (pcap_sendpacket(Thrd[idx].pfp, ptr, i) != 0)
 	{
 		fprintf(stderr, "\nError sending the packet: %s\n", pcap_geterr(Thrd[idx].pfp));
-		_AY_FreeMemory((unsigned char*)ptr);
+		//_AY_FreeMemory((unsigned char*)ptr);
 		return PCAP_ERROR;
 	}
 	printf("Data Has been Sent !!!! Count = %d", i);
 	AY_SendCnt += i;
-	_AY_FreeMemory((unsigned char*)ptr);
+	//_AY_FreeMemory((unsigned char*)ptr);
 	return 1;
 }
 
@@ -558,12 +559,12 @@ void AYPRINT_UDP_Header(udp_headerAll *pUDP) {
 	char Buff0[32], Buff1[32];
 	printf("\t\t***************\tPACKET HEADER\t******************\n");
 	printf("\t\tPROTOCOL:\t\t%d\n", pUDP->_ipHeader.proto);
-	printf("\t\t\t--------- SOURCE ----------\t\t\t--------- DESTINATION ----------\n");
+	printf("\t- SOURCE -\t\t\t- DESTINATION -\n");
 	Buff0[0] = 0; AY_HexToStr(&Buff0[0], &pUDP->_ethHeader.src.addr[0], 6, 3);
 	Buff1[0] = 0; AY_HexToStr(&Buff1[0], &pUDP->_ethHeader.dest.addr[0], 6, 3);
-	printf("\tETH:\t\t%s\tETH:\t\t%s\n", Buff0, Buff1);
+	printf("\tETH:\t%s\tETH:\t%s\n", Buff0, Buff1);
 	Buff0[0] = 0; AY_ConvertIPToStr(&pUDP->_ipHeader.saddr.byte1 , &Buff0[0]);
 	Buff1[0] = 0; AY_ConvertIPToStr(&pUDP->_ipHeader.daddr.byte1, &Buff1[0]);
-	printf("\tIP:\t\t%s\tIP:\t\t%s\n", Buff0, Buff1);
-	printf("\tPORT:\t\t%d\tPORT:\t\t%d\n", pUDP->_udpHeader.sport, pUDP->_udpHeader.sport);
+	printf("\tIP:\t%s\t\tIP:\t%s\n", Buff0, Buff1);
+	printf("\tPORT:   \t%d\t\tPORT:   \t%d\n", mhtons(pUDP->_udpHeader.sport), mhtons(pUDP->_udpHeader.dport));
 }

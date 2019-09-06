@@ -22,6 +22,7 @@ const Ui16 DefaultServerID = 1;
 
 const Ui16 MyUDP_StartPort = 1985;
 const Ui08 MyMac[6] = {0x60,0xF6,0x77,0xBE,0x5F,0x30};
+const Ui08 DefaultMac[6] = { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF };
 
 
 const Ui08 * const Default_Config_File = (unsigned char *)
