@@ -3,7 +3,7 @@
 
 #define RSA_DEMO_ACT			1
 
-#pragma pack(push, 8)
+#pragma pack(push, 1)
 
 
 #pragma pack(pop)

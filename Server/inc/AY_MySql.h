@@ -8,7 +8,7 @@
 //#include <stdlib.h>
 //using namespace std;
 
-#pragma pack(push, 8)
+#pragma pack(push, 1)
 
 typedef struct _MYSQL_GATEWAY {
 	Ui32		_id;

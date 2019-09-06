@@ -94,7 +94,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	pData = (Ui08 *)(pkt_data + sizeof(udp_headerAll)); // 
 
 	if ((pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort))) {
-		/* */
+		printf("Server Port Call\n");/* */
 		if (NEW_REMOTE_RESPONSE) {
 			AY_GWDATAHDR		*pGwDH;
 			Ui16				oLen, iLen;

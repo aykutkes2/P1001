@@ -4,7 +4,7 @@
 #define _THRDS_			2
 #define THREAD_STACK_SIZE		(16*1024)
 
-#pragma pack(push, 8)
+#pragma pack(push, 1)
 
 /* The TCP and IP headers. */
 struct uip_tcpip_hdr {

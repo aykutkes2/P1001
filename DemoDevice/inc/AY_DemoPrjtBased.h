@@ -1,7 +1,7 @@
 #pragma once
 #include <AY_Type.h>
 
-#pragma pack(push, 8)
+#pragma pack(push, 1)
 
 enum _MYSOCKETS {
 	_MAIN_SCKT,
