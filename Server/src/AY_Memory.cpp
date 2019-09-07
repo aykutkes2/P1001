@@ -2,6 +2,7 @@
 #undef UNICODE
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <AY_Memory.h>
 

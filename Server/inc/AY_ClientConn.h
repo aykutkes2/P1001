@@ -1,7 +1,7 @@
 #pragma once
 #include <AY_Type.h>
 
-#pragma pack(push, 1)
+#pragma pack(push, 8)
 
 typedef struct _AY_DEVSTRTIN {
 	udp_headerAll	_UDPh;

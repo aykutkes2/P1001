@@ -94,15 +94,20 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		k++;
 		j += i;
 		UDP_packet_send(_MAIN_SCKT, pUDP, (Ui08 *)pDevStrtPspHdr, (sizeof(AY_DeviceStartResp) + n/*(((Ui16)i) * sizeof(AY_DeviceRead))*/));
-
+#if STEP_TEST==1
+		printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
+		AYPRINT_UDP_Header(pUDP);
+#endif
 	} while (i >= 168);
-	_AY_FreeMemory((unsigned char*)pUDP);	
-	///< delete from queue
-	pQ->QFlg._QFinishedF = 1; 
-	pQ->QFlg._QKeepF = 0; 
-	pQ->QFlg._QBusyF = 1;
+	
 	MYSQL_LoadDeviceInfo(MYSQL_Gateway._id, (Ui32 *)&pDevStrtIn->_Unique);
 	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
+	
+	_AY_FreeMemory((unsigned char*)pUDP);
+	///< delete from queue
+	pQ->QFlg._QFinishedF = 1;
+	pQ->QFlg._QKeepF = 0;
+	pQ->QFlg._QBusyF = 1;
 }
 
 int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
@@ -147,38 +152,38 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			//==================== Test & Response if There is a waiting GWInfo Request
 			AY_CONNTYPE	*pSrc, *pDst;
 			pDst = pFindConnByUniqueID((UNIQUE_ID *)pDevStrtIn->_Unique[0]);
-			if (pDst != nullptr) {
-				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
-				if (i >= 0) {
-					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
-						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].DstUniq);
-						if (pSrc != nullptr) {
-							AY_GWINFORESP		GwRsp;
-							udp_headerAll		UDPheader;
-							Ui16				oLen;
-
-							GwRsp._Test2 = PACKET_TEST_DATA2;
-							GwRsp._Test3 = PACKET_TEST_DATA3;
-							GwRsp._LastUpdateMin =  AYCONN_ThisMinute();
-							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
-							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
-							memcpy(&GwRsp._UDPh, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
-							AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
-							//--------------
-							memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
-							AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
-							oLen = sizeof(AY_GWINFORESP);
-#if STEP_TEST==1
-							printf("********* STEP 6 *************\n********* STEP 6 *************\n********* STEP 6 *************\n");
-							AYPRINT_UDP_Header(&UDPheader);
-#endif
-							UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRsp, oLen);
-							//--------------
-							AYSRV_UniqQ_Init(i);
-						}
-					}
-				}
-			}
+//			if (pDst != nullptr) {//ieriki adým sonra aç !!!
+//				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
+//				if (i >= 0) {
+//					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
+//						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].DstUniq);
+//						if (pSrc != nullptr) {
+//							AY_GWINFORESP		GwRsp;
+//							udp_headerAll		UDPheader;
+//							Ui16				oLen;
+//
+//							GwRsp._Test2 = PACKET_TEST_DATA2;
+//							GwRsp._Test3 = PACKET_TEST_DATA3;
+//							GwRsp._LastUpdateMin =  AYCONN_ThisMinute();
+//							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
+//							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
+//							memcpy(&GwRsp._UDPh, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
+//							AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
+//							//--------------
+//							memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
+//							AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
+//							oLen = sizeof(AY_GWINFORESP);
+//#if STEP_TEST==1
+//							printf("********* STEP 6 *************\n********* STEP 6 *************\n********* STEP 6 *************\n");
+//							AYPRINT_UDP_Header(&UDPheader);
+//#endif
+//							UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRsp, oLen);
+//							//--------------
+//							AYSRV_UniqQ_Init(i);
+//						}
+//					}
+//				}
+//			}
 			//======= Load to Queue
 			return( AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pDevStrtIn, sizeof(AY_DEVSTRTIN), QTARGET_CLIENT_CONN, 0));
 		}
@@ -413,16 +418,16 @@ AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId) {
 #define i3		((i>>0)&0xFF)
 	i = ConnId;
 	ptr = ConnLevel1.pConnAdr[i0];
-	if (ptr != 0) {
+	if ((ptr != 0)|| (ptr != nullptr)) {
 		//printf("AYCONN--> Conn Test Level 1 i0=%d \n", i0);
 		ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i1];
-		if (ptr != 0) {
+		if ((ptr != 0) || (ptr != nullptr)) {
 			//printf("AYCONN--> Conn Test Level 2 i1=%d \n", i1);
 			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
-			if (ptr != 0) {///< valid address
+			if ((ptr != 0) || (ptr != nullptr)) {///< valid address
 				//printf("AYCONN--> Conn Test Level 3 i2=%d \n", i2);
 				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
-				if (pConnTyp != 0) {///< valid connecton
+				if ((pConnTyp != 0) || (pConnTyp != nullptr)) {///< valid connecton
 					printf("AYCONN--> Conn found - Conn Test Level 4 i=%d \n", i);
 					//memcpy(pConnRd, pConnTyp, sizeof(AY_CONNTYPE));
 					return pConnTyp;
@@ -479,16 +484,16 @@ int AYCONN_UpdateTime(Ui32 ConnId) {
 #define i3		((i>>0)&0xFF)
 	i = ConnId;
 	ptr = ConnLevel1.pConnAdr[i0];
-	if (ptr != 0) {
+	if ((ptr != 0) || (ptr != nullptr)) {
 		printf("AYCONN--> Time Test Level 1 i0=%d \n", i0);
 		ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i1];
-		if (ptr != 0) {
+		if ((ptr != 0) || (ptr != nullptr)) {
 			printf("AYCONN--> Time Test Level 2 i1=%d \n", i1);
 			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
-			if (ptr != 0) {///< valid address
+			if ((ptr != 0) || (ptr != nullptr)) {///< valid address
 				printf("AYCONN--> Time Test Level 3 i2=%d \n", i2);
 				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
-				if (pConnTyp != 0) {///< valid connecton
+				if ((pConnTyp != 0) || (pConnTyp != nullptr)) {///< valid connecton
 					printf("AYCONN--> Time Test Level 4 i3=%d \n", i3);
 					pConnTyp->_LastUpdateMin = AYCONN_ThisMinute();
 					return i;

@@ -1,7 +1,7 @@
 #pragma once
 #include <AY_Type.h>
 
-#pragma pack(push, 1)
+#pragma pack(push, 8)
 
 #define QUEUE_DEPTH				30
 #define QUEUE_THREAD_ALLWAYS	5
@@ -48,7 +48,7 @@ extern void AYSRV_QueueInit(void);
 
 //============================================================//
 //==============================================================//
-#pragma pack(push, 1)
+#pragma pack(push, 8)
 typedef union _UNIQ_Q_FLG {
 	Ui08	AllFlgs;
 	struct {

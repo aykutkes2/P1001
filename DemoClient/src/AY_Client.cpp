@@ -339,55 +339,58 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				AY_SendDeviceStartToServer(_USE_OLD);
 			}
 		}
-		else if (GW_DEVICE_LIST) {
-			Ui32 i, j, k;
-			Ui32 m, n;
-			Ui08 Temp[45];
-			AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
-			AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
+		else {
+		AY_DeviceStartResp *pDevStrt = (AY_DeviceStartResp	*)pData;
+			if (GW_DEVICE_LIST) {
+				Ui32 i, j, k;
+				Ui32 m, n;
+				Ui08 Temp[45];
+				AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
+				AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
 #if STEP_TEST==1
-			printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
-			AYPRINT_UDP_Header(pUDP);
+				printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
+				AYPRINT_UDP_Header(pUDP);
 #endif
-			if (AY_Ram.AY_DevPcktNo == pRsp->_DevPcktNo) {
-				j = pRsp->_DevCnt;
-				k = AY_Ram.AY_DeviceCnt;
-				if (j) {
-					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)pDev, header->len - (sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp))/*(j * sizeof(AY_DeviceRead))*/);
-					memcpy(&AY_Ram.AY_DeviceList[0], pDev, (j * sizeof(AY_DeviceRead)));
-				}
-
-				//============== FILE========================//
-				printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
-				printf("AYDVSTRT--> %d ============ FILE START =========\n ", (header->len - sizeof(udp_headerAll)));
-				m = sizeof(AY_DeviceStartResp) + (((Ui16)j) * sizeof(AY_DeviceRead));
-				n = 0;
-				while (m > 32) {
-					AY_HexValPrint((((Ui08 *)pRsp) + n), 32);
-					printf("\r\n ");
-					n += 32;
-					m -= 32;
-				}
-				if (m) {
-					AY_HexValPrint((((Ui08 *)pRsp) + n), m);
-					printf("\r\n ");
-				}
-				printf("AYDVSTRT--> ============ FILE END =========\n ");
-				//===========================================//
-				printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, j);
-				for (i = 0; i < j; i++) {
-					printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-					pAYCLNT_AddDevToList((Ui08 *)&AY_Ram.AY_DeviceList[i], (k + i), _DEV_READ_ALL);
-					if ( (!AY_Client_RecvServer) && (AY_Ram.AY_DeviceList[i]._Type == _MIRROR_) ) {
-						printf("Remote Device found Device No:%d ID:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
-						AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
+				if (AY_Ram.AY_DevPcktNo == pRsp->_DevPcktNo) {
+					j = pRsp->_DevCnt;
+					k = AY_Ram.AY_DeviceCnt;
+					if (j) {
+						AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)pDev, header->len - (sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp))/*(j * sizeof(AY_DeviceRead))*/);
+						memcpy(&AY_Ram.AY_DeviceList[0], pDev, (j * sizeof(AY_DeviceRead)));
 					}
-				}
-				AY_Ram.AY_DeviceCnt += j;
-				AY_Ram.AY_DevPcktNo++;
-				if (j < 168) {
-					AY_Client_RecvServer = 1;
-					AY_Client_ChngServerConn = 0;
+
+					//============== FILE========================//
+					printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
+					printf("AYDVSTRT--> %d ============ FILE START =========\n ", (header->len - sizeof(udp_headerAll)));
+					m = sizeof(AY_DeviceStartResp) + (((Ui16)j) * sizeof(AY_DeviceRead));
+					n = 0;
+					while (m > 32) {
+						AY_HexValPrint((((Ui08 *)pRsp) + n), 32);
+						printf("\r\n ");
+						n += 32;
+						m -= 32;
+					}
+					if (m) {
+						AY_HexValPrint((((Ui08 *)pRsp) + n), m);
+						printf("\r\n ");
+					}
+					printf("AYDVSTRT--> ============ FILE END =========\n ");
+					//===========================================//
+					printf("\nDevice List Downloaded Packet Length = %d, DevCnt=%d\n", header->len, j);
+					for (i = 0; i < j; i++) {
+						printf("Device No:%d ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x  Parent:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Unique[0], AY_Ram.AY_DeviceList[i]._Unique[1], AY_Ram.AY_DeviceList[i]._Unique[2], AY_Ram.AY_DeviceList[i]._ParentId, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
+						pAYCLNT_AddDevToList((Ui08 *)&AY_Ram.AY_DeviceList[i], (k + i), _DEV_READ_ALL);
+						if ((!AY_Client_RecvServer) && (AY_Ram.AY_DeviceList[i]._Type == _MIRROR_)) {
+							printf("Remote Device found Device No:%d ID:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
+							AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
+						}
+					}
+					AY_Ram.AY_DeviceCnt += j;
+					AY_Ram.AY_DevPcktNo++;
+					if (j < 168) {
+						AY_Client_RecvServer = 1;
+						AY_Client_ChngServerConn = 0;
+					}
 				}
 			}
 		}
