@@ -536,7 +536,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		int					i;
 		printf("AYCLNT--> ============ NEW SIDE PACKET Test & Find Target =========\n ");
 
-		pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pHdr->dest.addr[0]));
+		pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.daddr));
 		if (pInfom) {///< there is a valid target 
 			if (pInfom->DevRead._Type == _MIRROR_) {///< target must be a mirror device
 #if STEP_TEST==1
@@ -570,7 +570,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			}
 		}
 		else {///< Check For Local Device
-			pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pHdr->src.addr[0]) );
+			pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.daddr));
 			if (pInfom) {///< there is a valid target 
 				if (pInfom->DevRead._Type == _REAL_) {///< target must be a real device
 #if STEP_TEST == 1
@@ -671,10 +671,10 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 
 	//============= SET FILTER ==========================//
 	if (Filter == _GNRT_NEW) {
-		AYSCKT_FilterFreeA(_SLVS_SCKT);
+		AYSCKT_FilterFreeA(_MAIN_SCKT);
 		strcpy((char *)&MySocketBuff[0], "udp src port ");
 		AY_ConvertUi32AddToStrRet(CngFile.ServerPort, (char *)&MySocketBuff[0]);
-		AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+		AYSCKT_FilterSetA(_MAIN_SCKT, (char *)&MySocketBuff[0]);
 	}
 
 	//------- LOAD
@@ -782,7 +782,7 @@ int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	GwRqst.ReadCnt = AY_ReadCnt;
 	GwRqst.ErrCnt = AY_ErrCnt;
 	//---------------------------//
-	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)GwRqst._InfoCont[0], sizeof(GwRqst._InfoCont));
+	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (((Ui08 *)&GwRqst._InfoCont[0])), AY_GWINFORQST_SIZE_OF_INFO_CONT);
 	//------- SEND
 	UDP_header_init(&UDPheader);
 	UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort);
@@ -1033,6 +1033,7 @@ int main(void)//(int argc, char **argv)
 			AY_Client_ListenThreads = 1;
 		}
 		else {
+			AYCLNT_CoreDoTask();
 			AYCLNT_RemoteDevTimeoutTest();
 				///< check processes
 		}

@@ -100,7 +100,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 #endif
 	} while (i >= 168);
 	
-	MYSQL_LoadDeviceInfo(MYSQL_Gateway._id, (Ui32 *)&pDevStrtIn->_Unique);
+	MYSQL_FindLoadDeviceInfoID(0, (Ui32 *)&pDevStrtIn->_Unique);
 	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
 	
 	_AY_FreeMemory((unsigned char*)pUDP);

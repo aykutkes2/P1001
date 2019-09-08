@@ -745,7 +745,7 @@ int MYSQL_Init(void) {
 		return result;
 	}
 
-	int MYSQL_LoadDeviceInfo(Ui32 gId, Ui32 Id) {
+	int MYSQL_LoadDeviceInfoL(Ui32 gId, Ui32 Id, Ui32 IP) {
 		int result = 0;
 		string list, object, column;
 
@@ -753,9 +753,16 @@ int MYSQL_Init(void) {
 		if (gId == 0) { gId = MYSQL_Gateway._id; }///< loaded before
 		MYSQL_ConvertUi32AddToStr(gId, &MYSQL_Temp[0]);
 		list = MYSQL_Temp;
-		MYSQL_ConvertUi32ToStr(Id, &MYSQL_Temp0[0]);
-		object = MYSQL_Temp0;
-		column = (char *)DV_L_Cs[DVL_id];
+		if (IP == 0) {
+			MYSQL_ConvertUi32ToStr(Id, &MYSQL_Temp0[0]);
+			object = MYSQL_Temp0;
+			column = (char *)DV_L_Cs[DVL_id];
+		}
+		else {
+			MYSQL_ConvertUi32ToStr(IP, &MYSQL_Temp0[0]);
+			object = MYSQL_Temp0;
+			column = (char *)DV_L_Cs[DVL_LIP];
+		}
 		qstate = MYSQL_Search(list, column, object);
 		if (!qstate)
 		{
@@ -849,10 +856,15 @@ int MYSQL_Init(void) {
 		}
 	}
 
-	int MYSQL_LoadDeviceInfo(Ui32 id, Ui32 Unique[]) {
-		if (MYSQL_QueryAndLoadGateway(NULL, Unique, NULL, NULL, MYSQL_QUERY_BY_UNIQUE_) == TRUE) {
+	int MYSQL_FindLoadDeviceInfoL(Ui32 id, Ui32 Unique[], Ui32 IP) {
+		if (MYSQL_QueryAndLoadGateway(NULL, Unique, NULL, NULL, MYSQL_QUERY_BY_UNIQUE_) == TRUE) {			
 			if (id != 0) {
-				MYSQL_LoadDeviceInfo(MYSQL_Gateway._id, id);
+				if (IP == 0) {
+					MYSQL_LoadDeviceInfoID(MYSQL_Gateway._id, id);
+				}
+				else {
+					MYSQL_LoadDeviceInfoIP(MYSQL_Gateway._id, IP);
+				}
 			}
 			return MYSQL_Gateway._ConnectionId;
 		}

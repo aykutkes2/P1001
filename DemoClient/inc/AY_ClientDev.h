@@ -248,6 +248,11 @@ extern int AYCLNT_QueueReadStatus(int SlotNo);
 *****************************************************************************/
 extern int AYCLNT_QueueFindSlotNo(AY_CLNTQUEUE *pQue);
 
+/****************************************************************************/
+/*! \fn void AYCLNT_CoreDoTask(void)
+** \brief		       main process
+*****************************************************************************/
+extern void AYCLNT_CoreDoTask(void);
 
 enum _AYCLNT_STATUS {
 	_FIND_GW,

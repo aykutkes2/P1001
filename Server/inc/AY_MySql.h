@@ -233,11 +233,15 @@ extern int MYSQL_CreateNewDeviceList(Ui32 Id, char Delete);
 
 extern int MYSQL_TestCreateNewDeviceList(Ui32 Id);
 
-extern int MYSQL_LoadDeviceInfo(Ui32 gId, Ui32 Id);
+extern int MYSQL_LoadDeviceInfoL(Ui32 gId, Ui32 Id, Ui32 IP);
+#define MYSQL_LoadDeviceInfoID(gId, Id)		MYSQL_LoadDeviceInfoL(gId, Id, 0)
+#define MYSQL_LoadDeviceInfoIP(gId, IP)		MYSQL_LoadDeviceInfoL(gId, 0, IP)
 
 extern int MYSQL_ReadDeviceList(Ui32 Id, MYSQL_DeviceRead *pReadFile, Ui32 MaxCnt, Ui32 StrtIdx);
 
-extern int MYSQL_LoadDeviceInfo(Ui32 id, Ui32 Unique[]);
+extern int MYSQL_FindLoadDeviceInfoL(Ui32 id, Ui32 Unique[], Ui32 IP);
+#define MYSQL_FindLoadDeviceInfoIP(Unique, IP)		MYSQL_FindLoadDeviceInfoL(0, Unique, IP)
+#define MYSQL_FindLoadDeviceInfoID(id, Unique)		MYSQL_FindLoadDeviceInfoL(id, Unique, 0)
 #define FindConnectionIdOfGateway(Unique)		_LoadDeviceInfo(0, Unique)
 
 

@@ -61,12 +61,14 @@ typedef struct _AY_DevStrtRspHdr {
 	Ui32		_DevCnt;
 }AY_DeviceStartResp;
 //-----------------------------------------------------//
+#define AY_GWINFORQST_SIZE_OF_INFO_CONT		32
+#define AY_GWINFORQST_CONT_OFST				12
 typedef struct _AY_GWINFORQST {
 	Ui32		_Test2;
 	Ui32		_Test3;
 	Ui32		_QueRowNo;
 	union {
-		Ui08	_InfoCont[32];
+		Ui08	_InfoCont[AY_GWINFORQST_SIZE_OF_INFO_CONT];
 		struct {
 			Ui08		_Unique[12];
 			Ui32		SendCnt;
