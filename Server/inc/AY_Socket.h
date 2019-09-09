@@ -198,6 +198,7 @@ extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDs
 extern void AYPRINT_UDP_Header(udp_headerAll *pUDP);
 
 extern int AYSCKT_FilterSetA(Ui08 idx, char *pfilter);
+extern int AYSCKT_FilterSetB(Ui08 idx, char *pfilter);
 extern int AYSCKT_FilterFreeA(Ui08 idx);
 extern int AYSCKT_FilterFreeB(Ui08 idx);
 

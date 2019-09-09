@@ -186,7 +186,7 @@ int main(void) {
 			MYSQL_Init();
 			strcpy(MYSQL_Table, MySQLParams._GatewayList);
 			strcpy(MYSQL_UserList, MySQLParams._UserList);
-			MYSQL_Connect((char *)MySQLParams._ServerAdr, (char *)MySQLParams._ServerUser, (char *)MySQLParams._ServerPass, (char *)MySQLParams._ServerSchema);
+			MYSQL_Connect((char *)&MySQLParams._ServerAdr[0], (char *)&MySQLParams._ServerUser[0], (char *)&MySQLParams._ServerPass[0], (char *)&MySQLParams._ServerSchema[0]);
 			AYCONN_ClientConnInit();
 			AYSRV_QueueInit();
 			AY_Server_StartSqlConn = 1;

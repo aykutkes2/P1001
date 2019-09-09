@@ -83,6 +83,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	uip_eth_hdr		*pHdr;
 	ip_header		*ih;
 	udp_headerAll	*pUDP;
+	char			*pData;
 	struct DNS_HEADER *dns = NULL;
 
 	printf("Main Socket Callback\n");
@@ -91,17 +92,21 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	pHdr = (uip_eth_hdr *)(pkt_data + 0); // ethernet header
 	ih = (ip_header *)(pkt_data + 14); //length of ethernet header
 	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
+	pData = (char *)(pkt_data + sizeof(udp_headerAll)); // data
 	if (DeviceType == 4) {
 		AY_Demo_DemoPacketReceived = 1;
 #if STEP_TEST == 1
 		printf("********* STEP 9 *************\n********* STEP 9 *************\n********* STEP 9 *************\n");
 		AYPRINT_UDP_Header(pUDP);
+		printf("\n\n========== DATA TYPE:4 ==========\n\n%s", pData);
+
 #endif	
 	}
 	else {
 #if STEP_TEST == 1
 		printf("********* STEP 12 *************\n********* STEP 12 *************\n********* STEP 12 *************\n");
 		AYPRINT_UDP_Header(pUDP);
+		printf("\n\n========== DATA TYPE:3 ==========\n\n%s", pData);
 #endif		
 	}
 }
@@ -483,9 +488,9 @@ int AY_StartDemoListen(void) {
 	// //ip.src != 192.168.2.144 && ip.dst != 192.168.2.144
 	AYSCKT_FilterFreeA(_MAIN_SCKT);
 	//AYSCKT_FilterFreeA(_SLVS_SCKT);
-	strcpy((char *)&MySocketBuff[0], "ip dst host ");
+	strcpy((char *)&MySocketBuff[0],"ip dst host ");
 	AY_ConvertIPAddToStrRet((Ui08*)&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
-	AYSCKT_FilterSetA(_MAIN_SCKT, (char *)&MySocketBuff[0]);
+	AYSCKT_FilterSetB(_MAIN_SCKT, (char *)&MySocketBuff[0]);
 	return 1;
 }
 
@@ -678,20 +683,29 @@ int main(void)//(int argc, char **argv)
 			}
 			
 			if (DeviceType == 3) {
-				if (++j < 10) {
+				if (j == 3) {
+					AYDEMO_SendDemoPacket();
+					AY_Demo_SendPacket = 1;
+				}
+				j++;
+
+				/*if (++j == 3) {
 					AY_Delay(1000);
 				}
 				else {
 					j = 0;
 					AYDEMO_SendDemoPacket();
-				}
+				}*/
 			}
 			else if(AY_Demo_DemoPacketReceived){
 				AYDEMO_SendDemoPacket2();
 				AY_Demo_DemoPacketReceived = 0;
 			}
 		}
-
+		else {
+			
+		}
+		Sleep(1);
 
 
 

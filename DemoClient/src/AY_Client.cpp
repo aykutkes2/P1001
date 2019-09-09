@@ -243,7 +243,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							Inform2.DevRead._dport = 0;
 							Inform2.DevRead._sport = 0;
 						}
-						Inform2.DevRead._LocalIp = *((Ui32 *)pUDP2->_ipHeader.saddr.byte1);
+						Inform2.DevRead._LocalIp = *((Ui32 *)&pUDP2->_ipHeader.saddr.byte1);
 						Inform2.DevRead._ParentId = ((AY_GWDATAHDR	*)pData)->_DevNoOnTrgt;
 						Inform2.DevRead._Type = _GUEST_;
 						Inform2.DevF.Full_ = 1;
@@ -983,14 +983,14 @@ int main(void)//(int argc, char **argv)
 			}
 		}
 		else if (!AY_Client_GetSrvIPadr) {			
-			if (AY_IsStringToIP((char *)CngFile.ServerDns) == 1) {
+			if (AY_IsStringToIP((char *)&CngFile.ServerDns[0]) == 1) {
 				p = (char *)CngFile.ServerDns;
 				*((Ui32 *)&SrvIP_Address) = AY_ConvertStringToIP(&p);
 				AY_Client_GetSrvIPadr = 1;
 			}
 			else {
 				if (!AY_Client_WaitSrvIPadr) {
-					if (AY_DNS_Query((char *)CngFile.ServerDns, (ip_address *)&CngFile.DNSIp) == 1) {
+					if (AY_DNS_Query((char *)&CngFile.ServerDns[0], (ip_address *)&CngFile.DNSIp) == 1) {
 						AY_Client_WaitSrvIPadr = 1;
 						j = 0;
 					}

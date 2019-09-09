@@ -127,6 +127,7 @@ typedef struct _AYSCKT_Thread {
 	void *pMyHandler;
 	pcap_t *pfp;
 	struct bpf_program My_fcode;
+	pcap_if_t *d;
 }AYSCKT_Thread;
 //AYSCKT_Thread *pThrd;
 AYSCKT_Thread Thrd[_THRDS_];
@@ -230,6 +231,48 @@ int AYSCKT_FilterSetA(Ui08 idx, char *pfilter) {
 	AYSCKT_FilterSet(Thrd[idx].pfp, &Thrd[idx].My_fcode, pfilter, MyNetMask);
 	AYSCKT_StartThreadX(idx);
 	return 1;
+}
+
+int AYSCKT_FilterSetB(Ui08 idx, char *pfilter) {
+	pcap_t *fp;
+	AYSCKT_Thread ThrdBuff;
+	char errbuf[PCAP_ERRBUF_SIZE];
+	char EmptyFilter[] = "";
+
+	ThrdBuff = Thrd[idx];
+
+	//AYSCKT_FilterFreeB(idx);
+	pcap_breakloop(Thrd[idx].pfp);
+	pcap_close(Thrd[idx].pfp);
+	pcap_freecode(&Thrd[idx].My_fcode);
+
+	Thrd[idx] = ThrdBuff;
+
+	/* Open the adapter */
+	if ((fp = pcap_open_live(Thrd[idx].d->name/*argv[1]*/,		// name of the device
+		65536,			// portion of the packet to capture. It doesn't matter in this case 
+		1,				// promiscuous mode (nonzero means promiscuous)
+		1000,			// read timeout
+		errbuf			// error buffer
+	)) == NULL)
+	{
+		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by WinPcap\n", Thrd[idx].d->name/*argv[1]*/);
+		return PCAP_ERROR;
+	}
+
+	if (AYSCKT_FilterSet(fp, &Thrd[idx].My_fcode, &EmptyFilter[0], MyNetMask) < 0) {
+		pcap_freealldevs(alldevs);
+		return PCAP_ERROR;
+	}
+
+	if (AYSCKT_FilterSet(fp, &Thrd[idx].My_fcode, pfilter, MyNetMask) < 0) {
+		pcap_freealldevs(alldevs);
+		return PCAP_ERROR;
+	}
+
+	Thrd[idx].pfp = fp;
+
+	AYSCKT_StartThreadX(idx);
 }
 
 int AYSCKT_FilterFreeA(Ui08 idx) {
@@ -379,7 +422,7 @@ L_DevFound:
 
 		Thrd[idx].pfp = fp;
 		Thrd[idx].pMyHandler = pCallBack;
-
+		Thrd[idx].d = d;
 		AYSCKT_StartThreadX(idx);
 		//===================================================//
 	}
