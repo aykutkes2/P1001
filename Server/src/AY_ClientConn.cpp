@@ -41,7 +41,9 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	Ui32				m, n;//test sil !!!
 
 	pDevStrtIn = (AY_DEVSTRTIN	*)pQ->pIn;
+	printf("\n\t\tBEFORE-> ConnectionCount = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", ConnectionCount, *((Ui32 *)&pDevStrtIn->_Unique[0]),*((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]));
 	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_UDPh, &pDevStrtIn->_SessionKey[0], AY_CONN_UPDATE);
+	printf("\n\t\tAFTER-> ConnectionCount = %d\n", ConnectionCount);
 	printf("AYDVSTRT--> Connection ID ConnId=%d \n", i);
 	MYSQL_AddNewGateway((char *)pDevStrtIn->_Name, (char *)pDevStrtIn->_Pswd, (Ui32 *)&pDevStrtIn->_Unique, *((Ui64 *)&pDevStrtIn->_MAC), i, pDevStrtIn->_ServerCertNo, &pDevStrtIn->_SessionKey[0], _GATEWAY_UPDATE_);
 	//----------------------------//
@@ -101,7 +103,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	} while (i >= 168);
 	
 	MYSQL_FindLoadDeviceInfoID(0, (Ui32 *)&pDevStrtIn->_Unique);
-	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
+	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\n\n\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\n\r\n");
 	
 	_AY_FreeMemory((unsigned char*)pUDP);
 	///< delete from queue
@@ -266,8 +268,8 @@ int AYCONN_TestMinute(Ui32 RecMin, Ui32 TimeOut) {
 Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAll *pUDP, Ui08 *pSSK, Ui08 Func) {
 	void *ptr;
 	AY_CONNADR	*pConnList;
-	AY_CONNTYPE	*pConnTyp;
-	Ui32 FirstFree;
+	AY_CONNTYPE	*pConnTyp, *pConnTst;
+	Ui32 FirstFree= ConnectionCount;
 	Ui08 FirstFound = 0;
 	Ui32 i;
 
@@ -279,6 +281,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAl
 	i = 0; 
 	pConnTyp = 0;
 	do{
+		//pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3]);//test!!!!
 		if ((i & 0x00FFFFFF) == 0) {
 			printf("AYCONN--> Conn Test Level 1 i0=%d \n", i0);
 			ptr = ConnLevel1.pConnAdr[i0];
@@ -358,19 +361,26 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAl
 			if (Func == AY_CONN_UPDATE) {///< upload
 				((AY_CONNADR	*)ptr)->pConnAdr[i3] = _AY_MallocMemory(sizeof(AY_CONNTYPE));
 				pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index
+				pConnTyp->_UnqiueId[0] = Unique0;
+				pConnTyp->_UnqiueId[1] = Unique1;
+				pConnTyp->_UnqiueId[2] = Unique2;
 				memcpy(&pConnTyp->_UDPh, pUDP, sizeof(udp_headerAll));
 				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
 				pConnTyp->_LastUpdateMin = AYCONN_ThisMinute();
+				//============ TEST =========================//
+				printf("AYCONN--> Input Conn i0=0x%08x, i1=0x%08x, i2=0x%08x, i3=0x%08x \n", (Ui32)ConnLevel1.pConnAdr[i0], (Ui32)(((AY_CONNADR	*)ConnLevel1.pConnAdr[i0])->pConnAdr[i1]), (Ui32)(((AY_CONNADR	*)(((AY_CONNADR	*)ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2]), (Ui32)pConnTyp);
+				pConnTst = pAYCONN_ReadConn(i);				
+				//============ TEST =========================//
 				ConnectionCount++;
-				printf("AYCONN--> Conn new added ConnectionCount=%d \n", ConnectionCount);
+				printf("AYCONN--> Conn new added i3=%d ConnectionCount=%d Adr=0x%08x \n", i3, ConnectionCount, (Ui32)pConnTyp);
 			}
 			/*else if (Func == AY_CONN_READ) {///< download
 				memcpy(pUDP, &pConnTyp->_UDPh, sizeof(udp_headerAll));
 			}*/
 			return i;
 		}
-		pConnTyp++;
-	} while ((++i) < ConnectionCount);
+		pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index//pConnTyp++;
+	} while ((++i) <= ConnectionCount);
 	printf("AYCONN--> Conn There is something wrong ! \n");
 	return 0xFFFFFFFF;///< fail !!!
 }
@@ -387,16 +397,16 @@ Ui32 AYCONN_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd) {
 	i = ConnId;
 	ptr = ConnLevel1.pConnAdr[i0];
 	if (ptr != 0) {
-		printf("AYCONN--> Conn Test Level 1 i0=%d \n", i0);
+		printf("AYCONN--> Conn Test Level 1 i0=%d Adr=0x%08x \n", i0, (Ui32)ptr);
 		ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i1];
 		if (ptr != 0) {
-			printf("AYCONN--> Conn Test Level 2 i1=%d \n", i1);
+			printf("AYCONN--> Conn Test Level 2 i1=%d Adr=0x%08x \n", i1, (Ui32)ptr);
 			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
 			if (ptr != 0) {///< valid address
-				printf("AYCONN--> Conn Test Level 3 i2=%d \n", i2);
+				printf("AYCONN--> Conn Test Level 3 i2=%d Adr=0x%08x \n", i2, (Ui32)ptr);
 				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
 				if (pConnTyp != 0) {///< valid connecton
-					printf("AYCONN--> Conn Test Level 4 i3=%d \n", i3);
+					printf("AYCONN--> Conn Test Level 4 i3=%d Adr=0x%08x \n", i3, (Ui32)pConnTyp);
 					memcpy(pConnRd, pConnTyp, sizeof(AY_CONNTYPE));
 					return i;
 				}
@@ -419,16 +429,16 @@ AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId) {
 	i = ConnId;
 	ptr = ConnLevel1.pConnAdr[i0];
 	if ((ptr != 0)|| (ptr != nullptr)) {
-		//printf("AYCONN--> Conn Test Level 1 i0=%d \n", i0);
+		printf("AYCONN--> Conn Test Level 1 i0=%d Adr=0x%08x \n", i0, (Ui32)ptr);
 		ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i1];
 		if ((ptr != 0) || (ptr != nullptr)) {
-			//printf("AYCONN--> Conn Test Level 2 i1=%d \n", i1);
+			printf("AYCONN--> Conn Test Level 2 i1=%d Adr=0x%08x \n", i1, (Ui32)ptr);
 			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
 			if ((ptr != 0) || (ptr != nullptr)) {///< valid address
-				//printf("AYCONN--> Conn Test Level 3 i2=%d \n", i2);
+				printf("AYCONN--> Conn Test Level 3 i2=%d Adr=0x%08x \n", i2, (Ui32)ptr);
 				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
 				if ((pConnTyp != 0) || (pConnTyp != nullptr)) {///< valid connecton
-					printf("AYCONN--> Conn found - Conn Test Level 4 i=%d \n", i);
+					printf("AYCONN--> Conn found - Conn Test Level 4 i=%d Adr=0x%08x \n", i, (Ui32)pConnTyp);
 					//memcpy(pConnRd, pConnTyp, sizeof(AY_CONNTYPE));
 					return pConnTyp;
 				}
@@ -463,6 +473,8 @@ AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique) {
 	for (i = 0; i < ConnectionCount; i++) {
 		pConnTyp = pAYCONN_ReadConn(i);
 		if (pConnTyp != nullptr) {
+			printf("\n\t\tLook = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", i, pUnique->_UniqueL[0], pUnique->_UniqueL[1], pUnique->_UniqueL[2]);
+			printf("\n\t\tConnectionNo = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", i, pConnTyp->_UnqiueId[0], pConnTyp->_UnqiueId[1], pConnTyp->_UnqiueId[2]);
 			if ((pConnTyp->_UnqiueId[0] == pUnique->_UniqueL[0]) && (pConnTyp->_UnqiueId[1] == pUnique->_UniqueL[1]) && (pConnTyp->_UnqiueId[2] == pUnique->_UniqueL[2])) {///< device found 
 				printf("AYCONN--> Conn found - Unique ID matched i=%d \n", i);
 				return pConnTyp;

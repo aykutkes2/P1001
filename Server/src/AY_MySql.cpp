@@ -828,11 +828,11 @@ int MYSQL_Init(void) {
 					pReadFile->_LocalIp = (Ui32)MYSQL_ConvertStringToUi64(row[DVL_LIP]);
 					pReadFile->_ParentId = (Ui32)MYSQL_ConvertStringToUi64(row[DVL_pId]);
 					pReadFile->_Type = (Ui32)MYSQL_ConvertStringToUi64(row[DVL_Typ]);
-					pReadFile++;
 #ifdef WIN32
-					printf("MySQL Found Device id = %s _Unique0 = %s _Unique1 = %s _Unique2 = %s NAME = %s", row[DVL_id], row[DVL_Uq0], row[DVL_Uq1], row[DVL_Uq2], row[DVL_Nm]);
+					printf("MySQL Found Device id = %s \n\t _Unique0(%s) = 0x%08x \n\t _Unique1(%s) = 0x%08x \n\t _Unique2(%s) = 0x%08x \n\t nNAME = %s", row[DVL_id], row[DVL_Uq0], pReadFile->_Unique[0], row[DVL_Uq1], pReadFile->_Unique[1], row[DVL_Uq2], pReadFile->_Unique[2], row[DVL_Nm]);
 					//cout << "MySQL Found Device id = " << row[DVL_id] <<" _Unique0 = " << row[DVL_Uq0] <<	" _Unique1 = " << row[DVL_Uq1] << " _Unique2 = " << row[DVL_Uq2] << " NAME = " << row[DVL_Nm] << endl;
 #endif
+					pReadFile++;
 				}
 				i++;
 				if (i >= (MaxCnt + StrtIdx)) {
