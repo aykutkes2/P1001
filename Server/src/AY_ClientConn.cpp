@@ -158,7 +158,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)&pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)&pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
 				if (i >= 0) {
 					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
-						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].DstUniq);
+						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].SrcUniq);
 						if (pSrc != nullptr) {
 							AY_GWINFORESP		GwRsp;
 							udp_headerAll		UDPheader;
@@ -170,9 +170,9 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
 							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
 							memcpy(&GwRsp._UDPh, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
-							AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
+							AY_Crypt_AES128((Ui08 *)&pSrc->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
 							//--------------
-							memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
+							memcpy(&UDPheader, &pSrc->_UDPh, sizeof(udp_headerAll));
 							AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
 							oLen = sizeof(AY_GWINFORESP);
 #if STEP_TEST==1

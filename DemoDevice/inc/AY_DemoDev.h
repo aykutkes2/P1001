@@ -3,7 +3,7 @@
 #include <AY_Memory.h>
 #include <AY_Socket.h>
 
-#define DEV_REMOTE_TIMEOUT			50000
+#define DEV_REMOTE_TIMEOUT			10000000000
 
 #pragma pack(push, 1)
 

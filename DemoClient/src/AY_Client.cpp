@@ -93,7 +93,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
 	pData = (Ui08 *)(pkt_data + sizeof(udp_headerAll)); // 
 
-	if ((pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort))) {
+	if ( (pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort)) && (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) ) {
 		printf("Server Port Call\n");/* */
 		if (NEW_REMOTE_RESPONSE) {
 			AY_GWDATAHDR		*pGwDH;
@@ -348,7 +348,12 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
 				AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
 #if STEP_TEST==1
-				printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
+				if (AY_Client_ChngServerConn) {
+					printf("********* STEP 7 *************\n********* STEP 7 *************\n********* STEP 7 *************\n");
+				}
+				else {
+					printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
+				}
 				AYPRINT_UDP_Header(pUDP);
 #endif
 				if (AY_Ram.AY_DevPcktNo == pRsp->_DevPcktNo) {
@@ -388,6 +393,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					AY_Ram.AY_DeviceCnt += j;
 					AY_Ram.AY_DevPcktNo++;
 					if (j < 168) {
+						AY_Client_RemoteDevListEnd = 1;
 						AY_Client_RecvServer = 1;
 						AY_Client_ChngServerConn = 0;
 					}
@@ -853,6 +859,7 @@ int main(void)//(int argc, char **argv)
 	char *p;
 	int i,j=0;
 
+	AYCLNT_CoreInit();///< INIT !!!
 	MyClientInstPort = MyUDP_StartPort;
 	AY_Client_Flags = 0;///< clear all flags
 	AY_ClientInitLoop = 0;
@@ -1023,6 +1030,10 @@ int main(void)//(int argc, char **argv)
 			AYFILE_CloseFile((char*)&AddIP_File[0]);
 			if (AY_Ram.AY_DevPcktNo >0) {
 				AY_Client_GenerateRemoteDevs = 1;
+				if (AY_Client_RemoteDevListEnd) {
+					AY_Client_RemoteDevListEnd = 0;
+					AY_Ram.AY_DevPcktNo = 0;
+				}
 			}
 			else {
 				AY_Client_SendServer = 0;

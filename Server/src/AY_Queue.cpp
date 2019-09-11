@@ -273,8 +273,8 @@ int AYSRV_FindUniqQ(UNIQUE_ID Src, UNIQUE_ID Dst, Ui08 Func) {
 	int i;
 	for (i = 0; i < UNIQUE_QUEUE_LEN; i++) {
 		if (UniqQ_Lst.UniqQ[i].UniqQFlg.Full_) {
-			if ( (memcmp(&UniqQ_Lst.UniqQ[i].DstUniq, &Dst, sizeof(AY_UNIQUE_QUEUE)) == 0) || (Func & _UNIQ_NOT_DST) ){
-				if ( (memcmp(&UniqQ_Lst.UniqQ[i].SrcUniq, &Src, sizeof(AY_UNIQUE_QUEUE)) == 0) || (Func & _UNIQ_NOT_SRC) ) {
+			if ( (memcmp(&UniqQ_Lst.UniqQ[i].DstUniq, &Dst, sizeof(UNIQUE_ID)) == 0) || (Func & _UNIQ_NOT_DST) ){
+				if ( (memcmp(&UniqQ_Lst.UniqQ[i].SrcUniq, &Src, sizeof(UNIQUE_ID)) == 0) || (Func & _UNIQ_NOT_SRC) ) {
 					return i;
 				}
 			}

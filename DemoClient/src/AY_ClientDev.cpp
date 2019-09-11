@@ -176,7 +176,9 @@ AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo) {
 	}
 	else {
 		i = DevNo - 4096;
-		pDeInf = &pDevInfos[(i >> 12)]->Info[(i & 0xFFF)];
+		if(pDevInfos[(i >> 12)] != nullptr){
+			pDeInf = &pDevInfos[(i >> 12)]->Info[(i & 0xFFF)];
+		}
 	}
 	return pDeInf;
 }
@@ -1035,6 +1037,45 @@ int AYCLNT_QueueFindSlotNo(AY_CLNTQUEUE *pQue) {
 //============================  CORE  ================================================================//
 //============================  CORE  ================================================================//
 //============================  CORE  ================================================================//
+
+/****************************************************************************/
+/*! \fn void AYCLNT_CoreInit(void)
+**
+** \brief		       init process
+**
+** \param    			-
+**
+** \return				-
+**
+*****************************************************************************/
+void AYCLNT_CoreInit(void) {
+	memset(	&DevLevel1				, 0, sizeof(AY_DEVINFOLST));
+	memset( &DevRemote				, 0, sizeof(AY_DEVINFOLST));
+	memset( &DevRemoteTOut			, 0, sizeof(DevRemoteTOut));
+	memset(	&pDevInfos				, 0, sizeof(pDevInfos));
+	memset(	&AYCLNT_GWLISTE_L1		, 0, sizeof(AY_GWINFOLST));
+
+	memset(	&pGwInfos				, 0, sizeof(pGwInfos));
+	memset(	&AYCLNT_LOCCONNLIST_L1	, 0, sizeof(AY_LOCCONNINFOLST));
+	memset(	&pLocConnInfos			, 0, sizeof(pLocConnInfos));
+	memset(	&AYCLNT_GWLISTE_L1		, 0, sizeof(AY_GWINFOLST));
+
+	memset(	&AYCLNT_QUEUELIST_L1	, 0, sizeof(AY_GWQUEUELST));
+	memset(	&pQueueInfos			, 0, sizeof(pQueueInfos));
+
+	/*
+	AY_DEVINFOLST	DevLevel1;
+	AY_DEVINFOLST	DevRemote;
+	Ui16			DevRemoteTOut[RMTDEV_MAX_CNT];
+	AY_DEVINFOLST	*pDevInfos[((MAX_DEVINFO_CNT / 4096) - 1)];
+	AY_GWINFOLST			AYCLNT_GWLISTE_L1;
+	AY_GWINFOLST			*pGwInfos[((MAX_CLNTGWLIST_CNT / 4096) - 1)];
+	AY_LOCCONNINFOLST		AYCLNT_LOCCONNLIST_L1;
+	AY_LOCCONNINFOLST		*pLocConnInfos[((MAX_LOCCONNINFO_CNT / 4096) - 1)]; /
+		AY_GWQUEUELST			AYCLNT_QUEUELIST_L1;
+	AY_GWQUEUELST			*pQueueInfos[((MAX_CLNTQUEUE_CNT / 4096) - 1)];
+	*/
+}
 
 /****************************************************************************/
 /*! \fn void AYCLNT_CoreDoTask(void)

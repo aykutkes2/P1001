@@ -8,10 +8,10 @@
 #define MAX_CLNTQUEUE_CNT				65536
 #define MAX_LOCCONNINFO_CNT				65536
 
-#define DEV_REMOTE_TIMEOUT				50000
-#define AY_CLNTQUEUE_TIMEOUT_VAL		50000
-#define AY_CLNTLOCCONN_TIMEOUT_VAL		50000
-#define AY_CLNTGW_TIMEOUT_VAL			50000
+#define DEV_REMOTE_TIMEOUT				10000000000
+#define AY_CLNTQUEUE_TIMEOUT_VAL		10000000000
+#define AY_CLNTLOCCONN_TIMEOUT_VAL		10000000000
+#define AY_CLNTGW_TIMEOUT_VAL			10000000000
 
 
 #define AY_CLNTCORE_DO_EACH				4096
@@ -253,6 +253,12 @@ extern int AYCLNT_QueueFindSlotNo(AY_CLNTQUEUE *pQue);
 ** \brief		       main process
 *****************************************************************************/
 extern void AYCLNT_CoreDoTask(void);
+
+/****************************************************************************/
+/*! \fn void AYCLNT_CoreInit(void)
+** \brief		       init process
+*****************************************************************************/
+extern void AYCLNT_CoreInit(void);
 
 enum _AYCLNT_STATUS {
 	_FIND_GW,
