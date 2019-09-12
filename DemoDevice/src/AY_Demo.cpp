@@ -298,13 +298,13 @@ int AYDEMO_SendDemoPacket2(void) {
 	//------- SEND
 	//UDP_header_init(&UDPheader);
 	//UDP_header_load(&UDPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyDemoInstPort);
-	oLen = sizeof(DEMO_STR_2); 
+	oLen = strlen((const char *)DEMO_STR_2);
 
 #if STEP_TEST == 1
 		printf("********* STEP 10 *************\n********* STEP 10 *************\n********* STEP 10 *************\n");
 	AYPRINT_UDP_Header(&UDPheader);
 #endif	
-	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&DEMO_STR_2, oLen/*sizeof(AY_DeviceStart)*/));
+	return (UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)DEMO_STR_2, oLen/*sizeof(AY_DeviceStart)*/));
 }
 
 int main(void)//(int argc, char **argv)
@@ -473,8 +473,8 @@ int main(void)//(int argc, char **argv)
 				}*/
 			}
 			else if(AY_Demo_DemoPacketReceived){
-				AYDEMO_SendDemoPacket2();
 				AY_Demo_DemoPacketReceived = 0;
+				AYDEMO_SendDemoPacket2();
 			}
 		}
 		else {
