@@ -95,6 +95,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	pData = (char *)(pkt_data + sizeof(udp_headerAll)); // data
 	if (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) {
 		if (DeviceType == 4) {
+			memcpy(&UDPheader_Buff, pUDP,sizeof(udp_headerAll));
 			AY_Demo_DemoPacketReceived = 1;
 #if STEP_TEST == 1
 			printf("********* STEP 9 *************\n********* STEP 9 *************\n********* STEP 9 *************\n");

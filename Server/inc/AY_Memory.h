@@ -80,12 +80,13 @@ typedef struct _AY_GWINFORQST {
 	};
 }AY_GWINFORQST;
 
+#define AY_GWINFORESP_SIZE_OF_INFO_CONT		64
 typedef struct _AY_GWINFORESP {
 	Ui32		_Test2;
 	Ui32		_Test3;
 	Ui32		_QueRowNo;
 	union {
-		Ui08	_InfoCont[64];
+		Ui08	_InfoCont[AY_GWINFORESP_SIZE_OF_INFO_CONT];
 		struct {
 			Ui32			_LastUpdateMin;
 			Ui08			_SessionKey[16];
@@ -95,11 +96,13 @@ typedef struct _AY_GWINFORESP {
 	};
 }AY_GWINFORESP;
 
+
+#define AY_GWRENTRQSTT_SIZE_OF_INFO_CONT		80
 typedef struct _AY_GWRENTRQST {
 	Ui32		_Test4;
 	Ui32		_Test5;
 	union {
-		Ui08	_InfoCont[80];
+		Ui08	_InfoCont[AY_GWRENTRQSTT_SIZE_OF_INFO_CONT];
 		struct {
 			Ui32			_LastUpdateMin;
 			Ui08			_Unique[12];

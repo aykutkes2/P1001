@@ -126,7 +126,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					oLen = iLen - sizeof(udp_headerAll) - sizeof(AY_GWDATAHDR);
 					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pPckt + sizeof(udp_headerAll) + sizeof(AY_GWDATAHDR)), oLen);
 					pUDP2 = ((udp_headerAll *)(pData + sizeof(udp_headerAll) + sizeof(AY_GWDATAHDR)));
-					oLen = pUDP2->_ipHeader.tlen + sizeof(uip_eth_hdr) + sizeof(AY_GWDATAHDR) + sizeof(udp_headerAll);
+					oLen = _HTONS(pUDP2->_ipHeader.tlen) + sizeof(uip_eth_hdr) + sizeof(AY_GWDATAHDR) + sizeof(udp_headerAll);
 					if (oLen <= iLen) {
 						iLen = oLen;
 					}
@@ -229,8 +229,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						//------ DECRPT -------------------//
 						oLen = iLen - sizeof(udp_headerAll) - sizeof(AY_GWDATAHDR);
 						AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pPckt + sizeof(udp_headerAll) + sizeof(AY_GWDATAHDR)), oLen);
-						pUDP2 = ((udp_headerAll *)(pData + sizeof(udp_headerAll) + sizeof(AY_GWDATAHDR)));
-						oLen = pUDP2->_ipHeader.tlen + sizeof(uip_eth_hdr) + sizeof(AY_GWDATAHDR) + sizeof(udp_headerAll);
+						pUDP2 = ((udp_headerAll *)(pData + sizeof(AY_GWDATAHDR)));
+						oLen = _HTONS(pUDP2->_ipHeader.tlen) + sizeof(uip_eth_hdr) + sizeof(AY_GWDATAHDR) + sizeof(udp_headerAll);
 						if (oLen <= iLen) {
 							iLen = oLen;
 						}
@@ -251,7 +251,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						//------------------------------------------------------------//
 						pInfom2 = pAY_FindRmtDevInfoByAll(&Inform2);
 						if (pInfom2 == nullptr) {
-							pInfom2 = pAYCLNT_AddDevToList((Ui08 *)pGw0->_Unique[0], 0x01000000 | (4096), _DEV_UNIQUE_ALL);///< burasý hatalý !!! sürekli yeni cihaz ekliyor.duzeltildi.
+							pInfom2 = pAYCLNT_AddDevToList((Ui08 *)&pGw0->_Unique[0], 0x01000000 | (4096), _DEV_UNIQUE_ALL);///< burasý hatalý !!! sürekli yeni cihaz ekliyor.duzeltildi.
 						}
 						//------------ Change IP Addresses -----------//	
 						pUDP2->_ethHeader.src = MyEth_Address;
@@ -309,6 +309,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			printf("********* STEP 4 *************\n********* STEP 4 *************\n********* STEP 4 *************\n");
 			AYPRINT_UDP_Header(pUDP);
 #endif
+			AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(&pGwRent->_InfoCont[0]), AY_GWRENTRQSTT_SIZE_OF_INFO_CONT);
+
 			pGw0 = pAYCLNT_AddGwToList((Ui08 *)&pGwRent->_Unique[0], (Ui32*)&pGwRent->_Unique[0], _GW_UNQUE_ALL);///< add or update gw to list
 			AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRent->_UDPh, _GW_UDPH);
 			AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRent->_SessionKey[0], _GW_SSK);
@@ -326,10 +328,16 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				printf("********* STEP 6 *************\n********* STEP 6 *************\n********* STEP 6 *************\n");
 				AYPRINT_UDP_Header(pUDP);
 #endif
+				AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(&pGwRsp->_InfoCont[0]), AY_GWINFORESP_SIZE_OF_INFO_CONT);
+
 				pGw0 = pAYCLNT_AddGwToList((Ui08 *)&pQue->pInfo->DevRead._Unique[0], &pQue->pInfo->DevRead._Unique[0], _GW_UNQUE_ALL);///< add or update gw to list
 				AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRsp->_UDPh, _GW_UDPH);
 				AYCLNT_UpdateGwInfo(pGw0, (Ui08 *)&pGwRsp->_SessionKey[0], _GW_SSK);
 				pGw0->MyPortNo = pUDP->_udpHeader.dport;
+#if STEP_TEST==1
+				printf("********* STEP 6 *************\n********* STEP 6 *************\n********* STEP 6 *************\n");
+				AYPRINT_UDP_Header(&pGwRsp->_UDPh);
+#endif
 				//----------------//
 				pQue->pGw = pGw0;
 				AY_Client_ChngServerConn = 1;

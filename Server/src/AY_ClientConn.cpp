@@ -169,7 +169,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							GwRsp._LastUpdateMin =  AYCONN_ThisMinute();
 							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
 							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
-							memcpy(&GwRsp._UDPh, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
+							memcpy(&GwRsp._UDPh, &pDst->_UDPh/*pDevStrtIn->_UDPh*/, sizeof(udp_headerAll));
 							AY_Crypt_AES128((Ui08 *)&pSrc->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
 							//--------------
 							memcpy(&UDPheader, &pSrc->_UDPh, sizeof(udp_headerAll));
