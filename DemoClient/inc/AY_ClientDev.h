@@ -154,7 +154,7 @@ extern int			AYCLNT_GwTimeoutTest(void);
 //============================ LOCAL CONNECTIONs ================================================================//
 extern AY_LOCCONNINFOLST		AYCLNT_LOCCONNLIST_L1;
 extern AY_LOCCONNINFOLST		*pLocConnInfos[((MAX_LOCCONNINFO_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
-extern Ui32						AYCLNT_LocConn_Cnt;
+extern Si32						AYCLNT_LocConn_Cnt;
 
 /****************************************************************************/
 /*! \fn AY_LOCCONNINFO	*pAYCLNT_LocConnById(int Id)
@@ -169,10 +169,10 @@ extern AY_LOCCONNINFO	*pAYCLNT_LocConnById(int Id);
 extern AY_LOCCONNINFO	*pAYCLNT_FindFirstFreeLocConnId(int *pId);
 
 /****************************************************************************/
-/*! \fn int AYCLNT_CalcLocConnCnt(int *pCnt)
+/*! \fn Si32 AYCLNT_CalcLocConnCnt(int *pCnt)
 ** \brief		       Calculate Local Connection Length
 *****************************************************************************/
-extern int AYCLNT_CalcLocConnCnt(int *pCnt);
+extern Si32 AYCLNT_CalcLocConnCnt(int *pCnt);
 
 /****************************************************************************/
 /*! \fn int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn)

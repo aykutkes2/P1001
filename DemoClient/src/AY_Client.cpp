@@ -247,11 +247,12 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						Inform2.DevRead._ParentId = ((AY_GWDATAHDR	*)pData)->_DevNoOnTrgt;
 						Inform2.DevRead._Type = _GUEST_;
 						Inform2.DevF.Full_ = 1;
-						memcpy(&Inform2.DevRead._Unique, pGw0->_Unique, 12);
+						memcpy(&Inform2.DevRead._Unique[0], &pGw0->_Unique[0], 12);
 						//------------------------------------------------------------//
 						pInfom2 = pAY_FindRmtDevInfoByAll(&Inform2);
 						if (pInfom2 == nullptr) {
 							pInfom2 = pAYCLNT_AddDevToList((Ui08 *)&pGw0->_Unique[0], 0x01000000 | (4096), _DEV_UNIQUE_ALL);///< burasý hatalý !!! sürekli yeni cihaz ekliyor.duzeltildi.
+							memcpy(pInfom2, &Inform2, sizeof(AY_DEVINFO));
 						}
 						//------------ Change IP Addresses -----------//	
 						pUDP2->_ethHeader.src = MyEth_Address;
@@ -584,7 +585,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			}
 		}
 		else {///< Check For Local Device
-			pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.daddr));
+			pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.saddr));
 			if (pInfom) {///< there is a valid target 
 				if (pInfom->DevRead._Type == _REAL_) {///< target must be a real device
 #if STEP_TEST == 1
@@ -751,16 +752,18 @@ int AY_StartSlaveListen(void) {
 	// //ip.src == 192.168.2.147 || ip.src == 192.168.2.148
 	AYSCKT_FilterFreeA(_SLVS_SCKT);
 
+	strcpy((char *)&MySocketBuff[0], "ip dst host ");
+	AY_ConvertIPAddToStrRet((Ui08*)&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
 	for (i = 0; i < AY_Ram.AY_DeviceCnt; i++) {
 		pDevIfo = pAY_FindDevInfoByDevNo(i);
 		if (pDevIfo) {
 			if (pDevIfo->DevRead._Type == _MIRROR_) {///< remote
-				if (j) {
+				//if (j) {
 					strcat((char *)&MySocketBuff[0], " or ip dst host ");
-				}
-				else {
-					strcpy((char *)&MySocketBuff[0], "ip dst host ");
-				}
+				//}
+				//else {
+				//	strcpy((char *)&MySocketBuff[0], "ip dst host ");
+				//}
 				AY_ConvertIPAddToStrRet((Ui08*)&pDevIfo->DevRead._LocalIp, (char*)&MySocketBuff[0]);
 				j++;
 			}
@@ -770,12 +773,12 @@ int AY_StartSlaveListen(void) {
 		AY_StartSlaveListenA();
 	}
 #endif
-	if (j) {
+	//if (j) {
 		AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
-	}
-	else {
-		MySocketBuff[0] = 0;
-	}
+	//}
+	//else {
+	//	MySocketBuff[0] = 0;
+	//}
 	printf("_SLVS_SCKT filter: %s \r\n", (char *)&MySocketBuff[0]);
 	return 1;
 }

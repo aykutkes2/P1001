@@ -534,7 +534,7 @@ int AYCLNT_GwTimeoutTest(void) {
 //============================ LOCAL CONNECTIONs ================================================================//
 AY_LOCCONNINFOLST		AYCLNT_LOCCONNLIST_L1;
 AY_LOCCONNINFOLST		*pLocConnInfos[((MAX_LOCCONNINFO_CNT / 4096) - 1)];///< total 4096 * (15+1) = 65536 devices supported
-Ui32					AYCLNT_LocConn_Cnt = 0;
+Si32					AYCLNT_LocConn_Cnt = 0;
 Ui16					LocConnTestTask = 0;
 
 
@@ -611,7 +611,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindFirstFreeLocConnId(int *pId) {
 
 
 /****************************************************************************/
-/*! \fn int AYCLNT_CalcLocConnCnt(int *pCnt)
+/*! \fn Si32 AYCLNT_CalcLocConnCnt(int *pCnt)
 **
 ** \brief		       Calculate Local Connection Length
 **
@@ -621,7 +621,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindFirstFreeLocConnId(int *pId) {
 ** 						lst		: last index of full Local Connection + 1
 **
 *****************************************************************************/
-int AYCLNT_CalcLocConnCnt(int *pCnt) {
+Si32 AYCLNT_CalcLocConnCnt(int *pCnt) {
 	AY_LOCCONNINFO	*pLocConn = nullptr;
 	Ui32 i, j = 0;
 	int tot = 0;
@@ -706,13 +706,15 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId) {
 
 	if (pId != 0) { *pId = -1; }
 	AYCLNT_LocConn_Cnt = AYCLNT_CalcLocConnCnt(0);
-	for (i = 0; i < AYCLNT_LocConn_Cnt; i++) {
-		pLocConn = pAYCLNT_LocConnById(i);
-		if (pLocConn != nullptr) {
-			if (pLocConn->LocConnF.Full_) {
-				if (memcmp(&pLocConn->IPA_Hdr, pIPA, sizeof(ip_headerAll)) == 0) {
-					if (pId != 0) { *pId = i; }
-					return pLocConn;
+	if (AYCLNT_LocConn_Cnt >= 0) {
+		for (i = 0; i <= AYCLNT_LocConn_Cnt; i++) {
+			pLocConn = pAYCLNT_LocConnById(i);
+			if (pLocConn != nullptr) {
+				if (pLocConn->LocConnF.Full_) {
+					if (memcmp(&pLocConn->IPA_Hdr, pIPA, sizeof(ip_headerAll)) == 0) {
+						if (pId != 0) { *pId = i; }
+						return pLocConn;
+					}
 				}
 			}
 		}
@@ -744,13 +746,15 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId) {
 	IPA.dport = pIPA->dport;
 	IPA.sport = pIPA->sport;
 	AYCLNT_LocConn_Cnt = AYCLNT_CalcLocConnCnt(0);
-	for (i = 0; i < AYCLNT_LocConn_Cnt; i++) {
-		pLocConn = pAYCLNT_LocConnById(i);
-		if (pLocConn != nullptr) {
-			if (pLocConn->LocConnF.Full_) {
-				if (memcmp(&pLocConn->IPA_Hdr, &IPA, sizeof(ip_headerAll)) == 0) {
-					if (pId != 0) { *pId = i; }
-					return pLocConn;
+	if (AYCLNT_LocConn_Cnt >= 0) {
+		for (i = 0; i <= AYCLNT_LocConn_Cnt; i++) {
+			pLocConn = pAYCLNT_LocConnById(i);
+			if (pLocConn != nullptr) {
+				if (pLocConn->LocConnF.Full_) {
+					if (memcmp(&pLocConn->IPA_Hdr, &IPA, sizeof(ip_headerAll)) == 0) {
+						if (pId != 0) { *pId = i; }
+						return pLocConn;
+					}
 				}
 			}
 		}
@@ -801,15 +805,17 @@ int AYCLNT_LocConnTimeoutTest(void) {
 	AY_LOCCONNINFO	*pLocConn;
 	int i;
 	AYCLNT_LocConn_Cnt = AYCLNT_CalcLocConnCnt(0);
-	for (i = 0; i < AYCLNT_LocConn_Cnt; i++) {
-		pLocConn = pAYCLNT_LocConnById(i);
-		if (pLocConn != nullptr) {
-			if (pLocConn->LocConnF.Full_) {
-				if (pLocConn->TimeOut) {
-					pLocConn->TimeOut--;
-					if (pLocConn->TimeOut == 0) {
-						memset(pLocConn, 0, sizeof(AY_LOCCONNINFO));
-						pLocConn->LocConnF.Full_ = 0;///< release slot
+	if (AYCLNT_LocConn_Cnt >= 0) {
+		for (i = 0; i <= AYCLNT_LocConn_Cnt; i++) {
+			pLocConn = pAYCLNT_LocConnById(i);
+			if (pLocConn != nullptr) {
+				if (pLocConn->LocConnF.Full_) {
+					if (pLocConn->TimeOut) {
+						pLocConn->TimeOut--;
+						if (pLocConn->TimeOut == 0) {
+							memset(pLocConn, 0, sizeof(AY_LOCCONNINFO));
+							pLocConn->LocConnF.Full_ = 0;///< release slot
+						}
 					}
 				}
 			}
