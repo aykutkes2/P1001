@@ -1124,9 +1124,9 @@ void AYCLNT_CoreDoTask(void) {
 					pGw0 = pAYCLNT_FindGwByUnique( (Ui32 *)&pQue->pInfo->DevRead._Unique[0], &tmp);
 					if (pGw0 != nullptr) {
 						pQue->pGw = pGw0;
+						pQue->Status = _PRE_SEND_PCKT;
 						AY_SendGwInfoSend2(pQue, i);
 						//AY_Client_ChngServerConn = 0;
-						pQue->Status = _PRE_SEND_PCKT;
 					}
 					else {///< SIDE connection and unknown destination so discard packet
 						AYCLNT_QueueReleaseSlot(pQue);

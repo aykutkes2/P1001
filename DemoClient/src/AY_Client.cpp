@@ -124,8 +124,13 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					pData = (Ui08 *)(pPckt + sizeof(udp_headerAll)); // 
 					//------ DECRPT -------------------//
 					oLen = iLen - sizeof(udp_headerAll) - sizeof(AY_GWDATAHDR);
-					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pPckt + sizeof(udp_headerAll) + sizeof(AY_GWDATAHDR)), oLen);
-					pUDP2 = ((udp_headerAll *)(pData + sizeof(udp_headerAll) + sizeof(AY_GWDATAHDR)));
+					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDATAHDR)), oLen);
+					pUDP2 = ((udp_headerAll *)(pData + sizeof(AY_GWDATAHDR)));
+#if STEP_TEST == 1
+					printf("********* STEP 11B *************\n********* STEP 11B *************\n********* STEP 11B *************\n");
+					printf("AYCLNT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
+					AYPRINT_UDP_Header(pUDP2);
+#endif	
 					oLen = _HTONS(pUDP2->_ipHeader.tlen) + sizeof(uip_eth_hdr) + sizeof(AY_GWDATAHDR) + sizeof(udp_headerAll);
 					if (oLen <= iLen) {
 						iLen = oLen;
@@ -848,6 +853,11 @@ int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row) {
 	udp_headerAll	*pUDP2;
 	pUDP2 = (udp_headerAll *)(pQue->pDataIO + sizeof(AY_GWDATAHDR));
 	pUDP2->_ipHeader.daddr = *((ip_address *)&pQue->pInfo->DevRead._LocalIp);
+#if STEP_TEST == 1
+	printf("********* STEP 11B *************\n********* STEP 11B *************\n********* STEP 11B *************\n");
+	printf("AYCLNT--> SSK = "); AY_HexValPrint((Ui08 *)&pQue->pGw->Sessionkey[0], 16); printf("\r\n");
+	AYPRINT_UDP_Header(pUDP2);
+#endif	
 	//-----------------------------------//	
 
 	oLen = ((pQue->DataIOLen + 15) & 0xFFF0);

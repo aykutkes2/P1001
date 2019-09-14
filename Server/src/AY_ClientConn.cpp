@@ -229,7 +229,7 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 						memcpy(&GwRent._UDPh, (udp_headerAll *)pPtr, sizeof(udp_headerAll));
 						memcpy(&GwRent._SessionKey, &pSrc->_SessionKey, sizeof(SSK_));
 						memcpy(&GwRent._Unique, &pSrc->_UnqiueId, sizeof(UNIQUE_ID));
-						AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&pInfoRqst->_InfoCont[0], AY_GWINFORQST_SIZE_OF_INFO_CONT);
+						AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&GwRent._InfoCont[0], AY_GWRENTRQSTT_SIZE_OF_INFO_CONT);
 						//---------------------------//
 						memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
 						AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
