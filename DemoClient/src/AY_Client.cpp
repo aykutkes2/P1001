@@ -92,7 +92,13 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	/* retireve the position of the ethernet header */
 	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
 	pData = (Ui08 *)(pkt_data + sizeof(udp_headerAll)); // 
-
+	
+	if (AY_Client_MAC_NotFound) {
+		if (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) {
+			MyEth_Address = pUDP->_ethHeader.dest;
+			AY_Client_MAC_NotFound = 0;
+		}
+	}
 	if ( (pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort)) && (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) ) {
 		printf("Server Port Call\n");/* */
 		if (NEW_REMOTE_RESPONSE) {
@@ -361,6 +367,15 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				Ui08 Temp[45];
 				AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(udp_headerAll)); // 
 				AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(udp_headerAll) + sizeof(AY_DeviceStartResp)); // 
+#if REMOTE_TEST==1
+				if (memcmp(&SrvEth_Address.addr[0], &DefaultMac[0], sizeof(uip_eth_addr)) == 0) {
+					memcpy(&SrvEth_Address.addr[0], &pUDP->_ethHeader.src, 6);
+				}
+#endif
+				if (AY_Client_SrvMAC_NotFound) {
+					SrvEth_Address = pUDP->_ethHeader.src;
+					AY_Client_SrvMAC_NotFound = 0;
+				}
 #if STEP_TEST==1
 				if (AY_Client_ChngServerConn) {
 					printf("********* STEP 7 *************\n********* STEP 7 *************\n********* STEP 7 *************\n");
@@ -423,103 +438,124 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	udp_headerAll	*pUDP;
 	struct DNS_HEADER *dns = NULL;
 
-	printf("Read Socket Callback\n");
+	//printf("Read Socket Callback\n");
 
 	/* retireve the position of the ethernet header */
 	pHdr = (uip_eth_hdr *)(pkt_data + 0); // ethernet header
 	ih = (ip_header *)(pkt_data + 14); //length of ethernet header
 	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
 
-	if (!AY_Client_GetMACadr) {
 
-		printf("MAC Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
-		/* print ip addresses and udp ports */
-		printf("%02x-%02x-%02x-%02x-%02x-%02x -> %02x-%02x-%02x-%02x-%02x-%02x\n\n\n\n",
-			pHdr->src.addr[0],
-			pHdr->src.addr[1],
-			pHdr->src.addr[2],
-			pHdr->src.addr[3],
-			pHdr->src.addr[4],
-			pHdr->src.addr[5],
-			pHdr->dest.addr[0],
-			pHdr->dest.addr[1],
-			pHdr->dest.addr[2],
-			pHdr->dest.addr[3],
-			pHdr->dest.addr[4],
-			pHdr->dest.addr[5]
-		);
-		if ((ih->saddr.byte1 == MyIP_Address.byte1) && (ih->saddr.byte2 == MyIP_Address.byte2) && (ih->saddr.byte3 == MyIP_Address.byte3) && (ih->saddr.byte4 == MyIP_Address.byte4)) {
-			MyEth_Address = pHdr->src;
-			SrvEth_Address = pHdr->dest;
-			//GwIP_Address = ih->daddr;
+	if ( pHdr->type == _HTONS(UIP_ETHTYPE_ARP) ) {
+		if (!AY_Client_GetMACadr) {
+			arp_headerAll		*pARP_Pckt = (arp_headerAll *)(pkt_data + 0); // ethernet header
+			if (pARP_Pckt->request == _HTONS(2)) {///< reply
+				if (memcmp(&pARP_Pckt->SenderIp.byte1, &MyIP_Addresses._gateway.byte1, sizeof(ip_address)) == 0) {
+					printf("MAC Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
+					SrvEth_Address = pARP_Pckt->SenderMac;
+					MyEth_Address = pARP_Pckt->TargetMac;
+					AY_Client_GetMACadr = 1;
+				}
+			}
 		}
-		else {
-			MyEth_Address = pHdr->dest;
-			SrvEth_Address = pHdr->src;
-			//GwIP_Address = ih->saddr;
-		}
-		AY_Client_GetMACadr = 1;
 	}
-	else if ((!AY_Client_GetSrvIPadr)){
-		if ((pUDP->_udpHeader.sport == _HTONS(CngFile.DNSPort))) {
-			if ((pUDP->_udpHeader.dport == _HTONS((MyClientInstPort + 1)))) {
-				unsigned char *qname, *reader;
-				struct RES_RECORD answer;
-				int i, stop;
-				Ui32 j;
-				char Temp[40];
+	else {
+		/*if (AY_Client_MAC_NotFound) {
+			if (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) {
+				MyEth_Address = pUDP->_ethHeader.dest;
+				AY_Client_MAC_NotFound = 0;
+			}
+		}*/
+		if (!AY_Client_GetMACadr) {
 
-				printf("DNS Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
+			printf("MAC Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
+			/* print ip addresses and udp ports */
+			printf("%02x-%02x-%02x-%02x-%02x-%02x -> %02x-%02x-%02x-%02x-%02x-%02x\n\n\n\n",
+				pHdr->src.addr[0],
+				pHdr->src.addr[1],
+				pHdr->src.addr[2],
+				pHdr->src.addr[3],
+				pHdr->src.addr[4],
+				pHdr->src.addr[5],
+				pHdr->dest.addr[0],
+				pHdr->dest.addr[1],
+				pHdr->dest.addr[2],
+				pHdr->dest.addr[3],
+				pHdr->dest.addr[4],
+				pHdr->dest.addr[5]
+			);
+			if ((ih->saddr.byte1 == MyIP_Address.byte1) && (ih->saddr.byte2 == MyIP_Address.byte2) && (ih->saddr.byte3 == MyIP_Address.byte3) && (ih->saddr.byte4 == MyIP_Address.byte4)) {
+				MyEth_Address = pHdr->src;
+				SrvEth_Address = pHdr->dest;
+				//GwIP_Address = ih->daddr;
+			}
+			else {
+				MyEth_Address = pHdr->dest;
+				SrvEth_Address = pHdr->src;
+				//GwIP_Address = ih->saddr;
+			}
+			AY_Client_GetMACadr = 1;
+		}
+		else if ((!AY_Client_GetSrvIPadr)) {
+			if ((pUDP->_udpHeader.sport == _HTONS(CngFile.DNSPort))) {
+				if ((pUDP->_udpHeader.dport == _HTONS((MyClientInstPort + 1)))) {
+					unsigned char *qname, *reader;
+					struct RES_RECORD answer;
+					int i, stop;
+					Ui32 j;
+					char Temp[40];
 
-				dns = (struct DNS_HEADER*) (pkt_data + sizeof(udp_headerAll));
-				printf("\nThe response contains : ");
-				printf("\n %d Questions.", ntohs(dns->q_count));
-				printf("\n %d Answers.", ntohs(dns->ans_count));
-				printf("\n %d Authoritative Servers.", ntohs(dns->auth_count));
-				printf("\n %d Additional records.\n\n", ntohs(dns->add_count));
+					printf("DNS Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
 
-				//point to the query portion
-				qname = (Ui08 *)(pkt_data + sizeof(udp_headerAll) + sizeof(struct DNS_HEADER));
+					dns = (struct DNS_HEADER*) (pkt_data + sizeof(udp_headerAll));
+					printf("\nThe response contains : ");
+					printf("\n %d Questions.", ntohs(dns->q_count));
+					printf("\n %d Answers.", ntohs(dns->ans_count));
+					printf("\n %d Authoritative Servers.", ntohs(dns->auth_count));
+					printf("\n %d Additional records.\n\n", ntohs(dns->add_count));
 
-				//move ahead of the dns header and the query field
-				reader = (Ui08 *)(pkt_data + sizeof(udp_headerAll) + sizeof(struct DNS_HEADER) + (strlen((const char*)qname) + 1) + sizeof(struct QUESTION));
-				//Start reading answers
-				stop = 0;
+					//point to the query portion
+					qname = (Ui08 *)(pkt_data + sizeof(udp_headerAll) + sizeof(struct DNS_HEADER));
 
-				for (i = 0; i < _HTONS(dns->ans_count); i++)
-				{
-					answer.name = ReadName(reader, (Ui08 *)(pkt_data + sizeof(udp_headerAll)), &stop);
-					reader = reader + stop;
+					//move ahead of the dns header and the query field
+					reader = (Ui08 *)(pkt_data + sizeof(udp_headerAll) + sizeof(struct DNS_HEADER) + (strlen((const char*)qname) + 1) + sizeof(struct QUESTION));
+					//Start reading answers
+					stop = 0;
 
-					answer.resource = (struct R_DATA*)(reader);
-					reader = reader + sizeof(struct R_DATA);
-
-					if (_HTONS(answer.resource->type) == 1) //if its an ipv4 address
+					for (i = 0; i < _HTONS(dns->ans_count); i++)
 					{
-						answer.rdata = (unsigned char*)_AY_MallocMemory(_HTONS(answer.resource->data_len));
+						answer.name = ReadName(reader, (Ui08 *)(pkt_data + sizeof(udp_headerAll)), &stop);
+						reader = reader + stop;
 
-						for (j = 0; j < _HTONS(answer.resource->data_len); j++)
+						answer.resource = (struct R_DATA*)(reader);
+						reader = reader + sizeof(struct R_DATA);
+
+						if (_HTONS(answer.resource->type) == 1) //if its an ipv4 address
 						{
-							answer.rdata[j] = reader[j];
-						}
+							answer.rdata = (unsigned char*)_AY_MallocMemory(_HTONS(answer.resource->data_len));
 
-						answer.rdata[_HTONS(answer.resource->data_len)] = '\0';
+							for (j = 0; j < _HTONS(answer.resource->data_len); j++)
+							{
+								answer.rdata[j] = reader[j];
+							}
 
-						reader = reader + _HTONS(answer.resource->data_len);
+							answer.rdata[_HTONS(answer.resource->data_len)] = '\0';
 
-						printf("Name : %s ", answer.name);
+							reader = reader + _HTONS(answer.resource->data_len);
 
-						if (_HTONS(answer.resource->type) == T_A) //IPv4 address
-						{
-							printf("has IPv4 address : %s", AY_ConvertIPToStrRet(answer.rdata, Temp));
-							if ((strstr((char *)DNS_Searching, (char *)answer.name) != nullptr)) {
+							printf("Name : %s ", answer.name);
+
+							if (_HTONS(answer.resource->type) == T_A) //IPv4 address
+							{
+								printf("has IPv4 address : %s", AY_ConvertIPToStrRet(answer.rdata, Temp));
+								if ((strstr((char *)DNS_Searching, (char *)answer.name) != nullptr)) {
 #if CLIENT_DEMO
 									SrvIP_Address.byte1 = 192;
 									SrvIP_Address.byte2 = 168;
 									SrvIP_Address.byte3 = 2;
 									SrvIP_Address.byte4 = 149;
 #else
-								*((Ui32 *)&SrvIP_Address) = *((Ui32 *)answer.rdata);
+									*((Ui32 *)&SrvIP_Address) = *((Ui32 *)answer.rdata);
 #endif
 									/* print ip addresses and udp ports */
 									printf("\n\nSrvIP_Address = %d.%d.%d.%d\n",
@@ -529,100 +565,102 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 										SrvIP_Address.byte4);
 									AY_Client_GetSrvIPadr = 1;
 									return;
+								}
 							}
-						}
 
-						if (_HTONS(answer.resource->type) == 5)
+							if (_HTONS(answer.resource->type) == 5)
+							{
+								//Canonical name for an alias
+								printf("has alias name : %s", answer.rdata);
+							}
+
+							printf("\n");
+						}
+						else
 						{
-							//Canonical name for an alias
-							printf("has alias name : %s", answer.rdata);
+							answer.rdata = ReadName(reader, (Ui08 *)(pkt_data + sizeof(udp_headerAll)), &stop);
+							reader = reader + stop;
 						}
-
-						printf("\n");
-					}
-					else
-					{
-						answer.rdata = ReadName(reader, (Ui08 *)(pkt_data + sizeof(udp_headerAll)), &stop);
-						reader = reader + stop;
 					}
 				}
 			}
 		}
-	}
-	else if ((AY_Client_RecvServer)) {
-		AY_DEVINFO			*pInfom;
-		AY_CLNTQUEUE		*pQue;
-		AY_LOCCONNINFO		LocConn0;
-		int					i;
-		printf("AYCLNT--> ============ NEW SIDE PACKET Test & Find Target =========\n ");
+		else if ((AY_Client_RecvServer)) {
+			AY_DEVINFO			*pInfom;
+			AY_CLNTQUEUE		*pQue;
+			AY_LOCCONNINFO		LocConn0;
+			int					i;
 
-		pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.daddr));
-		if (pInfom) {///< there is a valid target 
-			if (pInfom->DevRead._Type == _MIRROR_) {///< target must be a mirror device
-#if STEP_TEST==1
-				printf("********* STEP 1 *************\n********* STEP 1 *************\n********* STEP 1 *************\n");
-				AYPRINT_UDP_Header(pUDP);
-#endif
-				printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror Device)\n ");
-				pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
-				if (pQue != nullptr) {
-					pQue->pInfo = pInfom;
-					i = sizeof(AY_GWDATAHDR) + ((header->len + 15) & 0xFFF0);
-					pQue->DataIOLen = header->len;
-					pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
-					memcpy(pQue->pDataIO + sizeof(AY_GWDATAHDR), pkt_data, pQue->DataIOLen);
-					pQue->Status = _FIND_GW;
-					pQue->QueF.Full_ = 1;///< start core process
-					//--------------//
-					LocConn0.IPA_Hdr.daddr = pUDP->_ipHeader.daddr;
-					LocConn0.IPA_Hdr.saddr = pUDP->_ipHeader.saddr;
-					if ((header->len > (sizeof(uip_eth_hdr) + sizeof(ip_header))) && ((pUDP->_ipHeader.proto == UIP_PROTO_UDP) || (pUDP->_ipHeader.proto == UIP_PROTO_TCP))) {
-						LocConn0.IPA_Hdr.dport = pUDP->_udpHeader.dport;
-						LocConn0.IPA_Hdr.sport = pUDP->_udpHeader.sport;
-					} 
-					else {
-						LocConn0.IPA_Hdr.dport = 0;
-						LocConn0.IPA_Hdr.sport = 0;
-					}
-					LocConn0.pDevInfo = pQue->pInfo;
-					pQue->pLocConn = pAYCLNT_TestAddOrUpdateLocConn(&LocConn0, 0);
-				}				
-			}
-		}
-		else {///< Check For Local Device
-			pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.saddr));
+			pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.daddr));
 			if (pInfom) {///< there is a valid target 
-				if (pInfom->DevRead._Type == _REAL_) {///< target must be a real device
-#if STEP_TEST == 1
-					printf("********* STEP 10 *************\n********* STEP 10 *************\n********* STEP 10 *************\n");
+				printf("AYCLNT--> ============ NEW SIDE PACKET Test & Find Target =========\n ");
+				if (pInfom->DevRead._Type == _MIRROR_) {///< target must be a mirror device
+#if STEP_TEST==1
+					printf("********* STEP 1 *************\n********* STEP 1 *************\n********* STEP 1 *************\n");
 					AYPRINT_UDP_Header(pUDP);
-#endif	
+#endif
+					printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror Device)\n ");
 					pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
 					if (pQue != nullptr) {
-						ip_headerAll	IPA;
-						AY_LOCCONNINFO	*pLocConn0 = nullptr;
-						IPA.daddr = pUDP->_ipHeader.saddr;
-						IPA.saddr = pUDP->_ipHeader.daddr;
+						pQue->pInfo = pInfom;
+						i = sizeof(AY_GWDATAHDR) + ((header->len + 15) & 0xFFF0);
+						pQue->DataIOLen = header->len;
+						pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
+						memcpy(pQue->pDataIO + sizeof(AY_GWDATAHDR), pkt_data, pQue->DataIOLen);
+						pQue->Status = _FIND_GW;
+						pQue->QueF.Full_ = 1;///< start core process
+						//--------------//
+						LocConn0.IPA_Hdr.daddr = pUDP->_ipHeader.daddr;
+						LocConn0.IPA_Hdr.saddr = pUDP->_ipHeader.saddr;
 						if ((header->len > (sizeof(uip_eth_hdr) + sizeof(ip_header))) && ((pUDP->_ipHeader.proto == UIP_PROTO_UDP) || (pUDP->_ipHeader.proto == UIP_PROTO_TCP))) {
-							IPA.dport = pUDP->_udpHeader.sport;
-							IPA.sport = pUDP->_udpHeader.dport;
+							LocConn0.IPA_Hdr.dport = pUDP->_udpHeader.dport;
+							LocConn0.IPA_Hdr.sport = pUDP->_udpHeader.sport;
 						}
 						else {
-							IPA.dport = 0;
-							IPA.sport = 0;
+							LocConn0.IPA_Hdr.dport = 0;
+							LocConn0.IPA_Hdr.sport = 0;
 						}
-						pLocConn0 = pAYCLNT_FindLocConnByIPA/*_Rvs*/(&IPA, &i);///< find local connection 
-						if (pLocConn0 != nullptr) {
-							pQue->pInfo = pLocConn0->pDevInfo;//< start core process
-							//--------------//							
-							i = sizeof(AY_GWDATAHDR) + ((header->len + 15) & 0xFFF0);
-							pQue->DataIOLen = header->len;
-							pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
-							memcpy(pQue->pDataIO + sizeof(AY_GWDATAHDR), pkt_data, pQue->DataIOLen);
-							pQue->Status = _FIND_GW2;
-							pQue->QueF.Full_ = 1;///< start core process
-							//--------------//
-							pQue->pLocConn = pLocConn0;						
+						LocConn0.pDevInfo = pQue->pInfo;
+						pQue->pLocConn = pAYCLNT_TestAddOrUpdateLocConn(&LocConn0, 0);
+					}
+				}
+			}
+			else {///< Check For Local Device
+				pInfom = pAY_FindLocDevInfoByIP(*((Ui32 *)&pUDP->_ipHeader.saddr));
+				if (pInfom) {///< there is a valid target 
+					printf("AYCLNT--> ============ NEW SIDE PACKET Test & Find Target =========\n ");
+					if (pInfom->DevRead._Type == _REAL_) {///< target must be a real device
+#if STEP_TEST == 1
+						printf("********* STEP 10 *************\n********* STEP 10 *************\n********* STEP 10 *************\n");
+						AYPRINT_UDP_Header(pUDP);
+#endif	
+						pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
+						if (pQue != nullptr) {
+							ip_headerAll	IPA;
+							AY_LOCCONNINFO	*pLocConn0 = nullptr;
+							IPA.daddr = pUDP->_ipHeader.saddr;
+							IPA.saddr = pUDP->_ipHeader.daddr;
+							if ((header->len > (sizeof(uip_eth_hdr) + sizeof(ip_header))) && ((pUDP->_ipHeader.proto == UIP_PROTO_UDP) || (pUDP->_ipHeader.proto == UIP_PROTO_TCP))) {
+								IPA.dport = pUDP->_udpHeader.sport;
+								IPA.sport = pUDP->_udpHeader.dport;
+							}
+							else {
+								IPA.dport = 0;
+								IPA.sport = 0;
+							}
+							pLocConn0 = pAYCLNT_FindLocConnByIPA/*_Rvs*/(&IPA, &i);///< find local connection 
+							if (pLocConn0 != nullptr) {
+								pQue->pInfo = pLocConn0->pDevInfo;//< start core process
+								//--------------//							
+								i = sizeof(AY_GWDATAHDR) + ((header->len + 15) & 0xFFF0);
+								pQue->DataIOLen = header->len;
+								pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
+								memcpy(pQue->pDataIO + sizeof(AY_GWDATAHDR), pkt_data, pQue->DataIOLen);
+								pQue->Status = _FIND_GW2;
+								pQue->QueF.Full_ = 1;///< start core process
+								//--------------//
+								pQue->pLocConn = pLocConn0;
+							}
 						}
 					}
 				}
@@ -730,6 +768,15 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 	AYPRINT_UDP_Header(&UDPheader);
 #endif
 	return RetVal;
+}
+
+int AY_StartSlaveListenMAC(uip_eth_addr MAC, Ui08 SrcDst) {
+	//============= SET FILTER ==========================//
+	AYSCKT_FilterFreeA(_SLVS_SCKT);	
+	strcpy((char *)&MySocketBuff[0], "arp or icmp");
+	AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+	printf("_SLVS_SCKT filter: %s \r\n", (char *)&MySocketBuff[0]);
+	return 1;
 }
 
 int AY_StartSlaveListenA(void) {
@@ -984,7 +1031,11 @@ int main(void)//(int argc, char **argv)
 		else if (!AY_Client_GetMACadr) {
 			if (!AY_Client_WaitMACadr) {
 				if (AYSCKT_Socket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, 0, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
+					memcpy(&MyEth_Address.addr[0], &MyMac[0], sizeof(uip_eth_addr));
+					AY_StartSlaveListenMAC(*(uip_eth_addr *)&MyMac[0], _ETH_DST_);
+					AYSCKT_WhoHasIP(_SLVS_SCKT, *((uip_eth_addr *)&DefaultMac[0]), MyIP_Addresses._gateway, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyIP_Addresses._gateway);
 					AY_Client_WaitMACadr = 1; 
+					AY_Client_MAC_NotFound = 0;
 					j = 0;
 				}
 			}
@@ -992,15 +1043,27 @@ int main(void)//(int argc, char **argv)
 #if CLIENT_DEMO2
 				if (GetVal > 0) {
 					memcpy(&MyEth_Address.addr[0], &DEMO_CLNT_MAC[GetVal][0], 6);
+#if REMOTE_TEST==1
+					memcpy(&SrvEth_Address.addr[0], &DefaultMac[0], 6);
+#else
 					memcpy(&SrvEth_Address.addr[0], &MyMac[0], 6);
+#endif
 					AY_Client_GetMACadr = 1;
 				}
 
 #else
 				if (++j < 10) {
-					AY_Delay(1000);
+					AY_Delay(30000);
+					//AYSCKT_PingIP(_SLVS_SCKT, *((uip_eth_addr *)&DefaultMac[0]), MyIP_Addresses._gateway, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, 1+j);
+					AYSCKT_WhoHasIP(_SLVS_SCKT, *((uip_eth_addr *)&DefaultMac[0]), MyIP_Addresses._gateway, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyIP_Addresses._gateway);
+
 				}
-				else {
+				else {					
+					/*memcpy(&MyEth_Address.addr[0], &MyMac[0], sizeof(uip_eth_addr));
+					memcpy(&SrvEth_Address.addr[0], &DefaultMac[0], sizeof(uip_eth_addr));
+					AY_Client_GetMACadr = 1;
+					AY_Client_MAC_NotFound = 1;
+					AY_Client_SrvMAC_NotFound = 1;*/
 					AY_ClientInitLoop ++;
 					AYSCKT_FilterFreeB(_MAIN_SCKT);
 					AYSCKT_FilterFreeB(_SLVS_SCKT);

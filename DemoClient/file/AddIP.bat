@@ -4,3 +4,4 @@ cd..
 cd..
 cd..
 cd..
+exit

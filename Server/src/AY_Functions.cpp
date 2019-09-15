@@ -196,8 +196,10 @@ void AY_HexToStr(char *pDst, Ui08 *pSrc,Ui08 ByteCnt, Ui08 add) {
 			*pDst = HexToChar(y);	pDst++;
 			pSrc++;
 			ByteCnt--;
-			if(add==2)			{ *pDst = '.';	pDst++; }///< IP Address
-			else if (add == 3)	{ *pDst = ':';	pDst++; }///< MAC Address
+			if (ByteCnt) {
+				if (add == 2) { *pDst = '.';	pDst++; }///< IP Address
+				else if (add == 3) { *pDst = ':';	pDst++; }///< MAC Address
+			}
 		}
 		*pDst = 0;
 	}	

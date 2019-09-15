@@ -136,6 +136,38 @@ typedef struct icmp_headerAll
 	uip_eth_hdr		_ethHeader;		// ETHERNET Header	14 bytes
 	ip_header		_ipHeader;		// IP Header		20 bytes
 }icmp_headerAll;						// total			34 bytes
+/* ICMP header */
+typedef struct _ihdr {
+	uint8_t    i_type;
+	uint8_t    i_code; /* type sub code */
+	uint16_t    i_cksum;
+	uint16_t    i_id;
+	uint16_t    i_seq;
+	/* This is not the std header, but we reserve space for time */
+	//uint32_t    timestamp;
+	uint8_t    data[32];///< abcdefghijklmnopqrstuvwabcdefghi
+}icmp_data;
+
+typedef struct _icmp_All
+{
+	uip_eth_hdr		_ethHeader;		// ETHERNET Header	14 bytes
+	ip_header		_ipHeader;		// IP Header		20 bytes
+	icmp_data		_data;			// Data				40 bytes
+}icmp_All;							// total			74 bytes
+
+/* ARP header */
+typedef struct _arphdr {
+	uip_eth_hdr		_ethHeader;		// ETHERNET Header	14 bytes
+	uint16_t		hw_type;		///< 0x0001
+	uint16_t		proto_type;		///< 0x0800 IPv4
+	uint8_t			hw_size;		///< 0x0006
+	uint8_t			proto_size;		///< 0x0004
+	uint16_t		request;		///< 0x0001
+	uip_eth_addr	SenderMac;		///< MyMAC
+	ip_address		SenderIp;		///< MyIP
+	uip_eth_addr	TargetMac;		///< 00:00:00:00:00:00
+	ip_address		TargetIp;		///< 192.168.2.1
+}arp_headerAll;
 
 /* TCP/IP header info */
 typedef struct ip_headerAll
@@ -187,6 +219,8 @@ extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_add
 extern int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len);
 extern int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len);
 extern int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len);
+extern int AYSCKT_PingIP(Ui08 idx, uip_eth_addr dest, ip_address	daddr, uip_eth_addr src, ip_address	saddr, Ui08 SeqNo);
+extern int AYSCKT_WhoHasIP(Ui08 idx, uip_eth_addr dest, ip_address	daddr, uip_eth_addr src, ip_address	saddr, ip_address	search);
 extern int UDP_packet_check(Ui08 *pBuff, int *pLen);
 
 enum _AYSCKT_ETH_ {

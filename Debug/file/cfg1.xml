@@ -12,7 +12,7 @@ By modifying this file,
 <Item id = "7" Name = "Gateway Password" 					Value = "" />	<!--exp: "1234", "A1b4c32", ""(means empty)-->
 <Item id = "8" Name = "Allow To Add/Remove Ghost Ips" 		Value = "YES" />	<!--exp: "YES", "NO", ""(means YES)-->
 <Item id = "9" Name = "Unique ID" 							Value = "74D4353C4AB274D4353C4AB2" />	<!--exp: "112233445566778899AABBCC", ""(means generate new)-->
-<Item id = "10" Name = "Server Dns" 						Value = "192.168.2.149" />	<!--exp: "LocalAndSafe.com" -->
+<Item id = "10" Name = "Server Dns" 						Value = "78.172.230.98" />	<!--exp: "datakomip.dyndns.org" "192.168.2.149" "LocalAndSafe.com" -->
 <Item id = "11" Name = "Server Port" 						Value = "1982" />	<!--exp: "1982" -->
 <Item id = "12" Name = "DNS Ip" 							Value = "8.8.8.8" />	<!--exp: "8.8.4.4" -->
 <Item id = "13" Name = "DNS Port" 							Value = "53" />	<!--exp: "53" -->

@@ -18,6 +18,8 @@ typedef union _AY_FLGS {
 		Ui32	_GenerateRemoteDevs : 1;
 		Ui32	_ListenThreads : 1;
 		Ui32	_RemoteDevListEnd : 1;
+		Ui32	_MAC_NotFound : 1;
+		Ui32	_SrvMAC_NotFound : 1;
 
 		Ui32	_ChngServerConn : 1;///< generate new connection with server
 		Ui32	_DynamicIP : 1;
@@ -51,6 +53,8 @@ extern	AY_GlobalRAM	AY_Ram;
 #define AY_Client_GenerateRemoteDevs	AY_Ram.AY_Flgs._GenerateRemoteDevs
 #define AY_Client_ListenThreads			AY_Ram.AY_Flgs._ListenThreads
 #define AY_Client_RemoteDevListEnd		AY_Ram.AY_Flgs._RemoteDevListEnd
+#define AY_Client_MAC_NotFound			AY_Ram.AY_Flgs._MAC_NotFound
+#define AY_Client_SrvMAC_NotFound		AY_Ram.AY_Flgs._SrvMAC_NotFound
 
 
 #define AY_Client_ChngServerConn		AY_Ram.AY_Flgs._ChngServerConn
@@ -64,7 +68,10 @@ extern	AY_GlobalRAM	AY_Ram;
 #pragma pack(pop)
 
 #define CLIENT_DEMO					0//1
-#define CLIENT_DEMO2				1				
+#define CLIENT_DEMO2				0//1	
+#if CLIENT_DEMO2
+	#define REMOTE_TEST				0//1
+#endif
 
 enum _SRVSTRT_TYP {
 	_USE_OLD,

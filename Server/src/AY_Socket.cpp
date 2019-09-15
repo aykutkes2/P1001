@@ -111,6 +111,10 @@ uint16_t uip_tcpchksum(uint8_t *buff) {
 uint16_t uip_udpchksum(uint8_t *buff) {
 	return upper_layer_chksum(UIP_PROTO_UDP, buff);
 }
+/*---------------------------------------------------------------------------*/
+uint16_t icmp_udpchksum(uint8_t *buff) {
+	return upper_layer_chksum(UIP_PROTO_ICMP, buff);
+}
 
 
 /* prototype of the packet handler */
@@ -521,6 +525,47 @@ int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) 
 	return 1;
 }
 
+/*
+ *			I N _ C K S U M
+ *
+ * Checksum routine for Internet Protocol family headers (C Version)
+ *
+ */
+Ui16 in_cksum(Ui16 *addr, Ui32 len)
+{
+	Ui32 nleft = len;
+	Ui16 *w = addr;
+	Ui16 answer;
+	Ui32 sum = 0;
+
+	/*
+	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
+	 *  we add sequential 16 bit words to it, and at the end, fold
+	 *  back all the carry bits from the top 16 bits into the lower
+	 *  16 bits.
+	 */
+	while (nleft > 1) {
+		sum += *w++;
+		nleft -= 2;
+	}
+
+	/* mop up an odd byte, if necessary */
+	if (nleft == 1) {
+		Ui16	u = 0;
+
+		*(Ui08 *)(&u) = *(Ui08 *)w;
+		sum += u;
+	}
+
+	/*
+	 * add back carry outs from top 16 bits to low 16 bits
+	 */
+	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
+	sum += (sum >> 16);			/* add carry */
+	answer = ~sum;				/* truncate to 16 bits */
+	return (answer);
+}
+
 int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len) {
 	int i = sizeof(icmp_headerAll);
 	Ui08 *ptr = (Ui08	*)_AY_MallocMemory(len + sizeof(icmp_headerAll));///< max packet size
@@ -543,6 +588,77 @@ int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int le
 	printf("Data Has been Sent !!!! Count = %d", i);
 	AY_SendCnt += i;
 	_AY_FreeMemory((unsigned char*)ptr);
+	return 1;
+}
+
+int ICMP_header_init(icmp_headerAll * ICMP_header ) {
+	// Ethernet Header
+	ICMP_header->_ethHeader.type = mhtons(UIP_ETHTYPE_IP);
+	// IP Header	
+	ICMP_header->_ipHeader.ver_ihl = 0x45;				///< Version:4		Length:20
+	ICMP_header->_ipHeader.tos = 0x00;				///< Not ECN-Capable Transport
+	ICMP_header->_ipHeader.identification = mhtons(0x6f63);	///< identification
+	ICMP_header->_ipHeader.flags_fo = mhtons(0x0000);	///< Fragment offset
+	ICMP_header->_ipHeader.ttl = 0x80;				///< time to live 128
+	ICMP_header->_ipHeader.proto = 0x01;				///< ICMP
+	// END
+	return 1;
+}
+
+int AYSCKT_PingIP(Ui08 idx, uip_eth_addr dest, ip_address	daddr, uip_eth_addr src, ip_address	saddr, Ui08 SeqNo) {
+	icmp_data		ICMP_Data;
+	icmp_headerAll	ICMP_header;
+	icmp_headerAll	*pICMP_header = (icmp_headerAll	*)&ICMP_header;
+	//Ui08			*ptr = (Ui08*)&ICMP;
+	//Ui16			i = sizeof(icmp_All);
+
+	char _PingData[] = "abcdefghijklmnopqrstuvwabcdefghi";
+
+	ICMP_header_init(pICMP_header);
+	pICMP_header->_ethHeader.dest = dest;
+	pICMP_header->_ethHeader.src = src;
+	pICMP_header->_ipHeader.daddr = daddr;
+	pICMP_header->_ipHeader.saddr = saddr;
+	//----------------------------------------//
+	ICMP_Data.i_cksum = 0;
+	ICMP_Data.i_code = 0;
+	ICMP_Data.i_type = 0;
+	ICMP_Data.i_id = mhtons(1);
+	ICMP_Data.i_seq = mhtons(SeqNo);
+	memcpy(&ICMP_Data.data[0], &_PingData[0], 32);
+	//----------------------------------------//
+	ICMP_Data.i_cksum = in_cksum((Ui16 *)&ICMP_Data, sizeof(icmp_data));//
+	//----------------------------------------//
+	return ICMP_packet_send(idx, pICMP_header, (Ui08 *)&ICMP_Data, sizeof(icmp_data));
+	
+}
+
+int AYSCKT_WhoHasIP(Ui08 idx, uip_eth_addr dest, ip_address	daddr, uip_eth_addr src, ip_address	saddr, ip_address	search) {
+	arp_headerAll		ARP_Pckt;
+	
+	// Ethernet Header
+	ARP_Pckt._ethHeader.dest = dest;
+	ARP_Pckt._ethHeader.src = src;
+	ARP_Pckt._ethHeader.type = mhtons(UIP_ETHTYPE_ARP);
+	// ARP
+	ARP_Pckt.hw_type = mhtons(0x0001);		///< 0x0001
+	ARP_Pckt.proto_type = mhtons(0x0800);		///< 0x0800 IPv4
+	ARP_Pckt.hw_size = 0x06;		///< 0x06
+	ARP_Pckt.proto_size = 0x04;		///< 0x04
+	ARP_Pckt.request = mhtons(0x0001);		///< 0x0001
+	ARP_Pckt.SenderMac = src;		///< MyMAC
+	ARP_Pckt.SenderIp = saddr;		///< MyIP
+	memset(&ARP_Pckt.TargetMac, 0, sizeof(uip_eth_addr));///< 00:00:00:00:00:00
+	ARP_Pckt.TargetIp = search;		///< 192.168.2.1
+	// SEND
+	/* Send down the packet */
+	if (pcap_sendpacket(Thrd[idx].pfp, (Ui08 *)&ARP_Pckt, sizeof(arp_headerAll)) != 0)
+	{
+		fprintf(stderr, "\nARP - Error sending the packet: %s\n", pcap_geterr(Thrd[idx].pfp));
+		return PCAP_ERROR;
+	}
+	printf("ARP - Data Has been Sent !!!! Count = %d", sizeof(arp_headerAll));
+	AY_SendCnt += sizeof(arp_headerAll);
 	return 1;
 }
 
