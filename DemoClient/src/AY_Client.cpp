@@ -93,12 +93,6 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
 	pData = (Ui08 *)(pkt_data + sizeof(udp_headerAll)); // 
 	
-	if (AY_Client_MAC_NotFound) {
-		if (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) {
-			MyEth_Address = pUDP->_ethHeader.dest;
-			AY_Client_MAC_NotFound = 0;
-		}
-	}
 	if ( (pUDP->_udpHeader.sport == _HTONS(CngFile.ServerPort)) && (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) ) {
 		printf("Server Port Call\n");/* */
 		if (NEW_REMOTE_RESPONSE) {
@@ -214,18 +208,6 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			if (pInfom) {///< there is a valid target 
 				if ((pInfom->DevRead._Type == _REAL_)) {///< target must be a real device					
 					//--------- Generate Connection -----//
-					/*LocConn0.IPA_Hdr.daddr = pUDP->_ipHeader.daddr;
-					LocConn0.IPA_Hdr.saddr = pUDP->_ipHeader.saddr;
-					if (header->len > (sizeof(uip_eth_hdr) + sizeof(ip_header))) {
-						LocConn0.IPA_Hdr.dport = pUDP->_udpHeader.dport;
-						LocConn0.IPA_Hdr.sport = pUDP->_udpHeader.sport;
-					}
-					else {
-						LocConn0.IPA_Hdr.dport = 0;
-						LocConn0.IPA_Hdr.sport = 0;
-					}*/
-					//LocConn0.pDevInfo = pInfom;
-					
 					AY_DEVINFO		Inform2, *pInfom2;
 					AY_GWINFO		*pGw0;
 					udp_headerAll	*pUDP2;
@@ -460,12 +442,6 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		}
 	}
 	else {
-		/*if (AY_Client_MAC_NotFound) {
-			if (memcmp(&pUDP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) {
-				MyEth_Address = pUDP->_ethHeader.dest;
-				AY_Client_MAC_NotFound = 0;
-			}
-		}*/
 		if (!AY_Client_GetMACadr) {
 
 			printf("MAC Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
@@ -810,12 +786,7 @@ int AY_StartSlaveListen(void) {
 		pDevIfo = pAY_FindDevInfoByDevNo(i);
 		if (pDevIfo) {
 			if (pDevIfo->DevRead._Type == _MIRROR_) {///< remote
-				//if (j) {
-					strcat((char *)&MySocketBuff[0], " or ip dst host ");
-				//}
-				//else {
-				//	strcpy((char *)&MySocketBuff[0], "ip dst host ");
-				//}
+				strcat((char *)&MySocketBuff[0], " or ip dst host ");
 				AY_ConvertIPAddToStrRet((Ui08*)&pDevIfo->DevRead._LocalIp, (char*)&MySocketBuff[0]);
 				j++;
 			}
@@ -825,12 +796,8 @@ int AY_StartSlaveListen(void) {
 		AY_StartSlaveListenA();
 	}
 #endif
-	//if (j) {
-		AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
-	//}
-	//else {
-	//	MySocketBuff[0] = 0;
-	//}
+	AYSCKT_FilterSetA(_SLVS_SCKT, (char *)&MySocketBuff[0]);
+	
 	printf("_SLVS_SCKT filter: %s \r\n", (char *)&MySocketBuff[0]);
 	return 1;
 }
@@ -1054,16 +1021,10 @@ int main(void)//(int argc, char **argv)
 #else
 				if (++j < 10) {
 					AY_Delay(30000);
-					//AYSCKT_PingIP(_SLVS_SCKT, *((uip_eth_addr *)&DefaultMac[0]), MyIP_Addresses._gateway, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, 1+j);
 					AYSCKT_WhoHasIP(_SLVS_SCKT, *((uip_eth_addr *)&DefaultMac[0]), MyIP_Addresses._gateway, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyIP_Addresses._gateway);
 
 				}
 				else {					
-					/*memcpy(&MyEth_Address.addr[0], &MyMac[0], sizeof(uip_eth_addr));
-					memcpy(&SrvEth_Address.addr[0], &DefaultMac[0], sizeof(uip_eth_addr));
-					AY_Client_GetMACadr = 1;
-					AY_Client_MAC_NotFound = 1;
-					AY_Client_SrvMAC_NotFound = 1;*/
 					AY_ClientInitLoop ++;
 					AYSCKT_FilterFreeB(_MAIN_SCKT);
 					AYSCKT_FilterFreeB(_SLVS_SCKT);
