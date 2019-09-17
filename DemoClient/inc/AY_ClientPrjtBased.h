@@ -59,7 +59,7 @@ extern Ui08 SIGNING_PR_KEY[2048];
 extern Ui32 CLIENT_CERT_NO;
 
 
-extern const Ui16			MyUDP_StartPort;
+extern const Ui16			MyTCP_StartPort;
 extern const Ui08			MyMac[6];
 extern const Ui08			DefaultMac[6];
 

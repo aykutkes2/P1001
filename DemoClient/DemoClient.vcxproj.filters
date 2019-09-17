@@ -36,18 +36,6 @@
     <ClInclude Include="..\Server\inc\AY_Printf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Test\inc\DKRTU_MsgObjects.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Test\inc\DKRTU_Parser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Test\inc\messages\DKRTU_55101000.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Test\inc\messages\DKRTU_OD.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\AY_ClientDev.h">
       <Filter>Header Files</Filter>
     </ClInclude>

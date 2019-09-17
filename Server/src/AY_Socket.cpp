@@ -448,7 +448,7 @@ int UDP_header_init(udp_headerAll * UDP_header) {
 	UDP_header->_ipHeader.identification = mhtons(0x6f63);	///< identification
 	UDP_header->_ipHeader.flags_fo = mhtons(0x0000);	///< Fragment offset
 	UDP_header->_ipHeader.ttl = 0x80;				///< time to live 128
-	UDP_header->_ipHeader.proto = 0x11;				///< UDP
+	UDP_header->_ipHeader.proto = UIP_PROTO_UDP;				///< UDP
 	// UDP Header	
 	// END
 	return 1;
@@ -464,6 +464,35 @@ int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	da
 	// UDP Header	
 	UDP_header->_udpHeader.sport = mhtons(sport);	///< source port
 	UDP_header->_udpHeader.dport = mhtons(dport);	///< destination port	
+	// END	
+	return 1;
+}
+
+int TCP_header_init(tcp_headerAll * TCP_header) {
+	// Ethernet Header
+	TCP_header->_ethHeader.type = mhtons(UIP_ETHTYPE_IP);
+	// IP Header	
+	TCP_header->_ipHeader.ver_ihl = 0x45;				///< Version:4		Length:20
+	TCP_header->_ipHeader.tos = 0x00;				///< Not ECN-Capable Transport
+	TCP_header->_ipHeader.identification = mhtons(0x6f63);	///< identification
+	TCP_header->_ipHeader.flags_fo = mhtons(0x0000);	///< Fragment offset
+	TCP_header->_ipHeader.ttl = 0x80;				///< time to live 128
+	TCP_header->_ipHeader.proto = UIP_PROTO_TCP;				///< TCP
+	// TCP Header	
+	// END
+	return 1;
+}
+
+int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport) {
+	// Ethernet Header
+	memcpy(&TCP_header->_ethHeader.dest.addr[0], &dest.addr[0], 6);
+	memcpy(&TCP_header->_ethHeader.src.addr[0], &src.addr[0], 6);
+	// IP Header	
+	memcpy(&TCP_header->_ipHeader.saddr, (u_char *)&saddr, 4);					///< sorce address
+	memcpy(&TCP_header->_ipHeader.daddr, (u_char *)&daddr, 4);					///< destination address
+	// TCP Header	
+	TCP_header->_tcpHeader.sport = mhtons(sport);	///< source port
+	TCP_header->_tcpHeader.dport = mhtons(dport);	///< destination port	
 	// END	
 	return 1;
 }
@@ -714,6 +743,30 @@ int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst) {
 	return 1;
 }
 
+
+int AY_ChngPacketDest_TCP(tcp_headerAll *pTCP, uip_eth_addr *pEth, Ui08 SrcDst) {
+	tcp_headerAll TCP0 = *pTCP;
+
+	pTCP->_ethHeader.dest = TCP0._ethHeader.src;
+	pTCP->_ethHeader.src = TCP0._ethHeader.dest;
+	if (pEth != 0) {
+		if (SrcDst == _ETH_SRC_) {
+			pTCP->_ethHeader.src = *pEth;
+		}
+		else if (SrcDst == _ETH_DST_) {
+			pTCP->_ethHeader.dest = *pEth;
+		}
+	}
+
+	pTCP->_ipHeader.daddr = TCP0._ipHeader.saddr;
+	pTCP->_ipHeader.saddr = TCP0._ipHeader.daddr;
+
+	pTCP->_tcpHeader.dport = TCP0._tcpHeader.sport;
+	pTCP->_tcpHeader.sport = TCP0._tcpHeader.dport;
+
+	return 1;
+}
+
 void AYPRINT_UDP_Header(udp_headerAll *pUDP) {
 	char Buff0[32], Buff1[32];
 	printf("\t\t***************\tPACKET HEADER\t******************\n");
@@ -726,4 +779,18 @@ void AYPRINT_UDP_Header(udp_headerAll *pUDP) {
 	Buff1[0] = 0; AY_ConvertIPToStr(&pUDP->_ipHeader.daddr.byte1, &Buff1[0]);
 	printf("\tIP:\t%s\t\tIP:\t%s\n", Buff0, Buff1);
 	printf("\tPORT:   \t%d\t\tPORT:   \t%d\n", mhtons(pUDP->_udpHeader.sport), mhtons(pUDP->_udpHeader.dport));
+}
+
+void AYPRINT_TCP_Header(tcp_headerAll *pTCP) {
+	char Buff0[32], Buff1[32];
+	printf("\t\t***************\tPACKET HEADER\t******************\n");
+	printf("\t\tPROTOCOL:\t\t%d\n", pTCP->_ipHeader.proto);
+	printf("\t- SOURCE -\t\t\t- DESTINATION -\n");
+	Buff0[0] = 0; AY_HexToStr(&Buff0[0], &pTCP->_ethHeader.src.addr[0], 6, 3);
+	Buff1[0] = 0; AY_HexToStr(&Buff1[0], &pTCP->_ethHeader.dest.addr[0], 6, 3);
+	printf("\tETH:\t%s\tETH:\t%s\n", Buff0, Buff1);
+	Buff0[0] = 0; AY_ConvertIPToStr(&pTCP->_ipHeader.saddr.byte1, &Buff0[0]);
+	Buff1[0] = 0; AY_ConvertIPToStr(&pTCP->_ipHeader.daddr.byte1, &Buff1[0]);
+	printf("\tIP:\t%s\t\tIP:\t%s\n", Buff0, Buff1);
+	printf("\tPORT:   \t%d\t\tPORT:   \t%d\n", mhtons(pTCP->_tcpHeader.sport), mhtons(pTCP->_tcpHeader.dport));
 }

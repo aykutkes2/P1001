@@ -57,10 +57,10 @@ typedef union _AY_GWFLAGs {
 		Ui16	InfoLoaded_ : 1;
 	};
 }AY_GWFLAGs;
-typedef struct  _AY_GWINFO {///< 2 + 12 + 42 + 16 +  4+4+4+4 = 88 Bytes
+typedef struct  _AY_GWINFO {///< 2 + 12 + 54 + 16 +  4+4+4+4 = 100 Bytes
 	AY_GWFLAGs		GwF;
 	Ui32			_Unique[3];				///< Gateway's Unique ID ( This gateway for local and remote gateway ID for remote type device)
-	udp_headerAll	UDP_Hdr;
+	tcp_headerAll	TCP_Hdr;
 	Ui08			Sessionkey[16];
 	Ui16			MyPortNo;
 	Si32			TimeOut;
@@ -110,7 +110,7 @@ enum _GWINFO_COMPs {
 	_GW_FLG,
 	_GW_UNQUE,
 	_GW_PORTNO,
-	_GW_UDPH,
+	_GW_TCPH,
 	_GW_SSK,
 	_GW_UNQUE_ALL,
 	_GW_SNDCNT,
@@ -272,6 +272,7 @@ enum _AYCLNT_STATUS {
 
 //================== Extrenals ===========================//
 extern int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row);
-extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr eth, Ui08 SrcDst);
+//extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr eth, Ui08 SrcDst);
+extern int AY_ChngPacketDest_TCP(tcp_headerAll *pTCP, uip_eth_addr eth, Ui08 SrcDst);
 extern int AY_SendGwInfoSend(AY_CLNTQUEUE *pQue, Si32 row);
 extern int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row);

@@ -90,7 +90,7 @@ typedef struct _AY_GWINFORESP {
 		struct {
 			Ui32			_LastUpdateMin;
 			Ui08			_SessionKey[16];
-			udp_headerAll	_UDPh;//42 bytes
+			tcp_headerAll	_TCPh;//54 bytes
 			//Ui16			reserved0;
 		};
 	};
@@ -107,7 +107,7 @@ typedef struct _AY_GWRENTRQST {
 			Ui32			_LastUpdateMin;
 			Ui08			_Unique[12];
 			Ui08			_SessionKey[16];
-			udp_headerAll	_UDPh;//42 bytes
+			tcp_headerAll	_TCPh;//54 bytes
 			//Ui16			reserved0;
 		};
 	};

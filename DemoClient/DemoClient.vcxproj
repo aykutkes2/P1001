@@ -127,10 +127,6 @@
     <ClInclude Include="..\P1001\inc\AY_Type.h" />
     <ClInclude Include="..\Server\inc\AY_Printf.h" />
     <ClInclude Include="..\Server\inc\AY_Socket.h" />
-    <ClInclude Include="..\Test\inc\DKRTU_MsgObjects.h" />
-    <ClInclude Include="..\Test\inc\DKRTU_Parser.h" />
-    <ClInclude Include="..\Test\inc\messages\DKRTU_55101000.h" />
-    <ClInclude Include="..\Test\inc\messages\DKRTU_OD.h" />
     <ClInclude Include="inc\AY_Client.h" />
     <ClInclude Include="inc\AY_ClientDev.h" />
     <ClInclude Include="inc\AY_ClientPrjtBased.h" />

@@ -214,8 +214,10 @@ struct ethip_hdr {
 #pragma pack(pop)
 
 extern int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfilter, void *pCallBack, Ui32 _A);
-extern int UDP_header_init(udp_headerAll * UDP_header);
-extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
+//extern int UDP_header_init(udp_headerAll * UDP_header);
+//extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
+extern int TCP_header_init(tcp_headerAll * TCP_header);
+extern int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
 extern int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len);
 extern int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len);
 extern int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len);
@@ -228,8 +230,10 @@ enum _AYSCKT_ETH_ {
 	_ETH_SRC_,
 	_ETH_DST_
 };
-extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst);
-extern void AYPRINT_UDP_Header(udp_headerAll *pUDP);
+//extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst);
+extern int AY_ChngPacketDest_TCP(tcp_headerAll *pTCP, uip_eth_addr *pEth, Ui08 SrcDst);
+//extern void AYPRINT_UDP_Header(udp_headerAll *pUDP);
+extern void AYPRINT_TCP_Header(tcp_headerAll *pTCP);
 
 extern int AYSCKT_FilterSetA(Ui08 idx, char *pfilter);
 extern int AYSCKT_FilterSetB(Ui08 idx, char *pfilter);
