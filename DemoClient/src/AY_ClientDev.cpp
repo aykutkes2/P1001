@@ -412,10 +412,10 @@ int AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp) {
 		pGw->GwF.Full_ = 1;
 		printf("AYGW--> _GW_FLG \n");
 		break;
-	case _GW_UDPH:
-		pGw->UDP_Hdr = *((udp_headerAll	*)pComp);
+	case _GW_TCPH:
+		pGw->TCP_Hdr = *((tcp_headerAll	*)pComp);
 		pGw->GwF.Full_ = 1;
-		printf("AYGW--> _GW_UDPH \n");
+		printf("AYGW--> _GW_TCPH \n");
 		break;
 	case _GW_SSK:
 		memcpy(&pGw->Sessionkey[0], ((Ui08	*)pComp), 16);

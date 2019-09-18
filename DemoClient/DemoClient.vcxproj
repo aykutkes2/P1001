@@ -210,7 +210,6 @@
     <ClCompile Include="..\Server\src\AY_Memory.cpp" />
     <ClCompile Include="..\Server\src\AY_Printf.cpp" />
     <ClCompile Include="..\Server\src\AY_Socket.cpp" />
-    <ClCompile Include="..\Test\src\DKRTU_MsgObjects.cpp" />
     <ClCompile Include="src\AY_Client.cpp" />
     <ClCompile Include="src\AY_ClientDev.cpp" />
     <ClCompile Include="src\AY_ClientPrjtBased.cpp" />

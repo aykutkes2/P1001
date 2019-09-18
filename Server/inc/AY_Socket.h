@@ -102,6 +102,18 @@ typedef struct udp_header
 	uint16_t crc;			// Checksum
 }udp_header;
 
+/* TCP flags */
+enum _TCPFLGE {
+	_FIN = 0x01,
+	_SYN = 0x02,
+	_RST = 0x04,
+	_PSH = 0x08,
+	_ACK = 0x10,
+	_URG = 0x20,
+	_ECN = 0x40,
+	_CWR = 0x80,
+};
+
 typedef struct tcp_header {
 	uint16_t sport; // Source port
 	uint16_t dport; // Destination port
@@ -217,7 +229,7 @@ extern int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char
 //extern int UDP_header_init(udp_headerAll * UDP_header);
 //extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
 extern int TCP_header_init(tcp_headerAll * TCP_header);
-extern int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
+extern int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport, Ui32 ack, Ui32 seq, Ui08 flgs);
 extern int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len);
 extern int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len);
 extern int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff, int len);

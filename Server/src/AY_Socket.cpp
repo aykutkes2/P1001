@@ -305,7 +305,7 @@ int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfilt
 	//==============================//
 	pcap_t *fp;
 	char errbuf[PCAP_ERRBUF_SIZE];
-	char packet_filter[40] = "udp dst port ";
+	char packet_filter[40] = "tcp dst port ";
 	char packet_filterIP[40] = "ip src host ";
 
 	d = NULL;
@@ -483,7 +483,8 @@ int TCP_header_init(tcp_headerAll * TCP_header) {
 	return 1;
 }
 
-int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport) {
+#define TCP_HEADER_LEN(_Len_)		(((_Len_>>2)<<4)&0xF0)
+int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport,Ui32 ack, Ui32 seq, Ui08 flgs) {
 	// Ethernet Header
 	memcpy(&TCP_header->_ethHeader.dest.addr[0], &dest.addr[0], 6);
 	memcpy(&TCP_header->_ethHeader.src.addr[0], &src.addr[0], 6);
@@ -493,6 +494,12 @@ int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	da
 	// TCP Header	
 	TCP_header->_tcpHeader.sport = mhtons(sport);	///< source port
 	TCP_header->_tcpHeader.dport = mhtons(dport);	///< destination port	
+	TCP_header->_tcpHeader.urgptr = 0;	///< unknown
+	TCP_header->_tcpHeader.acknum = ack;
+	TCP_header->_tcpHeader.seqnum = seq;
+	TCP_header->_tcpHeader.flags = flgs;
+	TCP_header->_tcpHeader.th_off = TCP_HEADER_LEN(20);
+	TCP_header->_tcpHeader.win = mhtons(8192);
 	// END	
 	return 1;
 }
@@ -782,7 +789,14 @@ void AYPRINT_UDP_Header(udp_headerAll *pUDP) {
 }
 
 void AYPRINT_TCP_Header(tcp_headerAll *pTCP) {
-	char Buff0[32], Buff1[32];
+	union {
+		char Buff[64];
+		struct {
+			char Buff0[32];
+			char Buff1[32];
+		};
+	};
+	
 	printf("\t\t***************\tPACKET HEADER\t******************\n");
 	printf("\t\tPROTOCOL:\t\t%d\n", pTCP->_ipHeader.proto);
 	printf("\t- SOURCE -\t\t\t- DESTINATION -\n");
@@ -793,4 +807,17 @@ void AYPRINT_TCP_Header(tcp_headerAll *pTCP) {
 	Buff1[0] = 0; AY_ConvertIPToStr(&pTCP->_ipHeader.daddr.byte1, &Buff1[0]);
 	printf("\tIP:\t%s\t\tIP:\t%s\n", Buff0, Buff1);
 	printf("\tPORT:   \t%d\t\tPORT:   \t%d\n", mhtons(pTCP->_tcpHeader.sport), mhtons(pTCP->_tcpHeader.dport));
+	if (pTCP->_ipHeader.proto == UIP_PROTO_TCP) {
+		printf("\t\t SEQ:0x%08x - ACK:0x%08x - HLEN:0x%02x  \n", pTCP->_tcpHeader.seqnum, pTCP->_tcpHeader.acknum, pTCP->_tcpHeader.th_off);
+		Buff[0] = 0; AY_Sprintf_Add(&Buff[0], (char *)"FLAGS -- ");		
+		if( pTCP->_tcpHeader.flags & _FIN ){ AY_Sprintf_Add(&Buff[0], (char *)"[FIN] ");  }
+		if (pTCP->_tcpHeader.flags & _SYN) { AY_Sprintf_Add(&Buff[0], (char *)"[SYN] "); }
+		if (pTCP->_tcpHeader.flags & _RST) { AY_Sprintf_Add(&Buff[0], (char *)"[RST] "); }
+		if (pTCP->_tcpHeader.flags & _PSH) { AY_Sprintf_Add(&Buff[0], (char *)"[PSH] "); }
+		if (pTCP->_tcpHeader.flags & _ACK) { AY_Sprintf_Add(&Buff[0], (char *)"[ACK] "); }
+		if (pTCP->_tcpHeader.flags & _URG) { AY_Sprintf_Add(&Buff[0], (char *)"[URG] "); }
+		if (pTCP->_tcpHeader.flags & _ECN) { AY_Sprintf_Add(&Buff[0], (char *)"[ECN] "); }
+		if (pTCP->_tcpHeader.flags & _CWR) { AY_Sprintf_Add(&Buff[0], (char *)"[CWR] "); }
+		printf("\t\t %s \n", &Buff[0]);
+	}
 }
