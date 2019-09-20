@@ -91,7 +91,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	printf("Main Socket Callback\n");
 
 	/* retireve the position of the ethernet header */
-	pTCP = (tcp_headerAll *)(pkt_data + 0); // udp all header
+	pTCP = (tcp_headerAll *)(pkt_data + 0); // tcp all header
 	pData = (Ui08 *)(pkt_data + sizeof(tcp_headerAll)); // 
 	
 	if ( (pTCP->_tcpHeader.sport == _HTONS(CngFile.ServerPort)) && (memcmp(&pTCP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0) ) {
@@ -737,7 +737,7 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 	AY_Crypt_RSASign((Ui08 *)&SIGNING_PR_KEY[0], (Ui08 *)&DevStrt._Input[0], 256, (Ui08 *)&DevStrt._Sign[0]);
 	//------- SEND
 	TCP_header_init(&TCPheader);
-	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort);
+	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, 1, 1, (_PSH | _ACK));
 	oLen = sizeof(AY_DeviceStart);
 	RetVal = TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&DevStrt, oLen/*sizeof(AY_DeviceStart)*/) ;
 #if STEP_TEST==1
@@ -822,7 +822,7 @@ int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (((Ui08 *)&GwRqst._InfoCont[0])), AY_GWINFORQST_SIZE_OF_INFO_CONT);
 	//------- SEND
 	TCP_header_init(&TCPheader);
-	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort);
+	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort,1,1, (_PSH | _ACK));
 	oLen = sizeof(AY_GWINFORQST);
 #if STEP_TEST==1
 	printf("********* STEP 3 *************\n********* STEP 3 *************\n********* STEP 3 *************\n");

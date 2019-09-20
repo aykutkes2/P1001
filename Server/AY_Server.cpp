@@ -54,7 +54,7 @@ static Ui08				MyUnique_ID[12];
 static Ui08				MySocketBuff[1536];
 static Ui32				AY_ServerInitLoop;
 
-//static udp_headerAll	UDPh;
+//static tcp_headerAll	TCPh;
 //static Ui08				MySocketBuff2[1536];
 
 struct pcap_pkthdr {
@@ -64,42 +64,42 @@ struct pcap_pkthdr {
 };
 
 void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const Ui08 *pkt_data) {
-	udp_headerAll	*pUDP;
+	tcp_headerAll	*pTCP;
 	struct DNS_HEADER *dns = NULL;
 
-	/* retireve the position of the udp all header */
-	pUDP = (udp_headerAll *)(pkt_data + 0); // udp all header
+	/* retireve the position of the tcp all header */
+	pTCP = (tcp_headerAll *)(pkt_data + 0); // tcp all header
 
 	if (!AY_Server_GetMACadr) {
 
 		printf("MAC Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
-		/* print ip addresses and udp ports */
+		/* print ip addresses and tcp ports */
 		printf("%02x-%02x-%02x-%02x-%02x-%02x -> %02x-%02x-%02x-%02x-%02x-%02x\n\n\n\n",
-			pUDP->_ethHeader.src.addr[0],
-			pUDP->_ethHeader.src.addr[1],
-			pUDP->_ethHeader.src.addr[2],
-			pUDP->_ethHeader.src.addr[3],
-			pUDP->_ethHeader.src.addr[4],
-			pUDP->_ethHeader.src.addr[5],
-			pUDP->_ethHeader.dest.addr[0],
-			pUDP->_ethHeader.dest.addr[1],
-			pUDP->_ethHeader.dest.addr[2],
-			pUDP->_ethHeader.dest.addr[3],
-			pUDP->_ethHeader.dest.addr[4],
-			pUDP->_ethHeader.dest.addr[5]
+			pTCP->_ethHeader.src.addr[0],
+			pTCP->_ethHeader.src.addr[1],
+			pTCP->_ethHeader.src.addr[2],
+			pTCP->_ethHeader.src.addr[3],
+			pTCP->_ethHeader.src.addr[4],
+			pTCP->_ethHeader.src.addr[5],
+			pTCP->_ethHeader.dest.addr[0],
+			pTCP->_ethHeader.dest.addr[1],
+			pTCP->_ethHeader.dest.addr[2],
+			pTCP->_ethHeader.dest.addr[3],
+			pTCP->_ethHeader.dest.addr[4],
+			pTCP->_ethHeader.dest.addr[5]
 		);
-		if ((pUDP->_ipHeader.saddr.byte1 == MyIP_Address.byte1) && (pUDP->_ipHeader.saddr.byte2 == MyIP_Address.byte2) && (pUDP->_ipHeader.saddr.byte3 == MyIP_Address.byte3) && (pUDP->_ipHeader.saddr.byte4 == MyIP_Address.byte4)) {
-			MyEth_Address = pUDP->_ethHeader.src;
+		if ((pTCP->_ipHeader.saddr.byte1 == MyIP_Address.byte1) && (pTCP->_ipHeader.saddr.byte2 == MyIP_Address.byte2) && (pTCP->_ipHeader.saddr.byte3 == MyIP_Address.byte3) && (pTCP->_ipHeader.saddr.byte4 == MyIP_Address.byte4)) {
+			MyEth_Address = pTCP->_ethHeader.src;
 		}
 		else {
-			MyEth_Address = pUDP->_ethHeader.dest;
+			MyEth_Address = pTCP->_ethHeader.dest;
 		}
 		AY_Server_GetMACadr = 1;
 	}
 	else if (AY_Server_Initied && AY_Server_GetMACadr) {
 		int Len;
-		if (UDP_packet_check((Ui08 *)pkt_data, &Len) == 1) {
-			printf("New UDP packet arrived\n");
+		if (TCP_packet_check((Ui08 *)pkt_data, &Len) == 1) {
+			printf("New TCP packet arrived\n");
 			if (AY_TestLoadDeviceStart((Ui08 *)pkt_data, Len) == 0) {
 				printf("Not Device Start\n");
 				if (AY_TestLoadGwInfoRqst((Ui08 *)pkt_data, Len) == 0) {
@@ -128,7 +128,7 @@ int main(void) {
 			memcpy(&MyEth_Address.addr[0], &DEMO_SRV_MAC[0], 6);
 			memcpy(&MyUnique_ID[0], &DEMO_SRV_UNIQUE[0], 12);
 
-			strcpy((char *)&MySocketBuff[0], "udp dst port ");
+			strcpy((char *)&MySocketBuff[0], "tcp dst port ");
 			AY_ConvertUi32AddToStrRet(SERVER_Port, (char *)&MySocketBuff[0]);
 			if (AYSCKT_Socket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, SERVER_Port, 0, AY_MainSocket_CallBack, AY_ServerInitLoop) == 1) {
 				AY_Server_Initied = 1;
@@ -175,7 +175,7 @@ int main(void) {
 		else if (!AY_Server_SetFilter) {
 			//============= SET FILTER ==========================//
 			AYSCKT_FilterFreeA(_MAIN_SCKT);
-			strcpy((char *)&MySocketBuff[0], "udp dst port ");
+			strcpy((char *)&MySocketBuff[0], "tcp dst port ");
 			AY_ConvertUi32AddToStrRet(SERVER_Port, (char *)&MySocketBuff[0]);
 			strcat((char *)&MySocketBuff[0], " and ip dst host ");
 			AY_ConvertIPAddToStrRet((Ui08 *)&MyIP_Address.byte1, (char *)&MySocketBuff[0]);

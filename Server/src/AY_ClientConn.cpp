@@ -36,13 +36,13 @@
 void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	AY_DEVSTRTIN		*pDevStrtIn;
 	AY_DeviceStartResp	*pDevStrtPspHdr;
-	udp_headerAll		*pUDP;
+	tcp_headerAll		*pTCP;
 	Ui32				i,j,k;
 	Ui32				m, n;//test sil !!!
 
 	pDevStrtIn = (AY_DEVSTRTIN	*)pQ->pIn;
 	printf("\n\t\tBEFORE-> ConnectionCount = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", ConnectionCount, *((Ui32 *)&pDevStrtIn->_Unique[0]),*((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]));
-	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_UDPh, &pDevStrtIn->_SessionKey[0], AY_CONN_UPDATE);
+	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_TCPh, &pDevStrtIn->_SessionKey[0], AY_CONN_UPDATE);
 	printf("\n\t\tAFTER-> ConnectionCount = %d\n", ConnectionCount);
 	printf("AYDVSTRT--> Connection ID ConnId=%d \n", i);
 	MYSQL_AddNewGateway((char *)pDevStrtIn->_Name, (char *)pDevStrtIn->_Pswd, (Ui32 *)&pDevStrtIn->_Unique, *((Ui64 *)&pDevStrtIn->_MAC), i, pDevStrtIn->_ServerCertNo, &pDevStrtIn->_SessionKey[0], _GATEWAY_UPDATE_);
@@ -55,16 +55,17 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	ConnNo = i;
 	memcpy(&Sssk[0], &pDevStrtIn->_SessionKey[0], 16);*/
 	//--------------------------------//
-	pUDP = (udp_headerAll *)_AY_MallocMemory(4096);///< max packet size
-	memcpy(pUDP, &pDevStrtIn->_UDPh, sizeof(udp_headerAll));
-	pUDP->_ethHeader.dest = pDevStrtIn->_UDPh._ethHeader.src;
-	pUDP->_ethHeader.src = MyEth_Address;//pDevStrtIn->_UDPh._ethHeader.dest;
-	pUDP->_ipHeader.daddr = pDevStrtIn->_UDPh._ipHeader.saddr;
-	pUDP->_ipHeader.saddr = pDevStrtIn->_UDPh._ipHeader.daddr;
-	pUDP->_udpHeader.dport = pDevStrtIn->_UDPh._udpHeader.sport;
-	pUDP->_udpHeader.sport = pDevStrtIn->_UDPh._udpHeader.dport;
+	pTCP = (tcp_headerAll *)_AY_MallocMemory(4096);///< max packet size
+	memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
+	pTCP->_ethHeader.dest = pDevStrtIn->_TCPh._ethHeader.src;
+	pTCP->_ethHeader.src = MyEth_Address;//pDevStrtIn->_TCPh._ethHeader.dest;
+	pTCP->_ipHeader.daddr = pDevStrtIn->_TCPh._ipHeader.saddr;
+	pTCP->_ipHeader.saddr = pDevStrtIn->_TCPh._ipHeader.daddr;
+	pTCP->_tcpHeader.dport = pDevStrtIn->_TCPh._tcpHeader.sport;
+	pTCP->_tcpHeader.sport = pDevStrtIn->_TCPh._tcpHeader.dport;
+	// ack seq düþün !!!
 
-	pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pUDP)+sizeof(udp_headerAll));///< max packet size
+	pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pTCP)+sizeof(tcp_headerAll));///< max packet size
 	j = 0; k = 0;
 	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
 	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
@@ -95,17 +96,17 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		}
 		k++;
 		j += i;
-		UDP_packet_send(_MAIN_SCKT, pUDP, (Ui08 *)pDevStrtPspHdr, (sizeof(AY_DeviceStartResp) + n/*(((Ui16)i) * sizeof(AY_DeviceRead))*/));
+		TCP_packet_send(_MAIN_SCKT, pTCP, (Ui08 *)pDevStrtPspHdr, (sizeof(AY_DeviceStartResp) + n/*(((Ui16)i) * sizeof(AY_DeviceRead))*/));
 #if STEP_TEST==1
 		printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
-		AYPRINT_UDP_Header(pUDP);
+		AYPRINT_TCP_Header(pTCP);
 #endif
 	} while (i >= 168);
 	
 	MYSQL_FindLoadDeviceInfoID(0, (Ui32 *)&pDevStrtIn->_Unique);
 	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\n\n\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\n\r\n");
 	
-	_AY_FreeMemory((unsigned char*)pUDP);
+	_AY_FreeMemory((unsigned char*)pTCP);
 	///< delete from queue
 	pQ->QFlg._QFinishedF = 1;
 	pQ->QFlg._QKeepF = 0;
@@ -113,20 +114,20 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 }
 
 int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
-	udp_headerAll	*pUDP; 
+	tcp_headerAll		*pTCP;
 	AY_DeviceStart	*pDevStrt;
 	AY_DEVSTRTIN	*pDevStrtIn;
 	Ui08			*pOut;
 	Ui16			j;
 	Si32			i;
 
-	pDevStrt = (AY_DeviceStart	*)(pPtr + sizeof(udp_headerAll));
+	pDevStrt = (AY_DeviceStart	*)(pPtr + sizeof(tcp_headerAll));
 	if ((pDevStrt->_Test0 == PACKET_TEST_DATA0) && (pDevStrt->_Test1 == PACKET_TEST_DATA1)) {
 		printf("AYDVSTRT--> Packet type is DeviceStart\n");
 		if (Len == sizeof(AY_DeviceStart)) {
 			pOut = (Ui08	*)_AY_MallocMemory(256);
 			pDevStrt = (AY_DeviceStart	*)_AY_MallocMemory(sizeof(AY_DeviceStart));
-			memcpy(pDevStrt, (AY_DeviceStart	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_DeviceStart));
+			memcpy(pDevStrt, (AY_DeviceStart	*)(pPtr + sizeof(tcp_headerAll)), sizeof(AY_DeviceStart));
 			///<===== Check Client's Sign ===================
 			AY_Crypt_RSAVerify((Ui08 *)&CLIENT_PUB_KEY[0], (Ui08 *)&pDevStrt->_Input[0], 256, (Ui08 *)&pDevStrt->_Sign[0]);
 			///<===== Decrpt Data ===================
@@ -134,13 +135,13 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			memcpy(&pDevStrt->_Input[0], pOut, 256);
 			_AY_FreeMemory((unsigned char*)pOut);
 			//======= Generate AY_DEVSTRTIN
-			pUDP = (udp_headerAll *)(pPtr + 0); // udp all header
+			pTCP = (tcp_headerAll *)(pPtr + 0); // udp all header
 #if STEP_TEST==1
 			printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
-			AYPRINT_UDP_Header(pUDP);
+			AYPRINT_TCP_Header(pTCP);
 #endif
 			pDevStrtIn = (AY_DEVSTRTIN	*)_AY_MallocMemory(sizeof(AY_DEVSTRTIN));
-			memcpy(&pDevStrtIn->_UDPh, pUDP, sizeof(udp_headerAll));
+			memcpy(&pDevStrtIn->_TCPh, pTCP, sizeof(tcp_headerAll));
 			pDevStrtIn->_LocalCertNo = pDevStrt->_LocalCertNo;
 			pDevStrtIn->_ServerCertNo = pDevStrt->_ServerCertNo;
 			memcpy(&pDevStrtIn->_MAC, &pDevStrt->_MAC, 6);
@@ -161,7 +162,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].SrcUniq);
 						if (pSrc != nullptr) {
 							AY_GWINFORESP		GwRsp;
-							udp_headerAll		UDPheader;
+							tcp_headerAll		TCPheader;
 							Ui16				oLen;
 
 							GwRsp._Test2 = PACKET_TEST_DATA2;
@@ -169,17 +170,17 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							GwRsp._LastUpdateMin =  AYCONN_ThisMinute();
 							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
 							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
-							memcpy(&GwRsp._UDPh, &pDst->_UDPh/*pDevStrtIn->_UDPh*/, sizeof(udp_headerAll));
+							memcpy(&GwRsp._TCPh, &pDst->_TCPh/*pDevStrtIn->_TCPh*/, sizeof(tcp_headerAll));
 							AY_Crypt_AES128((Ui08 *)&pSrc->_SessionKey[0], (Ui08 *)&GwRsp._InfoCont[0], sizeof(GwRsp._InfoCont));
 							//--------------
-							memcpy(&UDPheader, &pSrc->_UDPh, sizeof(udp_headerAll));
-							AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
+							memcpy(&TCPheader, &pSrc->_TCPh, sizeof(tcp_headerAll));
+							AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
 							oLen = sizeof(AY_GWINFORESP);
 #if STEP_TEST==1
 							printf("********* STEP 6 *************\n********* STEP 6 *************\n********* STEP 6 *************\n");
-							AYPRINT_UDP_Header(&UDPheader);
+							AYPRINT_TCP_Header(&TCPheader);
 #endif
-							UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRsp, oLen);
+							TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRsp, oLen);
 							//--------------
 							AYSRV_UniqQ_Init(i);
 						}
@@ -198,27 +199,27 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 	AY_GWINFORQST	*pInfoRqst;
 	Si32			i;
 
-	pInfoRqst = (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll));
+	pInfoRqst = (AY_GWINFORQST	*)(pPtr + sizeof(tcp_headerAll));
 	if ((pInfoRqst->_Test2 == PACKET_TEST_DATA2) && (pInfoRqst->_Test3 == PACKET_TEST_DATA3)) {
 #if STEP_TEST==1
 		printf("********* STEP 3 *************\n********* STEP 3 *************\n********* STEP 3 *************\n");
-		AYPRINT_UDP_Header((udp_headerAll *)pPtr);
+		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
 #endif
 		printf("AYDVSTRT--> Packet type is Info Request\n");
 		if (Len == sizeof(AY_GWINFORQST)) {
 			AY_CONNTYPE	*pSrc, *pDst;
 			AY_GWRENTRQST	GwRent;
-			pSrc = pFindConnByUDPheader((udp_headerAll *)pPtr);
+			pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);
 			if (pSrc != nullptr) {
 				i = AYSRV_UniqQ_FindFirstFreeRow();
 				if (i != -1) {
 					pInfoRqst = (AY_GWINFORQST	*)_AY_MallocMemory(sizeof(AY_GWINFORQST) + 16);
-					memcpy(pInfoRqst, (AY_GWINFORQST	*)(pPtr + sizeof(udp_headerAll)), sizeof(AY_GWINFORQST));
+					memcpy(pInfoRqst, (AY_GWINFORQST	*)(pPtr + sizeof(tcp_headerAll)), sizeof(AY_GWINFORQST));
 					//---------------------------//
 					AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], (Ui08 *)&pInfoRqst->_InfoCont[0], AY_GWINFORQST_SIZE_OF_INFO_CONT);
 					pDst = pFindConnByUniqueID((UNIQUE_ID *)&pInfoRqst->_Unique[0]);
 					if (pDst != nullptr) {
-						udp_headerAll		UDPheader;
+						tcp_headerAll		TCPheader;
 						Ui16 oLen;
 						//---------------------------//
 						AYSRV_UniqQ_Load(i, *((UNIQUE_ID *)&pSrc->_UnqiueId[0]), *((UNIQUE_ID *)&pInfoRqst->_Unique[0]), pInfoRqst->_QueRowNo, _UNIQUE_Q_RENT, 0, 0);
@@ -226,19 +227,19 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 						GwRent._Test4 = PACKET_TEST_DATA4;
 						GwRent._Test5 = PACKET_TEST_DATA5;
 						GwRent._LastUpdateMin = AYCONN_ThisMinute();
-						memcpy(&GwRent._UDPh, (udp_headerAll *)pPtr, sizeof(udp_headerAll));
+						memcpy(&GwRent._TCPh, (tcp_headerAll *)pPtr, sizeof(tcp_headerAll));
 						memcpy(&GwRent._SessionKey, &pSrc->_SessionKey, sizeof(SSK_));
 						memcpy(&GwRent._Unique, &pSrc->_UnqiueId, sizeof(UNIQUE_ID));
 						AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (Ui08 *)&GwRent._InfoCont[0], AY_GWRENTRQSTT_SIZE_OF_INFO_CONT);
 						//---------------------------//
-						memcpy(&UDPheader, &pDst->_UDPh, sizeof(udp_headerAll));
-						AY_ChngPacketDest(&UDPheader, &MyEth_Address, _ETH_DST_);
+						memcpy(&TCPheader, &pDst->_TCPh, sizeof(tcp_headerAll));
+						AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
 						oLen = sizeof(AY_GWRENTRQST);
 #if STEP_TEST==1
 						printf("********* STEP 4 *************\n********* STEP 4 *************\n********* STEP 4 *************\n");
-						AYPRINT_UDP_Header(&UDPheader);
+						AYPRINT_TCP_Header(&TCPheader);
 #endif
-						i =  UDP_packet_send(_MAIN_SCKT, &UDPheader, (Ui08 *)&GwRent, oLen);
+						i =  TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRent, oLen);
 						_AY_FreeMemory((unsigned char *)pInfoRqst);
 						return i;
 					}
@@ -265,7 +266,7 @@ int AYCONN_TestMinute(Ui32 RecMin, Ui32 TimeOut) {
 	if (Val > TimeOut) { return 1; }
 	else { return 0; }
 }
-Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAll *pUDP, Ui08 *pSSK, Ui08 Func) {
+Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAll *pTCP, Ui08 *pSSK, Ui08 Func) {
 	void *ptr;
 	AY_CONNADR	*pConnList;
 	AY_CONNTYPE	*pConnTyp, *pConnTst;
@@ -345,7 +346,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAl
 		else if ((pConnTyp->_UnqiueId[0] == Unique0) && (pConnTyp->_UnqiueId[1] == Unique1) && (pConnTyp->_UnqiueId[2] == Unique2)) {///< device found
 			printf("AYCONN--> Conn found FirstFree=%d \n", i);
 			if (Func == AY_CONN_UPDATE) {
-				memcpy(&pConnTyp->_UDPh, pUDP, sizeof(udp_headerAll));
+				memcpy(&pConnTyp->_TCPh, pTCP, sizeof(tcp_headerAll));
 				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
 			}
 			else if (Func == AY_CONN_DELETE) {
@@ -364,7 +365,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAl
 				pConnTyp->_UnqiueId[0] = Unique0;
 				pConnTyp->_UnqiueId[1] = Unique1;
 				pConnTyp->_UnqiueId[2] = Unique2;
-				memcpy(&pConnTyp->_UDPh, pUDP, sizeof(udp_headerAll));
+				memcpy(&pConnTyp->_TCPh, pTCP, sizeof(tcp_headerAll));
 				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
 				pConnTyp->_LastUpdateMin = AYCONN_ThisMinute();
 				//============ TEST =========================//
@@ -449,14 +450,14 @@ AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId) {
 	return nullptr;
 }
 
-AY_CONNTYPE	*pFindConnByUDPheader(udp_headerAll *pUDP) {
+AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP) {
 	AY_CONNTYPE	*pConnTyp = nullptr;
 	Ui32 i;
 
 	for (i = 0; i < ConnectionCount; i++) {
 		pConnTyp = pAYCONN_ReadConn(i);
 		if (pConnTyp != nullptr) {
-			if ((pConnTyp->_UDPh._ipHeader.saddr.longip == pUDP->_ipHeader.saddr.longip) && (pConnTyp->_UDPh._udpHeader.sport == pUDP->_udpHeader.sport)) {
+			if ((pConnTyp->_TCPh._ipHeader.saddr.longip == pTCP->_ipHeader.saddr.longip) && (pConnTyp->_TCPh._tcpHeader.sport == pTCP->_tcpHeader.sport)) {
 				printf("AYCONN--> Conn found - UDP header matched i=%d \n", i);
 				return pConnTyp;
 			}

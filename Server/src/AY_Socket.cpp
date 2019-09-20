@@ -39,6 +39,9 @@
 
 #define BUF   ((struct uip_tcpip_hdr *)&buff[UIP_LLH_LEN])
 
+#define TCP_HEADER_LEN(_Len_)		(((_Len_>>2)<<4)&0xF0)
+#define TCP_HEADER_LEN_GET(_Len_)	(((_Len_>>4)&0x0F)<<2)
+
 /*---------------------------------------------------------------------------*/
 uint16_t mhtons(uint16_t val) {
 	return _HTONS(val);
@@ -105,6 +108,11 @@ static uint16_t upper_layer_chksum(uint8_t proto, uint8_t *buff) {
 }
 /*---------------------------------------------------------------------------*/
 uint16_t uip_tcpchksum(uint8_t *buff) {
+	uint16_t sum;
+	#define BUF0   ((struct tcp_header *)&buff[UIP_LLH_LEN + UIP_IPH_LEN])
+
+	sum = chksum(0, (uint8_t *)BUF0, TCP_HEADER_LEN_GET(BUF0->th_off));
+	//return (sum == 0) ? 0xffff : mhtons(sum);
 	return upper_layer_chksum(UIP_PROTO_TCP, buff);
 }
 /*---------------------------------------------------------------------------*/
@@ -482,8 +490,7 @@ int TCP_header_init(tcp_headerAll * TCP_header) {
 	// END
 	return 1;
 }
-
-#define TCP_HEADER_LEN(_Len_)		(((_Len_>>2)<<4)&0xF0)
+				
 int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport,Ui32 ack, Ui32 seq, Ui08 flgs) {
 	// Ethernet Header
 	memcpy(&TCP_header->_ethHeader.dest.addr[0], &dest.addr[0], 6);
@@ -718,6 +725,34 @@ int UDP_packet_check(Ui08 *pBuff, int *pLen) {
 
 	if ( (uip_ipchksum(pBuff)==0xFFFF) && (uip_udpchksum(pBuff)==0xFFFF) ) {
 		*pLen = mhtons(pHdr->_udpHeader.len) - 8;
+		return 1;
+	}
+	else {
+		*pLen = 0;
+		return -1;
+	}
+}
+
+int TCP_packet_check(Ui08 *pBuff, int *pLen) {
+	tcp_headerAll * pHdr;
+	//int len;
+
+	Ui16 ipCrc0, ipCrc1, ipCrc2;
+	Ui16 udpCrc0, udpCrc1, udpCrc2;
+
+	pHdr = (tcp_headerAll *)pBuff;
+
+	ipCrc0 = pHdr->_ipHeader.crc;
+	ipCrc1 = uip_ipchksum(pBuff);
+	ipCrc2 = ~(uip_ipchksum(pBuff));
+
+	udpCrc0 = pHdr->_tcpHeader.crc;
+	udpCrc1 = uip_tcpchksum(pBuff);
+	udpCrc2 = ~(uip_tcpchksum(pBuff));
+
+
+	if ((uip_ipchksum(pBuff) == 0xFFFF) && (uip_tcpchksum(pBuff) == 0xFFFF)) {
+		*pLen = mhtons(pHdr->_ipHeader.tlen) - sizeof(ip_header) - TCP_HEADER_LEN_GET(pHdr->_tcpHeader.th_off);
 		return 1;
 	}
 	else {

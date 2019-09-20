@@ -77,7 +77,7 @@ struct uip_eth_hdr {
 	uint16_t type;
 };
 
-/* IPv4 header */
+/* IPv4 header 20 bytes */
 typedef struct ip_header
 {
 	uint8_t	ver_ihl;		// Version (4 bits) + Internet header length (4 bits)
@@ -226,8 +226,8 @@ struct ethip_hdr {
 #pragma pack(pop)
 
 extern int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfilter, void *pCallBack, Ui32 _A);
-//extern int UDP_header_init(udp_headerAll * UDP_header);
-//extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
+extern int UDP_header_init(udp_headerAll * UDP_header);
+extern int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport);
 extern int TCP_header_init(tcp_headerAll * TCP_header);
 extern int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport, Ui32 ack, Ui32 seq, Ui08 flgs);
 extern int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len);
@@ -236,6 +236,7 @@ extern int ICMP_packet_send(Ui08 idx, icmp_headerAll * ICMP_header, Ui08 *pBuff,
 extern int AYSCKT_PingIP(Ui08 idx, uip_eth_addr dest, ip_address	daddr, uip_eth_addr src, ip_address	saddr, Ui08 SeqNo);
 extern int AYSCKT_WhoHasIP(Ui08 idx, uip_eth_addr dest, ip_address	daddr, uip_eth_addr src, ip_address	saddr, ip_address	search);
 extern int UDP_packet_check(Ui08 *pBuff, int *pLen);
+extern int TCP_packet_check(Ui08 *pBuff, int *pLen);
 
 enum _AYSCKT_ETH_ {
 	_ETH_NULL_,
@@ -244,7 +245,7 @@ enum _AYSCKT_ETH_ {
 };
 //extern int AY_ChngPacketDest(udp_headerAll *pUDP, uip_eth_addr *pEth, Ui08 SrcDst);
 extern int AY_ChngPacketDest_TCP(tcp_headerAll *pTCP, uip_eth_addr *pEth, Ui08 SrcDst);
-//extern void AYPRINT_UDP_Header(udp_headerAll *pUDP);
+extern void AYPRINT_UDP_Header(udp_headerAll *pUDP);
 extern void AYPRINT_TCP_Header(tcp_headerAll *pTCP);
 
 extern int AYSCKT_FilterSetA(Ui08 idx, char *pfilter);

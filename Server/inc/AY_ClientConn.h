@@ -4,7 +4,7 @@
 #pragma pack(push, 1)
 
 typedef struct _AY_DEVSTRTIN {
-	udp_headerAll	_UDPh;
+	tcp_headerAll	_TCPh;
 	Ui32			_LocalCertNo;
 	Ui32			_ServerCertNo;
 	Ui08			_MAC[6];
@@ -21,7 +21,7 @@ typedef struct  _AY_CONNTYPE {
 	Ui32			_UnqiueId[3];
 	Ui32			_LastUpdateMin;
 	Ui08			_SessionKey[16];
-	udp_headerAll	_UDPh;
+	tcp_headerAll	_TCPh;
 }AY_CONNTYPE;
 
 enum AY_CONNFUNC {
@@ -47,10 +47,10 @@ extern int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len);
 extern Ui32	ConnectionCount;
 extern Ui32 AYCONN_ThisMinute(void);
 extern int AYCONN_TestMinute(Ui32 RecMin, Ui32 TimeOut);
-extern Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, udp_headerAll *pUDP, Ui08 *pSSK, Ui08 Func);
+extern Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAll *pTCP, Ui08 *pSSK, Ui08 Func);
 extern Ui32 AYCONN_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd);
 extern AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId);
-extern AY_CONNTYPE	*pFindConnByUDPheader(udp_headerAll *pUDP);
+extern AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP);
 extern AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique);
 extern int AYCONN_UpdateTime(Ui32 ConnId);
 extern int AYCONN_ClientConnInit(void);
