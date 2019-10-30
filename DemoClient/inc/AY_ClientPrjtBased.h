@@ -10,7 +10,7 @@ enum _MYSOCKETS {
 /*
 
 
-5c7980f152b1c6afd822673ed49c9668
+d49c9668
 9aca50a97243bed4929df23bda9a4971
 8fcf78689296b90bfb8199e1a7e6f030
 */
@@ -24,6 +24,8 @@ enum _MYSOCKETS {
 #define PACKET_TEST_DATA7			0x3ab96c05
 #define PACKET_TEST_DATA8			0x54675c92		///< New Remote Response
 #define PACKET_TEST_DATA9			0x873ed73d
+#define PACKET_TEST_DATA10			0x5c7980f1		///< New Direct Send Data
+#define PACKET_TEST_DATA11			0xd822673e
 
 typedef struct _CFG_FILES {
 	char NetInterfaceName[45];	// 0	<!--exp: \"Local Area Network\", \"Wi-Fi\", \"Local Area Network 2\", \"\"(means Local Area Connection)-->

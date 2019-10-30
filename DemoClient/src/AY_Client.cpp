@@ -84,6 +84,9 @@ struct pcap_pkthdr {
 #define NEW_REMOTE_PACKET		((((AY_GWDATAHDR	*)pData)->_Test6 == PACKET_TEST_DATA6) && (((AY_GWDATAHDR	*)pData)->_Test7 == PACKET_TEST_DATA7))
 #define NEW_REMOTE_RESPONSE		((((AY_GWDATAHDR	*)pData)->_Test6 == PACKET_TEST_DATA8) && (((AY_GWDATAHDR	*)pData)->_Test7 == PACKET_TEST_DATA9))
 
+
+int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom);
+
 /*
 	Main Server 1982 Call
 */
@@ -583,6 +586,9 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					AYPRINT_TCP_Header(pTCP);
 #endif
 					printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror(Reflection) Device)\n ");
+#if (DIRECT_SEND==1)
+					AY_DirectSendToListed((Ui08 *)pkt_data, header->len, pInfom);
+#else
 					pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
 					if (pQue != nullptr) {
 						pQue->pInfo = pInfom;
@@ -606,6 +612,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						LocConn0.pDevInfo = pQue->pInfo;
 						pQue->pLocConn = pAYCLNT_TestAddOrUpdateLocConn(&LocConn0, 0);
 					}
+#endif
 				}
 			}
 			else {///< Check For Local Device
@@ -889,6 +896,34 @@ int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row) {
 	AYPRINT_TCP_Header(&pQue->pGw->TCP_Hdr);
 #endif	
 	return (TCP_packet_send(_MAIN_SCKT, &pQue->pGw->TCP_Hdr, (Ui08 *)pQue->pDataIO, oLen + sizeof(AY_GWDATAHDR)));
+}
+
+int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
+	unsigned char		*pPckt;
+	AY_GWDATAHDR		*pGwDH;
+	Ui32				LenSend;
+	Ui08				*pCont;
+	tcp_headerAll		TCPheader;
+
+	LenSend					= ((len + 15) & 0xFFF0) + sizeof(AY_GWDATAHDR);
+	pPckt					= (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
+	pGwDH->_Test6			= PACKET_TEST_DATA10;
+	pGwDH->_Test7			= PACKET_TEST_DATA11;
+	pGwDH->_DevNoOnTrgt		= pInfom->DevRead._id;
+	pCont					= pPckt + sizeof(AY_GWDATAHDR);
+
+	memcpy(pCont, pkt_data, len);
+	//---------------------------//
+	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+	//------- SEND
+	TCP_header_init(&TCPheader);
+	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, 1, 1, (_PSH | _ACK));
+#if STEP_TEST==1
+	printf("********* STEP 2 *************\n********* STEP 2 *************\n********* STEP 2 *************\n");
+	printf("AYCLNT--> PACKET (1)				GW1	--->	SRV		(A request packet for Mirror(Reflection) Device)\n ");
+	AYPRINT_TCP_Header(&TCPheader);
+#endif
+	return (TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)pPckt, LenSend));
 }
 
 int main(void)//(int argc, char **argv)

@@ -102,8 +102,11 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			printf("New TCP packet arrived\n");
 			if (AY_TestLoadDeviceStart((Ui08 *)pkt_data, Len) == 0) {
 				printf("Not Device Start\n");
-				if (AY_TestLoadGwInfoRqst((Ui08 *)pkt_data, Len) == 0) {
-					printf("Not GW info Request\n");
+				if (AY_TestLoadDirectSendRqst((Ui08 *)pkt_data, Len) == 0) {
+					printf("Not Direct Send Request\n");
+					if (AY_TestLoadGwInfoRqst((Ui08 *)pkt_data, Len) == 0) {
+						printf("Not GW info Request\n");
+					}
 				}
 			}
 		}

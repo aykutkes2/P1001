@@ -252,6 +252,21 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 	return 0;///< not me
 }
 
+int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
+	AY_GWDATAHDR		*pGwDH;
+	Si32			i;
+
+	pGwDH = (AY_GWDATAHDR	*)(pPtr + sizeof(tcp_headerAll));
+	if ((pGwDH->_Test6 == PACKET_TEST_DATA10) && (pGwDH->_Test7 == PACKET_TEST_DATA11)) {
+#if STEP_TEST==1
+		printf("********* STEP 2 *************\n********* STEP 2 *************\n********* STEP 2 *************\n");
+		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
+#endif
+		printf("AYDVSTRT--> Packet type is Direct Send\n");
+	}
+	return 0;///< not me
+}
+
 
 //============================================================================================================
 //====================== CONNECTIONS =========================================================================

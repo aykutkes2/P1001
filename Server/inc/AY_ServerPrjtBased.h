@@ -58,6 +58,8 @@ enum _MYSOCKETS {
 #define PACKET_TEST_DATA7			0x3ab96c05
 #define PACKET_TEST_DATA8			0x54675c92		///< New Remote Response
 #define PACKET_TEST_DATA9			0x873ed73d
+#define PACKET_TEST_DATA10			0x5c7980f1		///< New Direct Send Data
+#define PACKET_TEST_DATA11			0xd822673e
 
 extern const MYSQL_STRS MySQLParams;
 
