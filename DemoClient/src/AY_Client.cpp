@@ -84,6 +84,9 @@ struct pcap_pkthdr {
 #define NEW_REMOTE_PACKET		((((AY_GWDATAHDR	*)pData)->_Test6 == PACKET_TEST_DATA6) && (((AY_GWDATAHDR	*)pData)->_Test7 == PACKET_TEST_DATA7))
 #define NEW_REMOTE_RESPONSE		((((AY_GWDATAHDR	*)pData)->_Test6 == PACKET_TEST_DATA8) && (((AY_GWDATAHDR	*)pData)->_Test7 == PACKET_TEST_DATA9))
 
+/*
+	Main Server 1982 Call
+*/
 void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const Ui08 *pkt_data) {
 	tcp_headerAll	*pTCP;
 	Ui08			*pData;
@@ -415,6 +418,9 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 	}	
 }
 
+/*
+	Local Network Call
+*/
 void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const Ui08 *pkt_data) {
 	uip_eth_hdr		*pHdr;
 	ip_header		*ih;
@@ -443,7 +449,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		}
 	}
 	else {
-		if (!AY_Client_GetMACadr) {
+		if (!AY_Client_GetMACadr) {///< MAC Address Waiting ...
 
 			printf("MAC Packet Received !!!\n\n\n===============================================\n\n\n===============================================\n\n\n");
 			/* print ip addresses and udp ports */
@@ -473,7 +479,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			}
 			AY_Client_GetMACadr = 1;
 		}
-		else if ((!AY_Client_GetSrvIPadr)) {
+		else if ((!AY_Client_GetSrvIPadr)) {///< Server IP Waiting ...
 			if ((pTCP->_tcpHeader.sport == _HTONS(CngFile.DNSPort))) {
 				if ((pTCP->_tcpHeader.dport == _HTONS((MyClientInstPort + 1)))) {
 					unsigned char *qname, *reader;
@@ -562,7 +568,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				}
 			}
 		}
-		else if ((AY_Client_RecvServer)) {
+		else if ((AY_Client_RecvServer)) {///< Ready ...
 			AY_DEVINFO			*pInfom;
 			AY_CLNTQUEUE		*pQue;
 			AY_LOCCONNINFO		LocConn0;
@@ -576,7 +582,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					printf("********* STEP 1 *************\n********* STEP 1 *************\n********* STEP 1 *************\n");
 					AYPRINT_TCP_Header(pTCP);
 #endif
-					printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror Device)\n ");
+					printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror(Reflection) Device)\n ");
 					pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
 					if (pQue != nullptr) {
 						pQue->pInfo = pInfom;
@@ -584,7 +590,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						pQue->DataIOLen = header->len;
 						pQue->pDataIO = (unsigned char*)_AY_MallocMemory(i);///< allocate memory for outgoing data
 						memcpy(pQue->pDataIO + sizeof(AY_GWDATAHDR), pkt_data, pQue->DataIOLen);
-						pQue->Status = _FIND_GW;
+						pQue->Status = _SEND_TO_SRV;///< Vers 1.1 20191030 _FIND_GW;
 						pQue->QueF.Full_ = 1;///< start core process
 						//--------------//
 						LocConn0.IPA_Hdr.daddr = pTCP->_ipHeader.daddr;

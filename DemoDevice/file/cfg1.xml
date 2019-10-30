@@ -3,7 +3,7 @@
 By modifying this file,
 -->
 <Gateway>
-<Item id = "1" Name = "Local Network Interface Name" 		Value = "Wi-Fi" />	<!--exp: "Npcap Loopback Adapter", "Local Area Connection", "Wi-Fi", "Local Area Network 2", ""(means Local Area Connection)-->
+<Item id = "1" Name = "Local Network Interface Name" 		Value = "Local Area Connection" />	<!--exp: "Npcap Loopback Adapter", "Local Area Connection", "Wi-Fi", "Local Area Network 2", ""(means Local Area Connection)-->
 <Item id = "2" Name = "Local Network Ip Address" 			Value = "192.168.2.145" />	<!--exp: "192.168.2.101", ""(means automatic)-->
 <Item id = "3" Name = "Local Network Subnet Mask" 			Value = "255.255.255.0" />	<!--exp: "255.255.255.0", ""(means automatic)-->
 <Item id = "4" Name = "Local Network Gateway Ip" 			Value = "192.168.2.1" />	<!--exp: "192.168.2.1", ""(means automatic)-->

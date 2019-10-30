@@ -261,6 +261,7 @@ extern void AYCLNT_CoreDoTask(void);
 extern void AYCLNT_CoreInit(void);
 
 enum _AYCLNT_STATUS {
+	_SEND_TO_SRV,///< Vers 1.1 20191030
 	_FIND_GW,
 	_ASK_FOR_GW,
 	_WAIT_SERVER_FOR_GW,
