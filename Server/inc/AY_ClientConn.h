@@ -31,6 +31,22 @@ enum AY_CONNFUNC {
 	AY_CONN_READ = 3
 };
 
+typedef struct _AY_M2M_TYPE {
+	//Ui32			_UnqiueId[3];
+	Ui32			_ConnNo;
+	Ui32			_RowNo;
+	Ui32			_SrcIP;
+	Ui32			_DstIP;
+	Ui16			_SrcPort;
+	Ui16			_DstPort;
+}AY_M2M_TYPE;
+
+typedef struct  _AY_M2M_CONNTYPE {
+	AY_M2M_TYPE		_Src;
+	AY_M2M_TYPE		_Dst;
+	//------------------------//
+	Ui32			M_LastUpdateMin;
+}AY_M2M_CONNTYPE;
 
 
 #pragma pack(pop)

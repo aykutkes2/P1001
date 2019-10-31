@@ -900,17 +900,18 @@ int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row) {
 
 int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	unsigned char		*pPckt;
-	AY_GWDATAHDR		*pGwDH;
+	AY_GWDRCTHDR		*pGwDH;
 	Ui32				LenSend;
 	Ui08				*pCont;
 	tcp_headerAll		TCPheader;
 
-	LenSend					= ((len + 15) & 0xFFF0) + sizeof(AY_GWDATAHDR);
+	LenSend					= ((len + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
 	pPckt					= (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
-	pGwDH->_Test6			= PACKET_TEST_DATA10;
-	pGwDH->_Test7			= PACKET_TEST_DATA11;
-	pGwDH->_DevNoOnTrgt		= pInfom->DevRead._id;
-	pCont					= pPckt + sizeof(AY_GWDATAHDR);
+	pGwDH->_Test10			= PACKET_TEST_DATA10;
+	pGwDH->_Test11			= PACKET_TEST_DATA11;
+	pGwDH->_RowNo			= pInfom->DevRead._id;
+	pGwDH->_LocalIP			= *((Ui32 *)&((tcp_headerAll *)(pkt_data + 0))->_ipHeader.saddr);
+	pCont					= pPckt + sizeof(AY_GWDRCTHDR);
 
 	memcpy(pCont, pkt_data, len);
 	//---------------------------//
