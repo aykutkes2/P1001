@@ -659,13 +659,14 @@ int AYM2M_TestMinute(Ui32 RecMin, Ui32 TimeOut) {
 	if (Val > TimeOut) { return 1; }
 	else { return 0; }
 }
-Ui32 AYM2M_FindOrAddConn(Ui32 *pUniqSrc, Ui32 *pUniqDst, Ui32 SrcRowNo, Ui32 DstRowNo, Ui08 Func) {
-	void *ptr;
-	AY_CONNADR	*pConnList;
-	AY_M2M_CONNTYPE	*pConnTyp, *pConnTst;
-	Ui32 FirstFree = ConnectionCount;
-	Ui08 FirstFound = 0;
-	Ui32 i;
+Ui32 AYM2M_FindOrAddConn(Ui32 SrcConnNo, Ui32 *pUniqSrc, Ui32 SrcRowNo, Ui32 *pUniqDst, Ui32 DstRowNo, Ui08 Func) {
+	void					*ptr;
+	AY_CONNADR				*pConnList;
+	AY_M2M_CONNTYPE			*pConnTypM2M, *pConnTst;
+	AY_CONNTYPE				*pConnTyp = nullptr;
+	Ui32					FirstFree = ConnectionCount;
+	Ui08					FirstFound = 0;
+	Ui32					i;
 
 #define i0		((i>>24)&0xFF)
 #define i1		((i>>16)&0xFF)
@@ -673,9 +674,9 @@ Ui32 AYM2M_FindOrAddConn(Ui32 *pUniqSrc, Ui32 *pUniqDst, Ui32 SrcRowNo, Ui32 Dst
 #define i3		((i>>0)&0xFF)
 	ptr = M2M_ConnLevel1.pConnAdr[0];
 	i = 0;
-	pConnTyp = 0;
+	pConnTypM2M = 0;
 	do {
-		//pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3]);//test!!!!
+		//pConnTypM2M = (AY_M2M_CONNTYPE *)(((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3]);//test!!!!
 		if ((i & 0x00FFFFFF) == 0) {
 			printf("AYM2M--> Conn Test Level 1 i0=%d \n", i0);
 			ptr = M2M_ConnLevel1.pConnAdr[i0];
@@ -727,53 +728,63 @@ Ui32 AYM2M_FindOrAddConn(Ui32 *pUniqSrc, Ui32 *pUniqDst, Ui32 SrcRowNo, Ui32 Dst
 					printf("AYM2M--> New Conn Level 3 created i2=%d \n", i2);
 				}
 			}
-			pConnTyp = (AY_M2M_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[0]);///< level4 start index
+			pConnTypM2M = (AY_M2M_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[0]);///< level4 start index
 		}
-		if (pConnTyp == 0) {///< free socket found
+		if (pConnTypM2M == 0) {///< free socket found
 			if (FirstFound != 0xAA) {
 				FirstFound = 0xAA;
 				FirstFree = i;
 				printf("AYM2M--> First free Conn found FirstFree=%d \n", FirstFree);
 			}
 		}
-		else if ((pConnTyp->_UnqiueId[0] == Unique0) && (pConnTyp->_UnqiueId[1] == Unique1) && (pConnTyp->_UnqiueId[2] == Unique2)) {///< device found
-			printf("AYM2M--> Conn found FirstFree=%d \n", i);
-			if (Func == AY_CONN_UPDATE) {
-				memcpy(&pConnTyp->_TCPh, pTCP, sizeof(tcp_headerAll));
-				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
+		else {
+			if ((SrcConnNo == pConnTypM2M->_Src._ConnNo) && (pConnTypM2M->_Src._RowNo == SrcRowNo)){
+				pConnTyp = pAYCONN_ReadConn(pConnTypM2M->_Src._ConnNo);
+				if ((pConnTyp->_UnqiueId[0] == pUniqSrc[0]) && (pConnTyp->_UnqiueId[1] == pUniqSrc[1]) && (pConnTyp->_UnqiueId[2] == pUniqSrc[2])) {///< Connection found
+					printf("AYM2M--> Conn found FirstFree=%d \n", i);
+					if (Func == AY_CONN_UPDATE) {
+						pConnTypM2M->M_LastUpdateMin = AYM2M_ThisMinute();
+					}
+					else if (Func == AY_CONN_DELETE) {
+						_AY_FreeMemory((unsigned char *)pConnTypM2M);
+						((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3] = 0;///< nullptr
+					}
+					return i;
+				}
 			}
-			else if (Func == AY_CONN_DELETE) {
-				_AY_FreeMemory((unsigned char *)pConnTyp);
-				((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3] = 0;///< nullptr
-			}
-			return i;
 		}
 		if (i == ConnectionCount) {
 			printf("AYM2M--> Conn not found use FirstFree=%d \n", FirstFree);
 			i = FirstFree;
 			ptr = ((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2];
 			if (Func == AY_CONN_UPDATE) {///< upload
-				((AY_CONNADR	*)ptr)->pConnAdr[i3] = _AY_MallocMemory(sizeof(AY_CONNTYPE));
-				pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index
-				pConnTyp->_UnqiueId[0] = Unique0;
-				pConnTyp->_UnqiueId[1] = Unique1;
-				pConnTyp->_UnqiueId[2] = Unique2;
-				memcpy(&pConnTyp->_TCPh, pTCP, sizeof(tcp_headerAll));
-				memcpy(&pConnTyp->_SessionKey[0], pSSK, 16);
-				pConnTyp->_LastUpdateMin = AYM2M_ThisMinute();
+				((AY_CONNADR	*)ptr)->pConnAdr[i3] = _AY_MallocMemory(sizeof(AY_M2M_CONNTYPE));
+				pConnTypM2M = (AY_M2M_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index
+				
+				memset(pConnTypM2M,0,sizeof(AY_M2M_CONNTYPE));
+				pConnTypM2M->M_LastUpdateMin = AYM2M_ThisMinute();
+				pConnTypM2M->_Src._ConnNo = SrcConnNo;
+				pConnTypM2M->_Src._RowNo = SrcRowNo;
+				
+				pConnTypM2M->_UnqiueId[0] = Unique0;
+				pConnTypM2M->_UnqiueId[1] = Unique1;
+				pConnTypM2M->_UnqiueId[2] = Unique2;
+				memcpy(&pConnTypM2M->_TCPh, pTCP, sizeof(tcp_headerAll));
+				memcpy(&pConnTypM2M->_SessionKey[0], pSSK, 16);
+				pConnTypM2M->_LastUpdateMin = AYM2M_ThisMinute();
 				//============ TEST =========================//
-				printf("AYM2M--> Input Conn i0=0x%08x, i1=0x%08x, i2=0x%08x, i3=0x%08x \n", (Ui32)M2M_ConnLevel1.pConnAdr[i0], (Ui32)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]), (Ui32)(((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2]), (Ui32)pConnTyp);
+				printf("AYM2M--> Input Conn i0=0x%08x, i1=0x%08x, i2=0x%08x, i3=0x%08x \n", (Ui32)M2M_ConnLevel1.pConnAdr[i0], (Ui32)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]), (Ui32)(((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2]), (Ui32)pConnTypM2M);
 				pConnTst = pAYM2M_ReadConn(i);
 				//============ TEST =========================//
 				ConnectionCount++;
-				printf("AYM2M--> Conn new added i3=%d ConnectionCount=%d Adr=0x%08x \n", i3, ConnectionCount, (Ui32)pConnTyp);
+				printf("AYM2M--> Conn new added i3=%d ConnectionCount=%d Adr=0x%08x \n", i3, ConnectionCount, (Ui32)pConnTypM2M);
 			}
 			/*else if (Func == AY_CONN_READ) {///< download
-				memcpy(pUDP, &pConnTyp->_UDPh, sizeof(udp_headerAll));
+				memcpy(pUDP, &pConnTypM2M->_UDPh, sizeof(udp_headerAll));
 			}*/
 			return i;
 		}
-		pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index//pConnTyp++;
+		pConnTypM2M = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index//pConnTypM2M++;
 	} while ((++i) <= ConnectionCount);
 	printf("AYM2M--> Conn There is something wrong ! \n");
 	return 0xFFFFFFFF;///< fail !!!
@@ -781,7 +792,7 @@ Ui32 AYM2M_FindOrAddConn(Ui32 *pUniqSrc, Ui32 *pUniqDst, Ui32 SrcRowNo, Ui32 Dst
 
 Ui32 AYM2M_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd) {
 	void *ptr;
-	AY_CONNTYPE	*pConnTyp;
+	AY_CONNTYPE	*pConnTypM2M;
 	Ui32 i;
 
 #define i0		((i>>24)&0xFF)
@@ -798,10 +809,10 @@ Ui32 AYM2M_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd) {
 			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
 			if (ptr != 0) {///< valid address
 				printf("AYM2M--> Conn Test Level 3 i2=%d Adr=0x%08x \n", i2, (Ui32)ptr);
-				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
-				if (pConnTyp != 0) {///< valid connecton
-					printf("AYM2M--> Conn Test Level 4 i3=%d Adr=0x%08x \n", i3, (Ui32)pConnTyp);
-					memcpy(pConnRd, pConnTyp, sizeof(AY_CONNTYPE));
+				pConnTypM2M = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
+				if (pConnTypM2M != 0) {///< valid connecton
+					printf("AYM2M--> Conn Test Level 4 i3=%d Adr=0x%08x \n", i3, (Ui32)pConnTypM2M);
+					memcpy(pConnRd, pConnTypM2M, sizeof(AY_CONNTYPE));
 					return i;
 				}
 			}
@@ -813,7 +824,7 @@ Ui32 AYM2M_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd) {
 
 AY_CONNTYPE	*pAYM2M_ReadConn(Ui32 ConnId) {
 	void *ptr;
-	AY_CONNTYPE	*pConnTyp;
+	AY_CONNTYPE	*pConnTypM2M;
 	Ui32 i;
 
 #define i0		((i>>24)&0xFF)
@@ -830,11 +841,11 @@ AY_CONNTYPE	*pAYM2M_ReadConn(Ui32 ConnId) {
 			ptr = ((AY_CONNADR	*)ptr)->pConnAdr[i2];
 			if ((ptr != 0) || (ptr != nullptr)) {///< valid address
 				printf("AYM2M--> Conn Test Level 3 i2=%d Adr=0x%08x \n", i2, (Ui32)ptr);
-				pConnTyp = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
-				if ((pConnTyp != 0) || (pConnTyp != nullptr)) {///< valid connecton
-					printf("AYM2M--> Conn found - Conn Test Level 4 i=%d Adr=0x%08x \n", i, (Ui32)pConnTyp);
-					//memcpy(pConnRd, pConnTyp, sizeof(AY_CONNTYPE));
-					return pConnTyp;
+				pConnTypM2M = (AY_CONNTYPE *)((AY_CONNADR	*)ptr)->pConnAdr[i3];
+				if ((pConnTypM2M != 0) || (pConnTypM2M != nullptr)) {///< valid connecton
+					printf("AYM2M--> Conn found - Conn Test Level 4 i=%d Adr=0x%08x \n", i, (Ui32)pConnTypM2M);
+					//memcpy(pConnRd, pConnTypM2M, sizeof(AY_CONNTYPE));
+					return pConnTypM2M;
 				}
 			}
 		}
@@ -844,15 +855,15 @@ AY_CONNTYPE	*pAYM2M_ReadConn(Ui32 ConnId) {
 }
 
 AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP) {
-	AY_CONNTYPE	*pConnTyp = nullptr;
+	AY_CONNTYPE	*pConnTypM2M = nullptr;
 	Ui32 i;
 
 	for (i = 0; i < ConnectionCount; i++) {
-		pConnTyp = pAYM2M_ReadConn(i);
-		if (pConnTyp != nullptr) {
-			if ((pConnTyp->_TCPh._ipHeader.saddr.longip == pTCP->_ipHeader.saddr.longip) && (pConnTyp->_TCPh._tcpHeader.sport == pTCP->_tcpHeader.sport)) {
+		pConnTypM2M = pAYM2M_ReadConn(i);
+		if (pConnTypM2M != nullptr) {
+			if ((pConnTypM2M->_TCPh._ipHeader.saddr.longip == pTCP->_ipHeader.saddr.longip) && (pConnTypM2M->_TCPh._tcpHeader.sport == pTCP->_tcpHeader.sport)) {
 				printf("AYM2M--> Conn found - UDP header matched i=%d \n", i);
-				return pConnTyp;
+				return pConnTypM2M;
 			}
 		}
 	}
@@ -861,17 +872,17 @@ AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP) {
 }
 
 AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique) {
-	AY_CONNTYPE	*pConnTyp = nullptr;
+	AY_CONNTYPE	*pConnTypM2M = nullptr;
 	Ui32 i;
 
 	for (i = 0; i < ConnectionCount; i++) {
-		pConnTyp = pAYM2M_ReadConn(i);
-		if (pConnTyp != nullptr) {
+		pConnTypM2M = pAYM2M_ReadConn(i);
+		if (pConnTypM2M != nullptr) {
 			printf("\n\t\tLook = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", i, pUnique->_UniqueL[0], pUnique->_UniqueL[1], pUnique->_UniqueL[2]);
-			printf("\n\t\tConnectionNo = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", i, pConnTyp->_UnqiueId[0], pConnTyp->_UnqiueId[1], pConnTyp->_UnqiueId[2]);
-			if ((pConnTyp->_UnqiueId[0] == pUnique->_UniqueL[0]) && (pConnTyp->_UnqiueId[1] == pUnique->_UniqueL[1]) && (pConnTyp->_UnqiueId[2] == pUnique->_UniqueL[2])) {///< device found 
+			printf("\n\t\tConnectionNo = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", i, pConnTypM2M->_UnqiueId[0], pConnTypM2M->_UnqiueId[1], pConnTypM2M->_UnqiueId[2]);
+			if ((pConnTypM2M->_UnqiueId[0] == pUnique->_UniqueL[0]) && (pConnTypM2M->_UnqiueId[1] == pUnique->_UniqueL[1]) && (pConnTypM2M->_UnqiueId[2] == pUnique->_UniqueL[2])) {///< device found 
 				printf("AYM2M--> Conn found - Unique ID matched i=%d \n", i);
-				return pConnTyp;
+				return pConnTypM2M;
 			}
 		}
 	}
