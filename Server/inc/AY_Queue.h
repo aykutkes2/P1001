@@ -31,6 +31,7 @@ typedef struct _AY_QUEUE {
 
 enum MY_QTARGET_ {
 	QTARGET_CLIENT_CONN = 0xA0,
+	QTARGET_DIRECT_SEND = 0xA1,
 
 };
 
@@ -57,14 +58,14 @@ typedef union _UNIQ_Q_FLG {
 	};
 }UNIQ_Q_FLG;
 typedef struct _AY_UNIQUE_QUEUE {///< 12 + 12 + 4  + 4 + 4 + 4- = 40 Bytes
-	UNIQUE_ID		SrcUniq;
-	UNIQUE_ID		DstUniq;
-	Ui32			PrcsNo;
-	Si32			TimeOut;
-	UNIQ_Q_FLG		UniqQFlg;
-	Ui08			UniqFnc;
-	Ui16			DataLen;
-	Ui08			*pData;
+	UNIQUE_ID		SrcUniq;		///<	source GW unique id
+	UNIQUE_ID		DstUniq;		///<	destination GW unique id
+	Ui32			PrcsNo;			///<	process no(RowNo)
+	Si32			TimeOut;		///<	
+	UNIQ_Q_FLG		UniqQFlg;		///<	
+	Ui08			UniqFnc;		///<	function
+	Ui16			DataLen;		///<	data length
+	Ui08			*pData;			///<	data start address
 }AY_UNIQUE_QUEUE;
 #define UNIQUE_QUEUE_LEN			4096
 typedef struct  _AY_UNIQ_QUEUELST {///< 4096*36 = 144 KBytes

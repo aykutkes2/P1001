@@ -18,6 +18,7 @@
 #include <AY_Socket.h>
 #include <AY_Queue.h>
 #include <AY_ClientConn.h>
+#include <AY_ClientConnM2M.h>
 
 
 #include <process.h>
@@ -33,7 +34,10 @@ void QUEUE_Process(int ql) {
 		switch (pQ->Target) {
 		case QTARGET_CLIENT_CONN:
 			AYSRV_QueueClientConn(pQ);
-			break;
+		break;
+		case QTARGET_DIRECT_SEND:
+			AYSRV_QueueDirectSend(pQ);
+		break;
 		}
 		if ((pQ->QFlg._QFinishedF == 1) && (pQ->QFlg._QKeepF == 0) && (pQ->QFlg._QBusyF == 1)) {
 			if (pQ->InLen) {

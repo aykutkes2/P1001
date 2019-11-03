@@ -29,18 +29,18 @@ typedef struct _MYSQL_GATEWAY {
 }MYSQL_GATEWAY;
 
 typedef struct _MYSQL_DEVICE {
-	Ui32		_id;
-	char		_Name[45];
-	Ui32		_Unique[3];
-	Ui64		_MAC;
-	Ui32		_ParentId;
-	Ui32		_Type;
-	Ui32		_LocalIp;
-	Ui32		_Status;
-	Ui32		_PacketCount;
-	Ui32		_TotalPackets;
-	Ui32		_SendBytes;
-	Ui32		_ReceivedBytes;
+	Ui32		_id;				///< RowNo on this GW
+	char		_Name[45];			///< device name
+	Ui32		_Unique[3];			///< Parent's Unique ID
+	Ui64		_MAC;				///< MAC Address
+	Ui32		_ParentId;			///< RowNo on Parent GW
+	Ui32		_Type;				///< 0:Local 1:Remote
+	Ui32		_LocalIp;			///< IP Address on this GW
+	Ui32		_Status;			///< Status
+	Ui32		_PacketCount;		///< Packet Counter for this session
+	Ui32		_TotalPackets;		///< Packet Counter
+	Ui32		_SendBytes;			///< Send Bytes for this session
+	Ui32		_ReceivedBytes;		///< Receive Bytes for this session
 }MYSQL_DEVICE;
 
 typedef struct _MYSQL_DeviceRead {
