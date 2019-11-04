@@ -197,6 +197,7 @@
     <ClCompile Include="..\mbedTLS\library\xtea.c" />
     <ClCompile Include="AY_Server.cpp" />
     <ClCompile Include="src\AY_ClientConn.cpp" />
+    <ClCompile Include="src\AY_ClientConnM2M.cpp" />
     <ClCompile Include="src\AY_Crypt.cpp" />
     <ClCompile Include="src\AY_Functions.cpp" />
     <ClCompile Include="src\AY_Memory.cpp" />
@@ -207,6 +208,7 @@
     <ClCompile Include="src\AY_Socket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\AY_ClientConnM2M.h" />
     <ClInclude Include="inc\AY_Crypt.h" />
     <ClInclude Include="inc\AY_Functions.h" />
     <ClInclude Include="inc\AY_Memory.h" />

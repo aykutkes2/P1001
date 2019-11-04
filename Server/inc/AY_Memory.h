@@ -122,8 +122,8 @@ typedef struct _AY_GWDATAHDR {
 typedef struct _AY_GWDRCTHDR {
 	Ui32		_Test10;	///< _Test10 for direct send
 	Ui32		_Test11;	///< _Test11 for direct send
-	Ui32		_RowNo;		///< RowNo on GW device list (DST)	
-	Ui32		_LocalIP;	///< Local IP address (SRC)	
+	Ui32		_DevNo;		///< RowNo on GW device list (DST)	
+	//Ui32		_LocalIP;	///< Local IP address (SRC)	
 }AY_GWDRCTHDR;
 
 #pragma pack(pop)

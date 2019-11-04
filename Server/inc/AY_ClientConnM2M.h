@@ -1,11 +1,12 @@
 #pragma once
 #include <AY_Type.h>
+#include <AY_ClientConn.h>
 
 #pragma pack(push, 1)
 
 typedef struct _AY_M2M_TYPE {
 	AY_CONNTYPE		*_pConn;
-	Ui32			_RowNo;
+	Ui32			_DevNo;
 	Ui32			_SrcIP;
 	Ui32			_DstIP;
 	Ui16			_SrcPort;
@@ -25,4 +26,8 @@ typedef struct  _AY_M2M_CONNTYPE {
 extern void AYSRV_QueueDirectSend(AY_QUEUE *pQ);
 
 extern AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui08 Func);
+
+extern Ui32 AYM2M_ReadConn(Ui32 ConnId, AY_M2M_CONNTYPE *pConnRd);
+
+extern AY_M2M_CONNTYPE	*pAYM2M_ReadConn(Ui32 ConnId);
 

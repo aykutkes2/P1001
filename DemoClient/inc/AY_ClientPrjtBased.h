@@ -8,11 +8,7 @@ enum _MYSOCKETS {
 	_SLVS_SCKT
 };
 /*
-
-
-d49c9668
-9aca50a97243bed4929df23bda9a4971
-8fcf78689296b90bfb8199e1a7e6f030
+9296b90bfb8199e1a7e6f030
 */
 #define PACKET_TEST_DATA0			0x1EB99AB7		///< GW Device List 
 #define PACKET_TEST_DATA1			0x92D1D121
@@ -26,6 +22,12 @@ d49c9668
 #define PACKET_TEST_DATA9			0x873ed73d
 #define PACKET_TEST_DATA10			0x5c7980f1		///< New Direct Send Data
 #define PACKET_TEST_DATA11			0xd822673e
+#define PACKET_TEST_DATA12			0xd49c9668		///< New Direct Send Data -2
+#define PACKET_TEST_DATA13			0x9aca50a9
+#define PACKET_TEST_DATA14			0x7243bed4		///< New Direct Response Data
+#define PACKET_TEST_DATA15			0x929df23b
+#define PACKET_TEST_DATA14			0xda9a4971		///< New Direct Response Data -2
+#define PACKET_TEST_DATA15			0x8fcf7868
 
 typedef struct _CFG_FILES {
 	char NetInterfaceName[45];	// 0	<!--exp: \"Local Area Network\", \"Wi-Fi\", \"Local Area Network 2\", \"\"(means Local Area Connection)-->

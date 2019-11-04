@@ -264,6 +264,9 @@
     <ClCompile Include="src\AY_ClientConn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\AY_ClientConnM2M.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\AY_Crypt.h">
@@ -294,6 +297,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\AY_Queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\AY_ClientConnM2M.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
