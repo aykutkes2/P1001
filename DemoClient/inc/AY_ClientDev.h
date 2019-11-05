@@ -34,16 +34,18 @@ typedef struct  _AY_DEVINFOLST {///< 4096*26 = 98304 Bytes
 }AY_DEVINFOLST;
 //=========================================================//
 typedef union _AY_LOCCONNFLAGs {
-	Ui16 _DevFlgs;
+	Ui08 _DevFlgs;
 	struct {
-		Ui16	Full_ : 1;
-		Ui16	InfoLoaded_ : 1;
+		Ui08	Full_ : 1;
+		Ui08	InfoLoaded_ : 1;
 	};
 }AY_LOCCONNFLAGs;
-typedef struct  _AY_LOCCONNINFO {///< 2 + 4 + 12 + 4 = 22 Bytes 
-	AY_LOCCONNFLAGs		LocConnF;//2 
+typedef struct  _AY_LOCCONNINFO {///< 1 + 4 + 12 + 12 + 4 = 33 Bytes 
+	AY_LOCCONNFLAGs		LocConnF;//1 
 	AY_DEVINFO			*pDevInfo;//4
 	ip_headerAll		IPA_Hdr;//12
+	struct uip_eth_addr		dest;//6
+	struct uip_eth_addr		src;//6
 	Si32				TimeOut;
 }AY_LOCCONNINFO;
 typedef struct  _AY_LOCCONNINFOLST {///< 4096*26 = 98304 Bytes
@@ -181,10 +183,10 @@ extern Si32 AYCLNT_CalcLocConnCnt(int *pCnt);
 extern int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn);
 
 /****************************************************************************/
-/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst)
 ** \brief		        find Local Connection address for determined PI Header packet
 *****************************************************************************/
-extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId);
+extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst);
 
 
 /****************************************************************************/
@@ -194,10 +196,10 @@ extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId);
 extern AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId);
 
 /****************************************************************************/
-/*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst)
 ** \brief		        if valid update else generate new Local Connection
 *****************************************************************************/
-extern AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId);
+extern AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst);
 
 /****************************************************************************/
 /*! \fn int AYCLNT_LocConnTimeoutTest(void)

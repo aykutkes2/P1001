@@ -689,7 +689,7 @@ int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn) {
 
 
 /****************************************************************************/
-/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst)
 **
 ** \brief		        find Local Connection address for determined PI Header packet
 **
@@ -697,9 +697,11 @@ int AYCLNT_FindLocConnId(AY_LOCCONNINFO	*pLocConn) {
 **
 ** \return				pLocConn	: Local Connection Address
 ** 						pId			: Local Connection no
+** 						pMAC		: MAC match required ( OPTIONAL)
+** 						SrcDst		: MAC type source or destination ( OPTIONAL)
 **
 *****************************************************************************/
-AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId) {
+AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst) {
 	AY_LOCCONNINFO	*pLocConn = nullptr;
 	Ui32 i, j;
 	Ui08 *p;
@@ -712,8 +714,10 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId) {
 			if (pLocConn != nullptr) {
 				if (pLocConn->LocConnF.Full_) {
 					if (memcmp(&pLocConn->IPA_Hdr, pIPA, sizeof(ip_headerAll)) == 0) {
-						if (pId != 0) { *pId = i; }
-						return pLocConn;
+						if ((SrcDst == _ETH_NULL_) || ((SrcDst== _ETH_SRC_)&&(memcmp(&pLocConn->src, pMAC, sizeof(uip_eth_addr)) == 0)) || ((SrcDst == _ETH_DST_) && (memcmp(&pLocConn->dest, pMAC, sizeof(uip_eth_addr)) == 0))) {
+							if (pId != 0) { *pId = i; }
+							return pLocConn;
+						}
 					}
 				}
 			}
@@ -763,7 +767,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId) {
 }
 
 /****************************************************************************/
-/*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst)
 **
 ** \brief		        if valid update else generate new Local Connection
 **
@@ -771,22 +775,23 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId) {
 **
 ** \return				pLocConn0	: New local connection
 ** 						pId			: Local Connection no
+** 						pMAC		: MAC match required ( OPTIONAL)
+** 						SrcDst		: MAC type source or destination ( OPTIONAL)
 **
 *****************************************************************************/
-AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId) {
+AY_LOCCONNINFO	*pAYCLNT_TestAddOrUpdateLocConn(AY_LOCCONNINFO	*pLocConn, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst) {
 	AY_LOCCONNINFO	*pLocConn0 = nullptr;
-	//int i = 0;
 
-	pLocConn0 = pAYCLNT_FindLocConnByIPA(&pLocConn->IPA_Hdr, pId);
+	pLocConn0 = pAYCLNT_FindLocConnByIPA(&pLocConn->IPA_Hdr, pId, pMAC, SrcDst);
 	if (pLocConn0 != nullptr) {///< update
-		//i = 1;
+		*pLocConn0 = *pLocConn;
 	}
 	else {
 		pLocConn0 = pAYCLNT_FindFirstFreeLocConnId(pId);
-		//i = 2;
+		*pLocConn0 = *pLocConn;
 	}
-	*pLocConn0 = *pLocConn;
 	pLocConn0->TimeOut = AY_CLNTLOCCONN_TIMEOUT_VAL;
+	pLocConn0->LocConnF.Full_ = 1;
 	return pLocConn0;
 }
 
