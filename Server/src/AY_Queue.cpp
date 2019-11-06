@@ -38,6 +38,9 @@ void QUEUE_Process(int ql) {
 		case QTARGET_DIRECT_SEND:
 			AYSRV_QueueDirectSend(pQ);
 		break;
+		case QTARGET_DIRECT_RESP:
+			AYSRV_QueueDirectResponse(pQ);
+			break;
 		}
 		if ((pQ->QFlg._QFinishedF == 1) && (pQ->QFlg._QKeepF == 0) && (pQ->QFlg._QBusyF == 1)) {
 			if (pQ->InLen) {

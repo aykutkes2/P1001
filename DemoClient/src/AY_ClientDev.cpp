@@ -9,6 +9,9 @@
 #include <AY_Client.h>
 #include <AY_ClientDev.h>
 
+
+static const Ui08 DefaultMac0[6] = { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, };
+
 #define RMTDEV_MAX_CNT			4096
 AY_DEVINFOLST	DevLevel1;
 AY_DEVINFOLST	DevRemote;
@@ -714,7 +717,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_a
 			if (pLocConn != nullptr) {
 				if (pLocConn->LocConnF.Full_) {
 					if (memcmp(&pLocConn->IPA_Hdr, pIPA, sizeof(ip_headerAll)) == 0) {
-						if ((SrcDst == _ETH_NULL_) || ((SrcDst== _ETH_SRC_)&&(memcmp(&pLocConn->src, pMAC, sizeof(uip_eth_addr)) == 0)) || ((SrcDst == _ETH_DST_) && (memcmp(&pLocConn->dest, pMAC, sizeof(uip_eth_addr)) == 0))) {
+						if ((SrcDst == _ETH_NULL_) || (memcmp(&DefaultMac0[0], pMAC, sizeof(uip_eth_addr)) == 0) || ((SrcDst== _ETH_SRC_)&&(memcmp(&pLocConn->src, pMAC, sizeof(uip_eth_addr)) == 0)) || ((SrcDst == _ETH_DST_) && (memcmp(&pLocConn->dest, pMAC, sizeof(uip_eth_addr)) == 0))) {
 							if (pId != 0) { *pId = i; }
 							return pLocConn;
 						}
@@ -728,7 +731,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_a
 
 
 /****************************************************************************/
-/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId)
+/*! \fn AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst)
 **
 ** \brief		        find Local Connection address for determined PI Header packet
 **
@@ -736,9 +739,11 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA(ip_headerAll *pIPA, int *pId, uip_eth_a
 **
 ** \return				pLocConn	: Local Connection Address
 ** 						pId			: Local Connection no
+** 						pMAC		: MAC match required ( OPTIONAL)
+** 						SrcDst		: MAC type source or destination ( OPTIONAL)
 **
 *****************************************************************************/
-AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId) {
+AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId, uip_eth_addr *pMAC, Ui08 SrcDst) {
 	AY_LOCCONNINFO	*pLocConn = nullptr;
 	ip_headerAll IPA;
 	Ui32 i, j;
@@ -755,7 +760,7 @@ AY_LOCCONNINFO	*pAYCLNT_FindLocConnByIPA_Rvs(ip_headerAll *pIPA, int *pId) {
 			pLocConn = pAYCLNT_LocConnById(i);
 			if (pLocConn != nullptr) {
 				if (pLocConn->LocConnF.Full_) {
-					if (memcmp(&pLocConn->IPA_Hdr, &IPA, sizeof(ip_headerAll)) == 0) {
+					if ((SrcDst == _ETH_NULL_) || (memcmp(&DefaultMac0[0], pMAC, sizeof(uip_eth_addr)) == 0) || ((SrcDst == _ETH_SRC_) && (memcmp(&pLocConn->src, pMAC, sizeof(uip_eth_addr)) == 0)) || ((SrcDst == _ETH_DST_) && (memcmp(&pLocConn->dest, pMAC, sizeof(uip_eth_addr)) == 0))) {
 						if (pId != 0) { *pId = i; }
 						return pLocConn;
 					}

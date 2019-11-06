@@ -121,7 +121,10 @@ typedef struct _AY_GWDATAHDR {
 
 typedef struct _AY_GWDRCTHDR {
 	Ui32		_Test10;	///< _Test10 for direct send
-	Ui32		_Test11;	///< _Test11 for direct send
+	union {
+		Ui32		_Test11;	///< _Test11 for direct send
+		Ui32		_ConM2M_Id;	///< Server M2M Conneciton No
+	};
 	Ui32		_DevNo;		///< RowNo on GW device list (DST)	
 	//Ui32		_LocalIP;	///< Local IP address (SRC)	
 }AY_GWDRCTHDR;

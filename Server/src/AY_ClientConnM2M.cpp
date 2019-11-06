@@ -31,7 +31,7 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 #endif
 		printf("AYDVSTRT--> Packet type is Direct Send\n");
 		AY_CONNTYPE		*pSrc;
-		pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);
+		pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);///< Find Request GW
 		if (pSrc != nullptr) {
 			AY_M2M_CONNTYPE			*pConnM2M;
 			Ui08					*pPckt;
@@ -43,14 +43,43 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 			//---------------------------//
 			pConnM2M->_Src._pConn = pSrc;
 			pConnM2M->_Src._DevNo = pGwDH->_DevNo;
-			pConnM2M->_Src._SrcIP = ((tcp_headerAll *)pPtr)->_ipHeader.saddr.longip;
-			pConnM2M->_Src._DstIP = ((tcp_headerAll *)pPtr)->_ipHeader.daddr.longip;
-			pConnM2M->_Src._SrcPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.sport);
-			pConnM2M->_Src._DstPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.dport);
+			//pConnM2M->_Src._SrcIP = ((tcp_headerAll *)pPtr)->_ipHeader.saddr.longip;
+			//pConnM2M->_Src._DstIP = ((tcp_headerAll *)pPtr)->_ipHeader.daddr.longip;
+			//pConnM2M->_Src._SrcPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.sport);
+			//pConnM2M->_Src._DstPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.dport);
 			//memcpy(&pConnM2M->_Src._SrcIP, &((tcp_headerAll *)pPtr)->_ipHeader.saddr, 12);///< 2xIP, 2xPort
 			//---------------------------//
 			//======= Load to Queue
 			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pConnM2M, (sizeof(AY_M2M_CONNTYPE) + Len), QTARGET_DIRECT_SEND, 0));
+		}
+	}
+	else if ((pGwDH->_Test10 == PACKET_TEST_DATA14) && (pGwDH->_Test11 == PACKET_TEST_DATA15)) {
+#if STEP_TEST==1
+		printf("********* STEP D6 *************\n********* STEP D6 *************\n********* STEP D6 *************\n");
+		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
+#endif
+		printf("AYDVSTRT--> Packet type is Direct Response\n");
+		AY_CONNTYPE		*pSrc;
+		pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);///< Find Response GW
+		if (pSrc != nullptr) {
+			AY_M2M_CONNTYPE			*pConnM2M;
+			Ui08					*pPckt;
+			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
+			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
+			memcpy(pPckt, pGwDH, Len);///< copy received packet
+			//---------------------------//
+			AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt + sizeof(AY_GWDRCTHDR)), (Len - sizeof(AY_GWDRCTHDR)));
+			//---------------------------//			
+			pConnM2M->_Src._pConn = pSrc;
+			pConnM2M->_Src._DevNo = pGwDH->_DevNo;
+			//pConnM2M->_Src._SrcIP = ((tcp_headerAll *)pPtr)->_ipHeader.saddr.longip;
+			//pConnM2M->_Src._DstIP = ((tcp_headerAll *)pPtr)->_ipHeader.daddr.longip;
+			//pConnM2M->_Src._SrcPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.sport);
+			//pConnM2M->_Src._DstPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.dport);
+			//memcpy(&pConnM2M->_Src._SrcIP, &((tcp_headerAll *)pPtr)->_ipHeader.saddr, 12);///< 2xIP, 2xPort
+			//---------------------------//
+			//======= Load to Queue
+			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pConnM2M, (sizeof(AY_M2M_CONNTYPE) + Len), QTARGET_DIRECT_RESP, 0));
 		}
 	}
 	return 0;///< not me
@@ -63,9 +92,47 @@ void AYSRV_QueueDirectSend(AY_QUEUE *pQ) {
 	Ui08					*pData;
 	tcp_headerAll			TCPheader;
 	Ui16					oLen;
+	Ui32					ConM2M_Id;
 
 	pConnM2M = (AY_M2M_CONNTYPE	*)pQ->pIn;
-	pConnM2M = pAYM2M_FindOrAddConn(pConnM2M, AY_CONN_UPDATE);
+	pConnM2M = pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_UPDATE);
+
+	pDst = pConnM2M->_Dst._pConn;
+	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
+	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA12;
+	((AY_GWDRCTHDR *)pData)->_Test11 = ConM2M_Id/*PACKET_TEST_DATA13*/;
+	((AY_GWDRCTHDR *)pData)->_DevNo = pConnM2M->_Dst._DevNo;
+	oLen = ((pQ->InLen - (sizeof(AY_M2M_CONNTYPE) + sizeof(AY_GWDRCTHDR)) + 15) & 0xFFF0);
+	//---------------------------//
+	AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (pData + sizeof(AY_GWDRCTHDR)), oLen);
+	//------- SEND
+	memcpy(&TCPheader, &pDst->_TCPh, sizeof(tcp_headerAll));
+	AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
+#if STEP_TEST==1
+	printf("********* STEP D3 *************\n********* STEP D3 *************\n********* STEP D3 *************\n");
+	AYPRINT_TCP_Header(&TCPheader);
+#endif
+	oLen += sizeof(AY_GWDRCTHDR);
+	TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)pData, oLen);
+	//--------------
+	///< delete from queue
+	pQ->QFlg._QFinishedF = 1;
+	pQ->QFlg._QKeepF = 0;
+	pQ->QFlg._QBusyF = 1;
+	return;
+}
+
+void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
+	AY_M2M_CONNTYPE			*pConnM2M;
+	tcp_headerAll			*pTCP;
+	AY_CONNTYPE				*pDst;
+	Ui08					*pData;
+	tcp_headerAll			TCPheader;
+	Ui16					oLen;
+	Ui32					ConM2M_Id;
+
+	pConnM2M = (AY_M2M_CONNTYPE	*)pQ->pIn;
+	pConnM2M = pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_FIND);
 
 	pDst = pConnM2M->_Dst._pConn;
 	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
@@ -107,7 +174,7 @@ int AYM2M_TestMinute(Ui32 RecMin, Ui32 TimeOut) {
 	if (Val > TimeOut) { return 1; }
 	else { return 0; }
 }
-AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui08 Func) {
+AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui32 *pId, Ui08 Func) {
 	void					*ptr;
 	AY_CONNADR				*pConnList;
 	AY_M2M_CONNTYPE			*pConnTypM2M, *pConnTst;
@@ -123,6 +190,7 @@ AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui08 Func) {
 	ptr = M2M_ConnLevel1.pConnAdr[0];
 	i = 0;
 	pConnTypM2M = 0;
+	if (pId != nullptr) {*pId = 0;}
 	do {
 		//pConnTypM2M = (AY_M2M_CONNTYPE *)(((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)M2M_ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3]);//test!!!!
 		if ((i & 0x00FFFFFF) == 0) {
@@ -193,6 +261,7 @@ AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui08 Func) {
 					if (Func == AY_CONN_UPDATE) {
 						if ((pConnTypM2M->_Dst._pConn != nullptr)/*&&(pConnTypM2M->_Dst._pConn->)*/) {
 							pConnTypM2M->M_LastUpdateMin = AYM2M_ThisMinute();
+							if (pId != nullptr) { *pId = i; }
 							return pConnTypM2M;
 						}
 					}
@@ -221,6 +290,7 @@ AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui08 Func) {
 						pConnTypM2M->_Dst._DevNo = MYSQL_Device._ParentId;
 						pConnTypM2M->_Dst._DstIP = MYSQL_Device._LocalIp;
 						//...
+						if (pId != nullptr) { *pId = i; }
 						return pConnTypM2M;
 					}
 				}
