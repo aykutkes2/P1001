@@ -55,13 +55,13 @@ enum _MYSOCKETS {
 #define PACKET_TEST_DATA7			0x3ab96c05
 #define PACKET_TEST_DATA8			0x54675c92		///< New Remote Response
 #define PACKET_TEST_DATA9			0x873ed73d
-#define PACKET_TEST_DATA10			0x5c7980f1		///< New Direct Send Data
-#define PACKET_TEST_DATA11			0xd822673e
-#define PACKET_TEST_DATA12			0xd49c9668		///< New Direct Send Data -2
-#define PACKET_TEST_DATA13			0x9aca50a9
-#define PACKET_TEST_DATA14			0x7243bed4		///< New Direct Response Data
+#define PACKET_TEST_DATA10			0x5c7980f1		///< New Direct Send Data		GW1 - SRV
+#define PACKET_TEST_DATA11			0xd822673e		///< New Direct Send Data		SRV - GW2
+#define PACKET_TEST_DATA12			0xd49c9668		///< New Direct Response Data	GW2 - SRV		
+#define PACKET_TEST_DATA13			0x9aca50a9		///< New Direct Response Data	SRV - GW1
+#define PACKET_TEST_DATA14			0x7243bed4		
 #define PACKET_TEST_DATA15			0x929df23b
-#define PACKET_TEST_DATA14			0xda9a4971		///< New Direct Response Data -2
+#define PACKET_TEST_DATA14			0xda9a4971		
 #define PACKET_TEST_DATA15			0x8fcf7868
 
 

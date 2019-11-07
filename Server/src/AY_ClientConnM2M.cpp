@@ -24,7 +24,7 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 	Si32			i;
 
 	pGwDH = (AY_GWDRCTHDR	*)(pPtr + sizeof(tcp_headerAll));
-	if ((pGwDH->_Test10 == PACKET_TEST_DATA10) && (pGwDH->_Test11 == PACKET_TEST_DATA11)) {
+	if (pGwDH->_Test10 == PACKET_TEST_DATA10) {
 #if STEP_TEST==1
 		printf("********* STEP D2 *************\n********* STEP D2 *************\n********* STEP D2 *************\n");
 		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
@@ -43,17 +43,13 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 			//---------------------------//
 			pConnM2M->_Src._pConn = pSrc;
 			pConnM2M->_Src._DevNo = pGwDH->_DevNo;
-			//pConnM2M->_Src._SrcIP = ((tcp_headerAll *)pPtr)->_ipHeader.saddr.longip;
-			//pConnM2M->_Src._DstIP = ((tcp_headerAll *)pPtr)->_ipHeader.daddr.longip;
-			//pConnM2M->_Src._SrcPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.sport);
-			//pConnM2M->_Src._DstPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.dport);
-			//memcpy(&pConnM2M->_Src._SrcIP, &((tcp_headerAll *)pPtr)->_ipHeader.saddr, 12);///< 2xIP, 2xPort
+			pConnM2M->M_LastUpdateMin = pGwDH->_ConM2M_Id;
 			//---------------------------//
 			//======= Load to Queue
 			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pConnM2M, (sizeof(AY_M2M_CONNTYPE) + Len), QTARGET_DIRECT_SEND, 0));
 		}
 	}
-	else if ((pGwDH->_Test10 == PACKET_TEST_DATA14) && (pGwDH->_Test11 == PACKET_TEST_DATA15)) {
+	else if (pGwDH->_Test10 == PACKET_TEST_DATA12) {
 #if STEP_TEST==1
 		printf("********* STEP D6 *************\n********* STEP D6 *************\n********* STEP D6 *************\n");
 		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
@@ -72,11 +68,7 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 			//---------------------------//			
 			pConnM2M->_Src._pConn = pSrc;
 			pConnM2M->_Src._DevNo = pGwDH->_DevNo;
-			//pConnM2M->_Src._SrcIP = ((tcp_headerAll *)pPtr)->_ipHeader.saddr.longip;
-			//pConnM2M->_Src._DstIP = ((tcp_headerAll *)pPtr)->_ipHeader.daddr.longip;
-			//pConnM2M->_Src._SrcPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.sport);
-			//pConnM2M->_Src._DstPort = _HTONS(((tcp_headerAll *)pPtr)->_tcpHeader.dport);
-			//memcpy(&pConnM2M->_Src._SrcIP, &((tcp_headerAll *)pPtr)->_ipHeader.saddr, 12);///< 2xIP, 2xPort
+			pConnM2M->M_LastUpdateMin = pGwDH->_ConM2M_Id;
 			//---------------------------//
 			//======= Load to Queue
 			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pConnM2M, (sizeof(AY_M2M_CONNTYPE) + Len), QTARGET_DIRECT_RESP, 0));
@@ -99,8 +91,8 @@ void AYSRV_QueueDirectSend(AY_QUEUE *pQ) {
 
 	pDst = pConnM2M->_Dst._pConn;
 	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
-	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA12;
-	((AY_GWDRCTHDR *)pData)->_Test11 = ConM2M_Id/*PACKET_TEST_DATA13*/;
+	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA11;
+	((AY_GWDRCTHDR *)pData)->_ConM2M_Id = ConM2M_Id;
 	((AY_GWDRCTHDR *)pData)->_DevNo = pConnM2M->_Dst._DevNo;
 	oLen = ((pQ->InLen - (sizeof(AY_M2M_CONNTYPE) + sizeof(AY_GWDRCTHDR)) + 15) & 0xFFF0);
 	//---------------------------//
@@ -132,13 +124,14 @@ void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 	Ui32					ConM2M_Id;
 
 	pConnM2M = (AY_M2M_CONNTYPE	*)pQ->pIn;
-	pConnM2M = pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_FIND);
+	ConM2M_Id = pConnM2M->M_LastUpdateMin;
+	pConnM2M = pAYM2M_ReadConn(ConM2M_Id);// pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_FIND);
 
 	pDst = pConnM2M->_Dst._pConn;
 	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
-	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA12;
-	((AY_GWDRCTHDR *)pData)->_Test11 = PACKET_TEST_DATA13;
-	((AY_GWDRCTHDR *)pData)->_DevNo = pConnM2M->_Dst._DevNo;
+	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA13;
+	((AY_GWDRCTHDR *)pData)->_ConM2M_Id = ConM2M_Id;
+	((AY_GWDRCTHDR *)pData)->_DevNo = pConnM2M->_Src._DevNo;
 	oLen = ((pQ->InLen - (sizeof(AY_M2M_CONNTYPE) + sizeof(AY_GWDRCTHDR)) + 15) & 0xFFF0);
 	//---------------------------//
 	AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (pData + sizeof(AY_GWDRCTHDR)), oLen);
@@ -146,7 +139,7 @@ void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 	memcpy(&TCPheader, &pDst->_TCPh, sizeof(tcp_headerAll));
 	AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
 #if STEP_TEST==1
-	printf("********* STEP D3 *************\n********* STEP D3 *************\n********* STEP D3 *************\n");
+	printf("********* STEP D7 *************\n********* STEP D7 *************\n********* STEP D7 *************\n");
 	AYPRINT_TCP_Header(&TCPheader);
 #endif
 	oLen += sizeof(AY_GWDRCTHDR);
