@@ -223,7 +223,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 
 			printf("AYCLNT--> ============ DIRECT RCV Test & Find Target =========\n ");
 			pGwDH = (AY_GWDRCTHDR	*)pData;
-			pInfom = pAY_FindDevInfoByDevNo(pGwDH->_DevNo);
+			pInfom = pAY_FindLocDevInfoByDevRowNo/*pAY_FindDevInfoByDevNo*/(pGwDH->_DevNo);
 			if (pInfom) {///< there is a valid target 
 				if ((pInfom->DevRead._Type == _MIRROR_) || (pInfom->DevRead._Type == _GUEST_)) {///< target must be a mirror device
 					AY_DEVINFO		 *pInfom2;

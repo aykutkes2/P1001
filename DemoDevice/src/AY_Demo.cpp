@@ -257,13 +257,19 @@ int AY_StartSlaveListen(void) {
 	return 1;
 }
 
+char * pAY_DemoFilter(void){
+
+	strcpy((char *)&MySocketBuff[0],"ip host ");
+	AY_ConvertIPAddToStrRet((Ui08*)&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
+	return ((char*)&MySocketBuff[0]);
+}
 
 int AY_StartDemoListen(void) {
 	//============= SET FILTER ==========================//
 	// //ip.src != 192.168.2.144 && ip.dst != 192.168.2.144
 	AYSCKT_FilterFreeA(_MAIN_SCKT);
 	//AYSCKT_FilterFreeA(_SLVS_SCKT);
-	strcpy((char *)&MySocketBuff[0],"ip dst host ");
+	strcpy((char *)&MySocketBuff[0],"ip host ");
 	AY_ConvertIPAddToStrRet((Ui08*)&MyIP_Address.byte1, (char*)&MySocketBuff[0]);
 	AYSCKT_FilterSetB(_MAIN_SCKT, (char *)&MySocketBuff[0]);
 	return 1;
@@ -420,6 +426,7 @@ int main(void)//(int argc, char **argv)
 					*((Ui32 *)&SrvIP_Address) = AY_ConvertStringToIP(&p);
 				}
 				AY_Demo_Initied = 1;
+				AY_Demo_WaitMACadr = 1;
 			}
 		}
 		else if (!AY_Demo_GetMACadr) {

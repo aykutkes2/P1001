@@ -127,7 +127,7 @@ void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 	ConM2M_Id = pConnM2M->M_LastUpdateMin;
 	pConnM2M = pAYM2M_ReadConn(ConM2M_Id);// pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_FIND);
 
-	pDst = pConnM2M->_Dst._pConn;
+	pDst = pConnM2M->_Src._pConn;
 	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
 	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA13;
 	((AY_GWDRCTHDR *)pData)->_ConM2M_Id = ConM2M_Id;

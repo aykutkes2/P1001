@@ -131,6 +131,7 @@ extern AY_DEVINFO *pAYCLNT_AddDevToList(Ui08 *pComp, Ui32 DevNo, Ui08 Comp);
 extern AY_DEVINFO *pAY_FindDevInfoByDevNo(Ui32 DevNo);
 extern AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP);
 extern AY_DEVINFO *pAY_FindRmtDevInfoByAll(AY_DEVINFO *pInfo);
+extern AY_DEVINFO *pAY_FindLocDevInfoByDevRowNo(Ui32 RowNo);
 
 
 //============================ GW LISTS ================================================================//

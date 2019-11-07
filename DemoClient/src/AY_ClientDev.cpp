@@ -210,6 +210,25 @@ AY_DEVINFO *pAY_FindLocDevInfoByIP(Ui32 LocIP) {
 /*
 *
 */
+AY_DEVINFO *pAY_FindLocDevInfoByDevRowNo (Ui32 RowNo) {
+	Ui32 i;
+	AY_DEVINFO	*pDeInf;
+	for (i = 0; i < (MAX_DEVINFO_CNT); i++) {
+		pDeInf = pAY_FindDevInfoByDevNo(i);
+		if (pDeInf) {
+			if (pDeInf->DevF.Full_) {
+				if (pDeInf->DevRead._id == RowNo) {
+					return pDeInf;
+				}
+			}
+		}
+	}
+	return nullptr;///< not found
+}
+
+/*
+*
+*/
 AY_DEVINFO *pAY_FindRmtDevInfoByAll(AY_DEVINFO *pInfo) {
 	Ui32 i;
 	AY_DEVINFO	*pDeInf;
