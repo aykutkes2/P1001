@@ -61,8 +61,8 @@ enum _MYSOCKETS {
 #define PACKET_TEST_DATA13			0x9aca50a9		///< New Direct Response Data	SRV - GW1
 #define PACKET_TEST_DATA14			0x7243bed4		
 #define PACKET_TEST_DATA15			0x929df23b
-#define PACKET_TEST_DATA14			0xda9a4971		
-#define PACKET_TEST_DATA15			0x8fcf7868
+#define PACKET_TEST_DATA16			0xda9a4971		
+#define PACKET_TEST_DATA17			0x8fcf7868
 
 
 extern const MYSQL_STRS MySQLParams;

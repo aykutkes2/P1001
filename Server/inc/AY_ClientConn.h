@@ -46,7 +46,7 @@ extern int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len);
 extern Ui32	ConnectionCount;
 extern Ui32 AYCONN_ThisMinute(void);
 extern int AYCONN_TestMinute(Ui32 RecMin, Ui32 TimeOut);
-extern Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAll *pTCP, Ui08 *pSSK, Ui08 Func);
+extern Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAll *pTCP, Ui08 *pSSK, AY_CONNTYPE **pConn, Ui08 Func);
 extern Ui32 AYCONN_ReadConn(Ui32 ConnId, AY_CONNTYPE *pConnRd);
 extern AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId);
 extern AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP);

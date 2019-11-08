@@ -34,6 +34,7 @@
 ////------------ TEST SIL !!! ___________________
 
 void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
+	AY_CONNTYPE			*pConnTyp;
 	AY_DEVSTRTIN		*pDevStrtIn;
 	AY_DeviceStartResp	*pDevStrtPspHdr;
 	tcp_headerAll		*pTCP;
@@ -42,71 +43,81 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 
 	pDevStrtIn = (AY_DEVSTRTIN	*)pQ->pIn;
 	printf("\n\t\tBEFORE-> ConnectionCount = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", ConnectionCount, *((Ui32 *)&pDevStrtIn->_Unique[0]),*((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]));
-	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_TCPh, &pDevStrtIn->_SessionKey[0], AY_CONN_UPDATE);
-	printf("\n\t\tAFTER-> ConnectionCount = %d\n", ConnectionCount);
-	printf("AYDVSTRT--> Connection ID ConnId=%d \n", i);
-	MYSQL_AddNewGateway((char *)pDevStrtIn->_Name, (char *)pDevStrtIn->_Pswd, (Ui32 *)&pDevStrtIn->_Unique, *((Ui64 *)&pDevStrtIn->_MAC), i, pDevStrtIn->_ServerCertNo, &pDevStrtIn->_SessionKey[0], _GATEWAY_UPDATE_);
-	//----------------------------//
-	/*memcpy(&UniqId[0], &pDevStrtIn->_Unique[0], 12);
-	memcpy(&Mac[0], &pDevStrtIn->_MAC[0], 6);
-	strcpy(Name, pDevStrtIn->_Name);
-	strcpy(Psw, pDevStrtIn->_Pswd);
-	CertNo = pDevStrtIn->_ServerCertNo;
-	ConnNo = i;
-	memcpy(&Sssk[0], &pDevStrtIn->_SessionKey[0], 16);*/
-	//--------------------------------//
-	pTCP = (tcp_headerAll *)_AY_MallocMemory(4096);///< max packet size
-	memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
-	pTCP->_ethHeader.dest = pDevStrtIn->_TCPh._ethHeader.src;
-	pTCP->_ethHeader.src = MyEth_Address;//pDevStrtIn->_TCPh._ethHeader.dest;
-	pTCP->_ipHeader.daddr = pDevStrtIn->_TCPh._ipHeader.saddr;
-	pTCP->_ipHeader.saddr = pDevStrtIn->_TCPh._ipHeader.daddr;
-	pTCP->_tcpHeader.dport = pDevStrtIn->_TCPh._tcpHeader.sport;
-	pTCP->_tcpHeader.sport = pDevStrtIn->_TCPh._tcpHeader.dport;
-	// ack seq düþün !!!
+	i = AYCONN_FindOrAddConn(*((Ui32 *)&pDevStrtIn->_Unique[0]), *((Ui32 *)&pDevStrtIn->_Unique[4]), *((Ui32 *)&pDevStrtIn->_Unique[8]), &pDevStrtIn->_TCPh, &pDevStrtIn->_SessionKey[0], &pConnTyp, AY_CONN_UPDATE);
+	if ((i != 0xFFFFFFFF) && (pConnTyp != nullptr)) {
+		printf("\n\t\tAFTER-> ConnectionCount = %d\n", ConnectionCount);
+		printf("AYDVSTRT--> Connection ID ConnId=%d \n", i);
+		MYSQL_AddNewGateway((char *)pDevStrtIn->_Name, (char *)pDevStrtIn->_Pswd, (Ui32 *)&pDevStrtIn->_Unique, *((Ui64 *)&pDevStrtIn->_MAC), i, pDevStrtIn->_ServerCertNo, &pDevStrtIn->_SessionKey[0], _GATEWAY_UPDATE_);
+		//----------------------------//
+		/*memcpy(&UniqId[0], &pDevStrtIn->_Unique[0], 12);
+		memcpy(&Mac[0], &pDevStrtIn->_MAC[0], 6);
+		strcpy(Name, pDevStrtIn->_Name);
+		strcpy(Psw, pDevStrtIn->_Pswd);
+		CertNo = pDevStrtIn->_ServerCertNo;
+		ConnNo = i;
+		memcpy(&Sssk[0], &pDevStrtIn->_SessionKey[0], 16);*/
+		//--------------------------------//
+		pTCP = (tcp_headerAll *)&pConnTyp->_TCPh;///< tcp header
+		pDevStrtPspHdr = (AY_DeviceStartResp	*)_AY_MallocMemory(4096);///< max packet size
+		memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
+		pTCP->_ethHeader.dest = pDevStrtIn->_TCPh._ethHeader.src;
+		pTCP->_ethHeader.src = MyEth_Address;//pDevStrtIn->_TCPh._ethHeader.dest;
+		pTCP->_ipHeader.daddr = pDevStrtIn->_TCPh._ipHeader.saddr;
+		pTCP->_ipHeader.saddr = pDevStrtIn->_TCPh._ipHeader.daddr;
+		pTCP->_tcpHeader.dport = pDevStrtIn->_TCPh._tcpHeader.sport;
+		pTCP->_tcpHeader.sport = pDevStrtIn->_TCPh._tcpHeader.dport;
+		// ack seq düþün !!!
+		j = pTCP->_tcpHeader.acknum;
+		pTCP->_tcpHeader.acknum = pTCP->_tcpHeader.seqnum;
+		pTCP->_tcpHeader.seqnum = j;///< convert TCP counters
+		pTCP->_tcpHeader.acknum += sizeof(AY_DeviceStart);
 
-	pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pTCP)+sizeof(tcp_headerAll));///< max packet size
-	j = 0; k = 0;
-	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
-	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
-	do {
-		i = MYSQL_ReadDeviceList(0, (MYSQL_DeviceRead *)(((Ui08 *)pDevStrtPspHdr)+sizeof(AY_DeviceStartResp)), 168, j);
-		pDevStrtPspHdr->_Test0 = PACKET_TEST_DATA0;
-		pDevStrtPspHdr->_Test1 = PACKET_TEST_DATA1;
-		pDevStrtPspHdr->_DevCnt = i;
-		pDevStrtPspHdr->_DevPcktNo= k;
-		//============== FILE========================//
-		m = sizeof(AY_DeviceStartResp) + (((Ui16)i) * sizeof(AY_DeviceRead));
-		printf("AYDVSTRT--> %d ============ FILE START =========\n ",m);
-		n = 0;
-		while (m > 32) {
-			AY_HexValPrint((((Ui08 *)pDevStrtPspHdr) + n), 32);
-			printf("\r\n ");
-			n += 32;
-			m -= 32;
-		}
-		if (m) {
-			AY_HexValPrint((((Ui08 *)pDevStrtPspHdr) + n), m);
-			printf("\r\n ");
-		}
-		printf("AYDVSTRT--> ============ FILE END =========\n ");
-		//===========================================//
-		if (i) {
-			n = AY_Crypt_AES128((Ui08 *)&pDevStrtIn->_SessionKey[0] /*&MYSQL_Gateway._SessionKey[0]*/, (((Ui08 *)pDevStrtPspHdr) + sizeof(AY_DeviceStartResp)), (((Ui16)i) * sizeof(AY_DeviceRead)));
-		}
-		k++;
-		j += i;
-		TCP_packet_send(_MAIN_SCKT, pTCP, (Ui08 *)pDevStrtPspHdr, (sizeof(AY_DeviceStartResp) + n/*(((Ui16)i) * sizeof(AY_DeviceRead))*/));
+		//pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pTCP)+sizeof(tcp_headerAll));///< max packet size
+		j = 0; k = 0;
+		printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
+		printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
+		do {
+			i = MYSQL_ReadDeviceList(0, (MYSQL_DeviceRead *)(((Ui08 *)pDevStrtPspHdr) + sizeof(AY_DeviceStartResp)), 168, j);
+			pDevStrtPspHdr->_Test0 = PACKET_TEST_DATA0;
+			pDevStrtPspHdr->_Test1 = PACKET_TEST_DATA1;
+			pDevStrtPspHdr->_DevCnt = i;
+			pDevStrtPspHdr->_DevPcktNo = k;
+			//============== FILE========================//
+			m = sizeof(AY_DeviceStartResp) + (((Ui16)i) * sizeof(AY_DeviceRead));
+			printf("AYDVSTRT--> %d ============ FILE START =========\n ", m);
+			n = 0;
+			while (m > 32) {
+				AY_HexValPrint((((Ui08 *)pDevStrtPspHdr) + n), 32);
+				printf("\r\n ");
+				n += 32;
+				m -= 32;
+			}
+			if (m) {
+				AY_HexValPrint((((Ui08 *)pDevStrtPspHdr) + n), m);
+				printf("\r\n ");
+			}
+			printf("AYDVSTRT--> ============ FILE END =========\n ");
+			//===========================================//
+			if (i) {
+				n = AY_Crypt_AES128((Ui08 *)&pDevStrtIn->_SessionKey[0] /*&MYSQL_Gateway._SessionKey[0]*/, (((Ui08 *)pDevStrtPspHdr) + sizeof(AY_DeviceStartResp)), (((Ui16)i) * sizeof(AY_DeviceRead)));
+			}
+			k++;
+			j += i;
+			TCP_packet_send(_MAIN_SCKT, pTCP, (Ui08 *)pDevStrtPspHdr, (sizeof(AY_DeviceStartResp) + n/*(((Ui16)i) * sizeof(AY_DeviceRead))*/));
 #if STEP_TEST==1
-		printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
-		AYPRINT_TCP_Header(pTCP);
+			printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
+			AYPRINT_TCP_Header(pTCP);
 #endif
-	} while (i >= 168);
-	
-	MYSQL_FindLoadDeviceInfoID(0, (Ui32 *)&pDevStrtIn->_Unique);
-	printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\n\n\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\n\r\n");
-	
-	_AY_FreeMemory((unsigned char*)pTCP);
+		} while (i >= 168);
+
+		MYSQL_FindLoadDeviceInfoID(0, (Ui32 *)&pDevStrtIn->_Unique);
+		printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\n\n\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\n\r\n");
+
+		_AY_FreeMemory((unsigned char*)pDevStrtPspHdr);
+	}
+	else {
+		printf("AYDVSTRT--> ERROR !!! Connection ID ConnId=%d \n", i);
+	}
 	///< delete from queue
 	pQ->QFlg._QFinishedF = 1;
 	pQ->QFlg._QKeepF = 0;
@@ -156,6 +167,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			AY_CONNTYPE	*pSrc, *pDst;
 			pDst = pFindConnByUniqueID((UNIQUE_ID *)&pDevStrtIn->_Unique[0]);
 			if (pDst != nullptr) {//ieriki adým sonra aç !!!
+				//pDst->_TCPh._tcpHeader.acknum += Len;
 				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)&pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)&pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
 				if (i >= 0) {
 					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
@@ -181,6 +193,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							AYPRINT_TCP_Header(&TCPheader);
 #endif
 							TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRsp, oLen);
+							pSrc->_TCPh._tcpHeader.seqnum += oLen;
 							//--------------
 							AYSRV_UniqQ_Init(i);
 						}
@@ -221,6 +234,8 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 					if (pDst != nullptr) {
 						tcp_headerAll		TCPheader;
 						Ui16 oLen;
+
+						pDst->_TCPh._tcpHeader.acknum += Len;
 						//---------------------------//
 						AYSRV_UniqQ_Load(i, *((UNIQUE_ID *)&pSrc->_UnqiueId[0]), *((UNIQUE_ID *)&pInfoRqst->_Unique[0]), pInfoRqst->_QueRowNo, _UNIQUE_Q_RENT, 0, 0);
 						//---------------------------//
@@ -240,6 +255,7 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 						AYPRINT_TCP_Header(&TCPheader);
 #endif
 						i =  TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRent, oLen);
+						pDst->_TCPh._tcpHeader.seqnum += oLen;
 						_AY_FreeMemory((unsigned char *)pInfoRqst);
 						return i;
 					}
@@ -265,7 +281,7 @@ int AYCONN_TestMinute(Ui32 RecMin, Ui32 TimeOut) {
 	if (Val > TimeOut) { return 1; }
 	else { return 0; }
 }
-Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAll *pTCP, Ui08 *pSSK, Ui08 Func) {
+Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAll *pTCP, Ui08 *pSSK, AY_CONNTYPE **pConn, Ui08 Func) {
 	void *ptr;
 	AY_CONNADR	*pConnList;
 	AY_CONNTYPE	*pConnTyp, *pConnTst;
@@ -280,6 +296,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAl
 	ptr = ConnLevel1.pConnAdr[0];
 	i = 0; 
 	pConnTyp = 0;
+	*pConn = nullptr;
 	do{
 		//pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3]);//test!!!!
 		if ((i & 0x00FFFFFF) == 0) {
@@ -352,6 +369,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAl
 				_AY_FreeMemory((unsigned char *)pConnTyp);
 				((AY_CONNADR	*)((AY_CONNADR	*)(((AY_CONNADR	*)ConnLevel1.pConnAdr[i0])->pConnAdr[i1]))->pConnAdr[i2])->pConnAdr[i3] = 0;///< nullptr
 			}
+			*pConn = pConnTyp;///< point conn values
 			return i;
 		}
 		if (i == ConnectionCount) {
@@ -377,6 +395,7 @@ Ui32 AYCONN_FindOrAddConn(Ui32 Unique0, Ui32 Unique1, Ui32 Unique2, tcp_headerAl
 			/*else if (Func == AY_CONN_READ) {///< download
 				memcpy(pUDP, &pConnTyp->_UDPh, sizeof(udp_headerAll));
 			}*/
+			*pConn = pConnTyp;///< point conn values
 			return i;
 		}
 		pConnTyp = (AY_CONNTYPE *)(((AY_CONNADR	*)ptr)->pConnAdr[i3]);///< level4 start index//pConnTyp++;

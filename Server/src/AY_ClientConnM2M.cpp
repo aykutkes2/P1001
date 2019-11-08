@@ -21,6 +21,7 @@
 
 int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 	AY_GWDRCTHDR		*pGwDH;
+	Ui32				j;
 	Si32			i;
 
 	pGwDH = (AY_GWDRCTHDR	*)(pPtr + sizeof(tcp_headerAll));
@@ -35,6 +36,13 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 		if (pSrc != nullptr) {
 			AY_M2M_CONNTYPE			*pConnM2M;
 			Ui08					*pPckt;
+
+			// ack seq düþün !!!
+			j = pSrc->_TCPh._tcpHeader.acknum;
+			pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
+			pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+			pSrc->_TCPh._tcpHeader.acknum += sizeof(AY_DeviceStart);
+			//----------------------------------------------------------------//
 			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
 			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
 			memcpy(pPckt, pGwDH, Len);///< copy received packet
@@ -60,6 +68,13 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 		if (pSrc != nullptr) {
 			AY_M2M_CONNTYPE			*pConnM2M;
 			Ui08					*pPckt;
+
+			// ack seq düþün !!!
+			j = pSrc->_TCPh._tcpHeader.acknum;
+			pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
+			pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+			pSrc->_TCPh._tcpHeader.acknum += sizeof(AY_DeviceStart);
+			//----------------------------------------------------------------//
 			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
 			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
 			memcpy(pPckt, pGwDH, Len);///< copy received packet
@@ -106,6 +121,8 @@ void AYSRV_QueueDirectSend(AY_QUEUE *pQ) {
 #endif
 	oLen += sizeof(AY_GWDRCTHDR);
 	TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)pData, oLen);
+	pDst->_TCPh._tcpHeader.acknum = TCPheader._tcpHeader.acknum;
+	pDst->_TCPh._tcpHeader.seqnum = TCPheader._tcpHeader.seqnum;
 	//--------------
 	///< delete from queue
 	pQ->QFlg._QFinishedF = 1;
@@ -144,6 +161,8 @@ void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 #endif
 	oLen += sizeof(AY_GWDRCTHDR);
 	TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)pData, oLen);
+	pDst->_TCPh._tcpHeader.acknum = TCPheader._tcpHeader.acknum;
+	pDst->_TCPh._tcpHeader.seqnum = TCPheader._tcpHeader.seqnum;
 	//--------------
 	///< delete from queue
 	pQ->QFlg._QFinishedF = 1;
