@@ -37,7 +37,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	AY_CONNTYPE			*pConnTyp;
 	AY_DEVSTRTIN		*pDevStrtIn;
 	AY_DeviceStartResp	*pDevStrtPspHdr;
-	tcp_headerAll		*pTCP;
+	tcp_headerAll		*pTCP,TCP_Send;
 	Ui32				i,j,k;
 	Ui32				m, n;//test sil !!!
 
@@ -57,8 +57,12 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		ConnNo = i;
 		memcpy(&Sssk[0], &pDevStrtIn->_SessionKey[0], 16);*/
 		//--------------------------------//
-		pTCP = (tcp_headerAll *)&pConnTyp->_TCPh;///< tcp header
-		pDevStrtPspHdr = (AY_DeviceStartResp	*)_AY_MallocMemory(4096);///< max packet size
+		j = pConnTyp->_TCPh._tcpHeader.acknum;
+		pConnTyp->_TCPh._tcpHeader.acknum = pConnTyp->_TCPh._tcpHeader.seqnum;
+		pConnTyp->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+		pConnTyp->_TCPh._tcpHeader.acknum += sizeof(AY_DeviceStart);
+
+		pTCP = (tcp_headerAll *)_AY_MallocMemory(4096);///< max packet size
 		memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
 		pTCP->_ethHeader.dest = pDevStrtIn->_TCPh._ethHeader.src;
 		pTCP->_ethHeader.src = MyEth_Address;//pDevStrtIn->_TCPh._ethHeader.dest;
@@ -66,13 +70,10 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		pTCP->_ipHeader.saddr = pDevStrtIn->_TCPh._ipHeader.daddr;
 		pTCP->_tcpHeader.dport = pDevStrtIn->_TCPh._tcpHeader.sport;
 		pTCP->_tcpHeader.sport = pDevStrtIn->_TCPh._tcpHeader.dport;
-		// ack seq düþün !!!
-		j = pTCP->_tcpHeader.acknum;
-		pTCP->_tcpHeader.acknum = pTCP->_tcpHeader.seqnum;
-		pTCP->_tcpHeader.seqnum = j;///< convert TCP counters
-		pTCP->_tcpHeader.acknum += sizeof(AY_DeviceStart);
+		pTCP->_tcpHeader.seqnum = pConnTyp->_TCPh._tcpHeader.seqnum;
+		pTCP->_tcpHeader.acknum = pConnTyp->_TCPh._tcpHeader.acknum;
 
-		//pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pTCP)+sizeof(tcp_headerAll));///< max packet size
+		pDevStrtPspHdr = (AY_DeviceStartResp	*)(((Ui08 *)pTCP)+sizeof(tcp_headerAll));///< max packet size
 		j = 0; k = 0;
 		printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&pDevStrtIn->_SessionKey[0], 16); printf("\r\n");
 		printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)&MYSQL_Gateway._SessionKey[0], 16); printf("\r\n");
@@ -104,6 +105,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 			k++;
 			j += i;
 			TCP_packet_send(_MAIN_SCKT, pTCP, (Ui08 *)pDevStrtPspHdr, (sizeof(AY_DeviceStartResp) + n/*(((Ui16)i) * sizeof(AY_DeviceRead))*/));
+			pConnTyp->_TCPh._tcpHeader.seqnum = pTCP->_tcpHeader.seqnum;
 #if STEP_TEST==1
 			printf("********* STEP 0 *************\n********* STEP 5 *************\n********* STEP 7 *************\n");
 			AYPRINT_TCP_Header(pTCP);
@@ -113,7 +115,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		MYSQL_FindLoadDeviceInfoID(0, (Ui32 *)&pDevStrtIn->_Unique);
 		printf("AYDVSTRT--> SSK = "); AY_HexValPrint((Ui08 *)/*&pDevStrtIn->_SessionKey[0]*/ &MYSQL_Gateway._SessionKey[0], 16); printf("\n\n\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\t\t************** CONN END ************\n\n\r\n");
 
-		_AY_FreeMemory((unsigned char*)pDevStrtPspHdr);
+		_AY_FreeMemory((unsigned char*)pTCP);
 	}
 	else {
 		printf("AYDVSTRT--> ERROR !!! Connection ID ConnId=%d \n", i);
