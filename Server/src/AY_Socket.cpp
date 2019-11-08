@@ -563,7 +563,7 @@ int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) 
 		return PCAP_ERROR;
 	}
 	printf("Data Has been Sent !!!! Count = %d", i);
-	TCP_header->_tcpHeader.seqnum += i;
+	TCP_header->_tcpHeader.seqnum += _HTONSL(i);
 	AY_SendCnt += i;
 	_AY_FreeMemory((unsigned char*)ptr);
 	return 1;

@@ -209,6 +209,7 @@ struct ethip_hdr {
 };
 
 #define _HTONS(n) ((uint16_t)((((uint16_t)(n)) << 8) | (((uint16_t)(n)) >> 8)))
+#define _HTONSL(n) ((uint32_t)( (((uint32_t)(n&0xFF000000)) >> 24) |(((uint32_t)(n&0x00FF0000)) >> 8) | (((uint32_t)(n&0x0000FF00)) << 8) | (((uint32_t)(n&0x000000FF)) << 24) ) )
 #define UIP_LLH_LEN     14	/* The link level header length. */
 #define UIP_IPH_LEN    20    /* Size of IP header */
 #define UIP_UDPH_LEN    8    /* Size of UDP header */

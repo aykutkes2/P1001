@@ -60,7 +60,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		j = pConnTyp->_TCPh._tcpHeader.acknum;
 		pConnTyp->_TCPh._tcpHeader.acknum = pConnTyp->_TCPh._tcpHeader.seqnum;
 		pConnTyp->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
-		pConnTyp->_TCPh._tcpHeader.acknum += sizeof(AY_DeviceStart);
+		pConnTyp->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 
 		pTCP = (tcp_headerAll *)_AY_MallocMemory(4096);///< max packet size
 		memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
@@ -169,7 +169,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 			AY_CONNTYPE	*pSrc, *pDst;
 			pDst = pFindConnByUniqueID((UNIQUE_ID *)&pDevStrtIn->_Unique[0]);
 			if (pDst != nullptr) {//ieriki adým sonra aç !!!
-				//pDst->_TCPh._tcpHeader.acknum += Len;
+				//pDst->_TCPh._tcpHeader.acknum += _HTONSL(Len);
 				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)&pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)&pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
 				if (i >= 0) {
 					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
@@ -195,7 +195,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							AYPRINT_TCP_Header(&TCPheader);
 #endif
 							TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRsp, oLen);
-							pSrc->_TCPh._tcpHeader.seqnum += oLen;
+							pSrc->_TCPh._tcpHeader.seqnum += _HTONSL( oLen );
 							//--------------
 							AYSRV_UniqQ_Init(i);
 						}
@@ -237,7 +237,7 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 						tcp_headerAll		TCPheader;
 						Ui16 oLen;
 
-						pDst->_TCPh._tcpHeader.acknum += Len;
+						pDst->_TCPh._tcpHeader.acknum += _HTONSL(Len);
 						//---------------------------//
 						AYSRV_UniqQ_Load(i, *((UNIQUE_ID *)&pSrc->_UnqiueId[0]), *((UNIQUE_ID *)&pInfoRqst->_Unique[0]), pInfoRqst->_QueRowNo, _UNIQUE_Q_RENT, 0, 0);
 						//---------------------------//
@@ -257,7 +257,7 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
 						AYPRINT_TCP_Header(&TCPheader);
 #endif
 						i =  TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRent, oLen);
-						pDst->_TCPh._tcpHeader.seqnum += oLen;
+						pDst->_TCPh._tcpHeader.seqnum += _HTONSL( oLen );
 						_AY_FreeMemory((unsigned char *)pInfoRqst);
 						return i;
 					}
