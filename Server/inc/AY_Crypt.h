@@ -23,6 +23,7 @@ extern int AY_Crypt_RSAEncrpt(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO
 
 extern int AY_Crypt_RSADecrpt(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 *oLen);
 
+extern Ui32 AY_Crypt_GenerateUi32Random(void);
 
 #if 0//RSA_DEMO_ACT
 extern int AY_Crypt_RSA_test(void);

@@ -57,6 +57,8 @@ static Ui32				AY_ServerInitLoop;
 //static tcp_headerAll	TCPh;
 //static Ui08				MySocketBuff2[1536];
 
+int AY_ServerSendStatus(tcp_headerAll *pTCP, Ui08 flgs);
+
 struct pcap_pkthdr {
 	struct timeval ts;	/* time stamp */
 	Ui32 caplen;	/* length of portion present */
@@ -97,15 +99,72 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		AY_Server_GetMACadr = 1;
 	}
 	else if (AY_Server_Initied && AY_Server_GetMACadr) {
+		Ui32 j;
 		int Len;
+		AY_CONNTYPE	*pConnTyp;
+		pConnTyp = pFindConnByTCPheader((tcp_headerAll *)pkt_data);
 		if (TCP_packet_check((Ui08 *)pkt_data, &Len) == 1) {
-			printf("New TCP packet arrived\n");
-			if (AY_TestLoadDeviceStart((Ui08 *)pkt_data, Len) == 0) {
-				printf("Not Device Start\n");
-				if (AY_TestLoadDirectSendRqst((Ui08 *)pkt_data, Len) == 0) {
-					printf("Not Direct Send Request\n");
-					if (AY_TestLoadGwInfoRqst((Ui08 *)pkt_data, Len) == 0) {
-						printf("Not GW info Request\n");
+			if (pConnTyp != nullptr) {
+				tcp_headerAll	TCP;
+
+				j = pConnTyp->_TCPh._tcpHeader.acknum;
+				pConnTyp->_TCPh._tcpHeader.acknum = pConnTyp->_TCPh._tcpHeader.seqnum;
+				pConnTyp->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+				pConnTyp->_TCPh._tcpHeader.acknum += _HTONSL(Len);
+
+				memcpy(&TCP, (tcp_headerAll *)&pConnTyp->_TCPh, sizeof(tcp_headerAll));
+
+				AY_ChngPacketDest_TCP(&TCP, &MyEth_Address, _ETH_DST_);
+
+				if ((pTCP->_tcpHeader.flags & (_SYN | _ACK)) == (_SYN | _ACK)) {
+					AY_ServerSendStatus(&TCP, _ACK);
+					//AY_Client_WaitSyncToServer = 1;
+				}
+				else if (pTCP->_tcpHeader.flags & _SYN) {
+					AY_ServerSendStatus(&TCP, (_SYN | _ACK));
+				}
+				else {
+					if (pTCP->_tcpHeader.flags & _FIN) {
+						AYCONN_FindOrAddConn(*((Ui32 *)&pConnTyp->_UnqiueId[0]), *((Ui32 *)&pConnTyp->_UnqiueId[1]), *((Ui32 *)&pConnTyp->_UnqiueId[2]), &pConnTyp->_TCPh, &pConnTyp->_SessionKey[0], &pConnTyp, AY_CONN_DELETE);
+						//AY_Client_StartSyncToServer = 0;///< re-start connection
+					}
+					AY_ServerSendStatus(&TCP, _ACK);
+				}
+			}
+			else {
+				tcp_headerAll	TCP;
+				memcpy(&TCP, (tcp_headerAll *)pkt_data, sizeof(tcp_headerAll));
+				TCP._tcpHeader.acknum = ((tcp_headerAll *)pkt_data)->_tcpHeader.seqnum;
+				TCP._tcpHeader.acknum += _HTONSL(1);
+				TCP._tcpHeader.seqnum = _HTONSL(0xA0B1C2D3);///< convert TCP counters
+
+				AY_ChngPacketDest_TCP(&TCP, &MyEth_Address, _ETH_DST_);
+
+				if ((pTCP->_tcpHeader.flags & (_SYN | _ACK))== (_SYN | _ACK)) {
+					AY_ServerSendStatus(&TCP, _ACK);
+					//AY_Client_WaitSyncToServer = 1;
+				}
+				else if (pTCP->_tcpHeader.flags & _SYN) {
+					AY_ServerSendStatus(&TCP, (_SYN | _ACK));
+				}
+				else {
+					if (pTCP->_tcpHeader.flags & _FIN) {
+						//AY_Client_StartSyncToServer = 0;///< re-start connection
+					}
+					AY_ServerSendStatus(&TCP, _ACK);
+				}
+			}
+			if (Len == 0) {
+			}
+			else {
+				printf("New TCP packet arrived\n");
+				if (AY_TestLoadDeviceStart((Ui08 *)pkt_data, Len) == 0) {
+					printf("Not Device Start\n");
+					if (AY_TestLoadDirectSendRqst((Ui08 *)pkt_data, Len) == 0) {
+						printf("Not Direct Send Request\n");
+						if (AY_TestLoadGwInfoRqst((Ui08 *)pkt_data, Len) == 0) {
+							printf("Not GW info Request\n");
+						}
 					}
 				}
 			}
@@ -209,4 +268,33 @@ int main(void) {
 	}
 
 	return 0;
+}
+
+
+int AY_ServerSendStatus(tcp_headerAll *pTCP, Ui08 flgs) {
+	Ui32 Val;
+	/*if ((flgs & _SYN) && ((flgs & _ACK) == 0)) {
+		Val = AY_Crypt_GenerateUi32Random();
+		MyClientInstPort = 48615 + (Val & 0x3FFF);
+		TCP_header_init(pTCP);
+		pTCP->_tcpHeader.acknum = 0;
+		pTCP->_tcpHeader.seqnum = Val;
+	}
+	TCP_header_load(pTCP, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, pTCP->_tcpHeader.acknum, pTCP->_tcpHeader.seqnum, flgs);
+*/
+	pTCP->_tcpHeader.flags = flgs;
+#if STEP_TEST==1
+	char Buff[64];
+	Buff[0] = 0; AY_Sprintf_Add(&Buff[0], (char *)"\tAYCLNT--> FLAGS -- ");
+	if (pTCP->_tcpHeader.flags & _FIN) { AY_Sprintf_Add(&Buff[0], (char *)"[FIN] "); }
+	if (pTCP->_tcpHeader.flags & _SYN) { AY_Sprintf_Add(&Buff[0], (char *)"[SYN] "); }
+	if (pTCP->_tcpHeader.flags & _RST) { AY_Sprintf_Add(&Buff[0], (char *)"[RST] "); }
+	if (pTCP->_tcpHeader.flags & _PSH) { AY_Sprintf_Add(&Buff[0], (char *)"[PSH] "); }
+	if (pTCP->_tcpHeader.flags & _ACK) { AY_Sprintf_Add(&Buff[0], (char *)"[ACK] "); }
+	if (pTCP->_tcpHeader.flags & _URG) { AY_Sprintf_Add(&Buff[0], (char *)"[URG] "); }
+	if (pTCP->_tcpHeader.flags & _ECN) { AY_Sprintf_Add(&Buff[0], (char *)"[ECN] "); }
+	if (pTCP->_tcpHeader.flags & _CWR) { AY_Sprintf_Add(&Buff[0], (char *)"[CWR] "); }
+	printf("\t\t %s \n", &Buff[0]);
+#endif
+	return (TCP_packet_send(_MAIN_SCKT, pTCP, 0, 0));
 }

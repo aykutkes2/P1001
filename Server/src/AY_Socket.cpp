@@ -463,17 +463,17 @@ int UDP_header_init(udp_headerAll * UDP_header) {
 }
 
 int UDP_header_load(udp_headerAll * UDP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport) {
-	// Ethernet Header
-	memcpy(&UDP_header->_ethHeader.dest.addr[0], &dest.addr[0], 6);
-	memcpy(&UDP_header->_ethHeader.src.addr[0], &src.addr[0], 6);
-	// IP Header	
-	memcpy(&UDP_header->_ipHeader.saddr, (u_char *)&saddr, 4);					///< sorce address
-	memcpy(&UDP_header->_ipHeader.daddr, (u_char *)&daddr, 4);					///< destination address
-	// UDP Header	
-	UDP_header->_udpHeader.sport = mhtons(sport);	///< source port
-	UDP_header->_udpHeader.dport = mhtons(dport);	///< destination port	
-	// END	
-	return 1;
+// Ethernet Header
+memcpy(&UDP_header->_ethHeader.dest.addr[0], &dest.addr[0], 6);
+memcpy(&UDP_header->_ethHeader.src.addr[0], &src.addr[0], 6);
+// IP Header	
+memcpy(&UDP_header->_ipHeader.saddr, (u_char *)&saddr, 4);					///< sorce address
+memcpy(&UDP_header->_ipHeader.daddr, (u_char *)&daddr, 4);					///< destination address
+// UDP Header	
+UDP_header->_udpHeader.sport = mhtons(sport);	///< source port
+UDP_header->_udpHeader.dport = mhtons(dport);	///< destination port	
+// END	
+return 1;
 }
 
 int TCP_header_init(tcp_headerAll * TCP_header) {
@@ -490,8 +490,8 @@ int TCP_header_init(tcp_headerAll * TCP_header) {
 	// END
 	return 1;
 }
-				
-int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport,Ui32 ack, Ui32 seq, Ui08 flgs) {
+
+int TCP_header_load(tcp_headerAll * TCP_header, uip_eth_addr dest, ip_address	daddr, Ui16 dport, uip_eth_addr src, ip_address	saddr, Ui16 sport, Ui32 ack, Ui32 seq, Ui08 flgs) {
 	// Ethernet Header
 	memcpy(&TCP_header->_ethHeader.dest.addr[0], &dest.addr[0], 6);
 	memcpy(&TCP_header->_ethHeader.src.addr[0], &src.addr[0], 6);
@@ -516,7 +516,7 @@ int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) 
 	int i = sizeof(udp_headerAll);
 	Ui08 *ptr = &AY_SocketBuff[0];// (Ui08	*)_AY_MallocMemory(len + sizeof(udp_headerAll) + 64);///< max packet size
 	udp_headerAll	*pHdr = (udp_headerAll *)&ptr[0];
-	
+
 	memcpy(&ptr[0], UDP_header, i);
 	memcpy(&ptr[i], pBuff, len);
 	i += len;
@@ -546,7 +546,7 @@ int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) 
 	tcp_headerAll	*pHdr = (tcp_headerAll *)&ptr[0];
 
 	memcpy(&ptr[0], TCP_header, i);
-	memcpy(&ptr[i], pBuff, len);
+	if (len) { memcpy(&ptr[i], pBuff, len); }
 	i += len;
 	pHdr->_ipHeader.tlen = mhtons(i - 14);	///< length 100 bytes
 	pHdr->_ipHeader.crc = 0;				///< header checksum
@@ -563,8 +563,11 @@ int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) 
 		return PCAP_ERROR;
 	}
 	printf("Data Has been Sent !!!! Count = %d", i);
-	TCP_header->_tcpHeader.seqnum += _HTONSL(i);
 	AY_SendCnt += i;
+	if ((i == 0) && (pHdr->_tcpHeader.flags & _ACK)){
+		i = 1;
+	}
+	TCP_header->_tcpHeader.seqnum += _HTONSL(i);
 	_AY_FreeMemory((unsigned char*)ptr);
 	return 1;
 }

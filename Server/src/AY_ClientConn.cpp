@@ -57,10 +57,10 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		ConnNo = i;
 		memcpy(&Sssk[0], &pDevStrtIn->_SessionKey[0], 16);*/
 		//--------------------------------//
-		j = pConnTyp->_TCPh._tcpHeader.acknum;
-		pConnTyp->_TCPh._tcpHeader.acknum = pConnTyp->_TCPh._tcpHeader.seqnum;
-		pConnTyp->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
-		pConnTyp->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
+		//j = pConnTyp->_TCPh._tcpHeader.acknum;
+		//pConnTyp->_TCPh._tcpHeader.acknum = pConnTyp->_TCPh._tcpHeader.seqnum;
+		//pConnTyp->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+		//pConnTyp->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 
 		pTCP = (tcp_headerAll *)_AY_MallocMemory(4096);///< max packet size
 		memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));

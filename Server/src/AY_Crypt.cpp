@@ -184,6 +184,15 @@ int AY_Crypt_RSADecrpt(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 
 	return 1;
 }
 
+/*
+	Generate random 4 bytes of data
+*/
+Ui32 AY_Crypt_GenerateUi32Random(void) {
+	/* initialize random seed: */
+	srand((unsigned int)time(NULL));
+	return rand();///< success for tls functions
+}
+
 #if 0//RSA_DEMO_ACT
 #include <AY_ClientPrjtBased.h>
 

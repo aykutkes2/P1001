@@ -13,6 +13,11 @@ typedef union _AY_FLGS {
 		Ui32	_WaitMACadr : 1;
 		Ui32	_GetSrvIPadr : 1;
 		Ui32	_WaitSrvIPadr : 1;
+
+		Ui32	_DeleteServerConn : 1;
+		Ui32	_StartSyncToServer : 1;
+		Ui32	_WaitSyncToServer : 1;
+
 		Ui32	_SendServer : 1;
 		Ui32	_RecvServer : 1;
 		Ui32	_GenerateRemoteDevs : 1;
@@ -48,6 +53,10 @@ extern	AY_GlobalRAM	AY_Ram;
 #define AY_Client_WaitMACadr			AY_Ram.AY_Flgs._WaitMACadr
 #define AY_Client_GetSrvIPadr			AY_Ram.AY_Flgs._GetSrvIPadr
 #define AY_Client_WaitSrvIPadr			AY_Ram.AY_Flgs._WaitSrvIPadr
+
+#define AY_Client_StartSyncToServer		AY_Ram.AY_Flgs._StartSyncToServer
+#define AY_Client_WaitSyncToServer		AY_Ram.AY_Flgs._WaitSyncToServer
+
 #define AY_Client_SendServer			AY_Ram.AY_Flgs._SendServer
 #define AY_Client_RecvServer			AY_Ram.AY_Flgs._RecvServer
 #define AY_Client_GenerateRemoteDevs	AY_Ram.AY_Flgs._GenerateRemoteDevs

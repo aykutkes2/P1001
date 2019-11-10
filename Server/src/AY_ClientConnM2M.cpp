@@ -38,10 +38,10 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 			Ui08					*pPckt;
 
 			// ack seq düþün !!!
-			j = pSrc->_TCPh._tcpHeader.acknum;
-			pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
-			pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
-			pSrc->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
+			//j = pSrc->_TCPh._tcpHeader.acknum;
+			//pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
+			//pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+			//pSrc->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 			//----------------------------------------------------------------//
 			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
 			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
@@ -70,10 +70,10 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
 			Ui08					*pPckt;
 
 			// ack seq düþün !!!
-			j = pSrc->_TCPh._tcpHeader.acknum;
-			pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
-			pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
-			pSrc->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
+			//j = pSrc->_TCPh._tcpHeader.acknum;
+			//pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
+			//pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
+			//pSrc->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 			//----------------------------------------------------------------//
 			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
 			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
