@@ -127,8 +127,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					if (pTCP->_tcpHeader.flags & _FIN) {
 						AYCONN_FindOrAddConn(*((Ui32 *)&pConnTyp->_UnqiueId[0]), *((Ui32 *)&pConnTyp->_UnqiueId[1]), *((Ui32 *)&pConnTyp->_UnqiueId[2]), &pConnTyp->_TCPh, &pConnTyp->_SessionKey[0], &pConnTyp, AY_CONN_DELETE);
 						//AY_Client_StartSyncToServer = 0;///< re-start connection
+						AY_ServerSendStatus(&TCP, _ACK);
 					}
-					AY_ServerSendStatus(&TCP, _ACK);
 				}
 			}
 			else {
@@ -150,8 +150,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				else {
 					if (pTCP->_tcpHeader.flags & _FIN) {
 						//AY_Client_StartSyncToServer = 0;///< re-start connection
+						AY_ServerSendStatus(&TCP, _ACK);
 					}
-					AY_ServerSendStatus(&TCP, _ACK);
 				}
 			}
 			if (Len == 0) {

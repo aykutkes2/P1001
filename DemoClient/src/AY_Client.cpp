@@ -132,8 +132,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			else { 
 				if (pTCP->_tcpHeader.flags & _FIN) {
 					AY_Client_StartSyncToServer = 0;///< re-start connection
-				}
-				AY_SendStatusToServer(_ACK); 
+					AY_SendStatusToServer(_ACK);
+				} 
 			}
 			if (TcpLen) {
 				printf("Server Port Call\n");/* */
@@ -1457,8 +1457,16 @@ int main(void)//(int argc, char **argv)
 		}
 #endif
 		else if (!AY_Client_StartSyncToServer) {
-		AY_Client_StartSyncToServer = 1;
-		AY_Client_WaitSyncToServer = 0;
+			AY_Client_StartSyncToServer = 1;
+			AY_Client_WaitSyncToServer = 0;
+			//============= SET FILTER ==========================//
+			//if (Filter == _GNRT_NEW) {
+				AYSCKT_FilterFreeA(_MAIN_SCKT);
+				strcpy((char *)&MySocketBuff[0], "tcp src port ");
+				AY_ConvertUi32AddToStrRet(CngFile.ServerPort, (char *)&MySocketBuff[0]);
+				AYSCKT_FilterSetA(_MAIN_SCKT, (char *)&MySocketBuff[0]);
+			//}
+
 			AY_SendStatusToServer(_SYN);
 		}
 		else if (!AY_Client_WaitSyncToServer) {
@@ -1471,7 +1479,7 @@ int main(void)//(int argc, char **argv)
 			AY_Ram.AY_DevPcktNo = 0;
 			AYFILE_ClearFile((char*)&AddIP_File[0]);
 			AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, 0, 0, 0, 0, 1);
-			AY_SendDeviceStartToServer(_GNRT_NEW);
+			AY_SendDeviceStartToServer(_USE_OLD/*_GNRT_NEW*/);
 			
 			AY_Client_SendServer = 1;
 		}
