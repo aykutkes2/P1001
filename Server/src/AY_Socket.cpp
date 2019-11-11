@@ -564,10 +564,10 @@ int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) 
 	}
 	printf("Data Has been Sent !!!! Count = %d", i);
 	AY_SendCnt += i;
-	if ((i == 0) && (pHdr->_tcpHeader.flags & _ACK)){
-		i = 1;
-	}
-	TCP_header->_tcpHeader.seqnum += _HTONSL(i);
+	//if ((len == 0) && (pHdr->_tcpHeader.flags & _ACK)){
+	//	len = 1;
+	//}
+	TCP_header->_tcpHeader.seqnum += _HTONSL(len);
 	_AY_FreeMemory((unsigned char*)ptr);
 	return 1;
 }

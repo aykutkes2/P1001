@@ -19,7 +19,7 @@
 #include <AY_ClientConn.h>
 #include <AY_ClientConnM2M.h>
 
-int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len) {
+int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 	AY_GWDRCTHDR		*pGwDH;
 	Ui32				j;
 	Si32			i;

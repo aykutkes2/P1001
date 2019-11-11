@@ -62,6 +62,11 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 		//pConnTyp->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
 		//pConnTyp->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 
+		/*if (pConnTyp->_TCPh._ipHeader.proto != UIP_PROTO_TCP) {
+			memcpy(&pConnTyp->_TCPh, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
+			pConnTyp->_TCPh._tcpHeader.seqnum = pDevStrtIn->_TCPh._tcpHeader.acknum;
+			pConnTyp->_TCPh._tcpHeader.acknum = pDevStrtIn->_TCPh._tcpHeader.seqnum;
+		}*/
 		pTCP = (tcp_headerAll *)_AY_MallocMemory(4096);///< max packet size
 		memcpy(pTCP, &pDevStrtIn->_TCPh, sizeof(tcp_headerAll));
 		pTCP->_ethHeader.dest = pDevStrtIn->_TCPh._ethHeader.src;
@@ -126,7 +131,7 @@ void AYSRV_QueueClientConn(AY_QUEUE *pQ) {
 	pQ->QFlg._QBusyF = 1;
 }
 
-int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
+int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 	tcp_headerAll		*pTCP;
 	AY_DeviceStart	*pDevStrt;
 	AY_DEVSTRTIN	*pDevStrtIn;
@@ -181,7 +186,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 
 							GwRsp._Test2 = PACKET_TEST_DATA2;
 							GwRsp._Test3 = PACKET_TEST_DATA3;
-							GwRsp._LastUpdateMin =  AYCONN_ThisMinute();
+							GwRsp._LastUpdateMin = AYCONN_ThisMinute();
 							GwRsp._QueRowNo = UniqQ_Lst.UniqQ[i].PrcsNo;
 							memcpy(&GwRsp._SessionKey, &pDevStrtIn->_SessionKey, sizeof(SSK_));
 							memcpy(&GwRsp._TCPh, &pDst->_TCPh/*pDevStrtIn->_TCPh*/, sizeof(tcp_headerAll));
@@ -195,7 +200,7 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 							AYPRINT_TCP_Header(&TCPheader);
 #endif
 							TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&GwRsp, oLen);
-							pSrc->_TCPh._tcpHeader.seqnum += _HTONSL( oLen );
+							pSrc->_TCPh._tcpHeader.seqnum += _HTONSL(oLen);
 							//--------------
 							AYSRV_UniqQ_Init(i);
 						}
@@ -203,14 +208,14 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len) {
 				}
 			}
 			//======= Load to Queue
-			return( AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pDevStrtIn, sizeof(AY_DEVSTRTIN), QTARGET_CLIENT_CONN, 0));
+			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pDevStrtIn, sizeof(AY_DEVSTRTIN), QTARGET_CLIENT_CONN, 0));
 		}
 		printf("AYDVSTRT--> Packet fail\n");
 	}
 	return 0;///< not me
 }
 
-int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len) {
+int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 	AY_GWINFORQST	*pInfoRqst;
 	Si32			i;
 

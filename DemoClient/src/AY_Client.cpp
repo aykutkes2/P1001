@@ -120,9 +120,14 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		if ((pTCP->_tcpHeader.sport == _HTONS(CngFile.ServerPort)) && (memcmp(&pTCP->_ipHeader.daddr, &MyIP_Address.byte1, sizeof(ip_address)) == 0)) {
 			AY_TCPheader._tcpHeader.acknum = pTCP->_tcpHeader.seqnum;
 			AY_TCPheader._tcpHeader.seqnum = pTCP->_tcpHeader.acknum;///< convert TCP counters
-			AY_TCPheader._tcpHeader.acknum += _HTONSL(TcpLen);// (header->len - sizeof(tcp_headerAll));
+			if (TcpLen) {
+				AY_TCPheader._tcpHeader.acknum += _HTONSL(TcpLen);// (header->len - sizeof(tcp_headerAll));
+			}
+			else {
+				AY_TCPheader._tcpHeader.acknum += _HTONSL(1);// (header->len - sizeof(tcp_headerAll));
+			}
 
-			if (pTCP->_tcpHeader.flags & (_SYN | _ACK)) {
+			if ( (pTCP->_tcpHeader.flags & (_SYN | _ACK)) == (_SYN | _ACK) ) {
 				AY_SendStatusToServer(_ACK);
 				AY_Client_WaitSyncToServer = 1;
 			}
@@ -133,7 +138,10 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				if (pTCP->_tcpHeader.flags & _FIN) {
 					AY_Client_StartSyncToServer = 0;///< re-start connection
 					AY_SendStatusToServer(_ACK);
-				} 
+				}
+				else if (TcpLen) {
+					AY_SendStatusToServer(_ACK);
+				}
 			}
 			if (TcpLen) {
 				printf("Server Port Call\n");/* */
@@ -998,11 +1006,11 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 #if (DIRECT_SEND==1)
 	if (memcmp(&AY_TCPheader._ethHeader.src, &MyEth_Address, sizeof(uip_eth_addr)) == 0) {
 		//TCP_header_init(&AY_TCPheader);
-		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, 1, 1, (_PSH/* | _ACK*/));
+		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 	}
 	else {
-		TCP_header_init(&AY_TCPheader);
-		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, 1, 1, (_PSH/* | _ACK*/));
+		//TCP_header_init(&AY_TCPheader);
+		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 	}
 	oLen = sizeof(AY_DeviceStart);
 	RetVal = TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&DevStrt, oLen/*sizeof(AY_DeviceStart)*/);
@@ -1012,7 +1020,7 @@ int AY_SendDeviceStartToServer(Ui08 Filter) {
 #endif
 #else
 	TCP_header_init(&TCPheader);
-	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, 1, 1, (_PSH/* | _ACK*/));
+	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 	oLen = sizeof(AY_DeviceStart);
 	RetVal = TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)&DevStrt, oLen/*sizeof(AY_DeviceStart)*/);
 #if STEP_TEST==1
@@ -1098,7 +1106,7 @@ int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (((Ui08 *)&GwRqst._InfoCont[0])), AY_GWINFORQST_SIZE_OF_INFO_CONT);
 	//------- SEND
 	TCP_header_init(&TCPheader);
-	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort,1,1, (_PSH/* | _ACK*/));
+	TCP_header_load(&TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 	oLen = sizeof(AY_GWINFORQST);
 #if STEP_TEST==1
 	printf("********* STEP 3 *************\n********* STEP 3 *************\n********* STEP 3 *************\n");
@@ -1211,7 +1219,7 @@ int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
 	//------- SEND
 	//TCP_header_init(&AY_TCPheader);
-	TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH/* | _ACK*/));
+	TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 #if STEP_TEST==1
 	printf("********* STEP D2 *************\n********* STEP D2 *************\n********* STEP D2 *************\n");
 	printf("AYCLNT--> PACKET (1)				GW1	--->	SRV		(A request packet for Mirror(Reflection) Device)\n ");
@@ -1271,7 +1279,7 @@ int AY_DirectSendToListedRcv(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 		AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
 		//------- SEND
 		//TCP_header_init(&AY_TCPheader);
-		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH/* | _ACK*/));
+		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 #if STEP_TEST==1
 		printf("********* STEP D6 *************\n********* STEP D6 *************\n********* STEP D6 *************\n");
 		printf("AYCLNT--> PACKET (1)				GW1	--->	SRV		(A request packet for Mirror(Reflection) Device)\n ");

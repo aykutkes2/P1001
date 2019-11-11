@@ -46,7 +46,7 @@ void QUEUE_Process(int ql) {
 			if (pQ->InLen) {
 				_AY_FreeMemory(pQ->pIn);///< release input buffer
 			}
-			if (pQ->OutLen) {
+			if ( (pQ->OutLen) && (pQ->pOut != nullptr) ) {
 				_AY_FreeMemory(pQ->pOut);///< release output buffer
 			}
 			memset((Ui08 *)pQ, 0, sizeof(AY_QUEUE));///< clear queue row

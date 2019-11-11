@@ -36,9 +36,9 @@ enum AY_CONNFUNC {
 
 extern void AYSRV_QueueClientConn(AY_QUEUE *pQ);
 
-extern int AY_TestLoadDeviceStart(Ui08 *pPtr, Ui16 Len);
-extern int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len);
-extern int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len);
+extern int AY_TestLoadDeviceStart(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp);
+extern int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp);
+extern int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp);
 
 //============================================================================================================
 //====================== CONNECTIONS =========================================================================
