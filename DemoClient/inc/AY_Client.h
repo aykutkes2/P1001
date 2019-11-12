@@ -26,6 +26,10 @@ typedef union _AY_FLGS {
 		Ui32	_MAC_NotFound : 1;
 		Ui32	_SrvMAC_NotFound : 1;
 
+		Ui32	_ConnectRemoteGws : 1;
+		Ui32	_StartRemoteGws : 1;
+		Ui32	_WaitRemoteGws : 1;
+
 		Ui32	_ChngServerConn : 1;///< generate new connection with server
 		Ui32	_DynamicIP : 1;
 	};
@@ -66,6 +70,9 @@ extern	AY_GlobalRAM	AY_Ram;
 #define AY_Client_MAC_NotFound			AY_Ram.AY_Flgs._MAC_NotFound
 #define AY_Client_SrvMAC_NotFound		AY_Ram.AY_Flgs._SrvMAC_NotFound
 
+#define AY_Client_ConnectRemoteGws		AY_Ram.AY_Flgs._ConnectRemoteGws
+#define AY_Client_StartRemoteGws		AY_Ram.AY_Flgs._StartRemoteGws
+#define AY_Client_WaitRemoteGws			AY_Ram.AY_Flgs._WaitRemoteGws
 
 #define AY_Client_ChngServerConn		AY_Ram.AY_Flgs._ChngServerConn
 #define AY_Client_DynamicIP				AY_Ram.AY_Flgs._DynamicIP
@@ -86,6 +93,11 @@ extern	AY_GlobalRAM	AY_Ram;
 enum _SRVSTRT_TYP {
 	_USE_OLD,
 	_GNRT_NEW
+};
+
+enum _DIRECT_CONNTYPE {
+	_TOSRV_,
+	_M2M_,
 };
 extern int AY_SendDeviceStartToServer(Ui08 Filter);
 

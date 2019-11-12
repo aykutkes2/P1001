@@ -62,4 +62,8 @@ extern	uip_eth_addr			MyEth_Address;
 
 #define CLIENT_DEMO					1
 
+enum _DIRECT_CONNTYPE {
+	_TOSRV_,
+	_M2M_,
+};
 

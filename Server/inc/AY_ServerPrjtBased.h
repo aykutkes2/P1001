@@ -59,10 +59,10 @@ enum _MYSOCKETS {
 #define PACKET_TEST_DATA11			0xd822673e		///< New Direct Send Data		SRV - GW2
 #define PACKET_TEST_DATA12			0xd49c9668		///< New Direct Response Data	GW2 - SRV		
 #define PACKET_TEST_DATA13			0x9aca50a9		///< New Direct Response Data	SRV - GW1
-#define PACKET_TEST_DATA14			0x7243bed4		
-#define PACKET_TEST_DATA15			0x929df23b
-#define PACKET_TEST_DATA16			0xda9a4971		
-#define PACKET_TEST_DATA17			0x8fcf7868
+#define PACKET_TEST_DATA14			0x7243bed4		///< M2M New Direct Send Data		GW1 - SRV
+#define PACKET_TEST_DATA15			0x929df23b		///< M2M New Direct Send Data		SRV - GW2
+#define PACKET_TEST_DATA16			0xda9a4971		///< M2M New Direct Response Data	GW2 - SRV
+#define PACKET_TEST_DATA17			0x8fcf7868		///< M2M New Direct Send Data		GW1 - SRV
 
 
 extern const MYSQL_STRS MySQLParams;

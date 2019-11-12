@@ -87,8 +87,8 @@ struct pcap_pkthdr {
 #define DIRECT_SEND_REQUEST		((((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA12) && (((AY_GWDRCTHDR	*)pData)->_Test11 == PACKET_TEST_DATA13))
 #define DIRECT_SEND_RESPONSE	((((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA14) && (((AY_GWDRCTHDR	*)pData)->_Test11 == PACKET_TEST_DATA15))
 
-int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom);
-int AY_DirectSendToListedRcv(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom);
+int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom);
+int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom);
 int AY_SendStatusToServer(Ui08 flgs);
 
 /**************************************************************************************************************
@@ -815,7 +815,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 #endif
 					printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror(Reflection) Device)\n ");
 #if (DIRECT_SEND==1)
-					AY_DirectSendToListed((Ui08 *)pkt_data, header->len, pInfom);
+					AY_DirectSendToListed(_TOSRV_, (Ui08 *)pkt_data, header->len, pInfom);
 #else
 					pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
 					if (pQue != nullptr) {
@@ -853,7 +853,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						printf("********* STEP 5 *************\n********* STEP 5 *************\n********* STEP 5 *************\n");
 						AYPRINT_TCP_Header(pTCP);
 #endif	
-						AY_DirectSendToListedRcv((Ui08 *)pkt_data, header->len, pInfom);
+						AY_DirectSendToListedRcv(_TOSRV_, (Ui08 *)pkt_data, header->len, pInfom);
 #else
 #if STEP_TEST == 1
 						printf("********* STEP 10 *************\n********* STEP 10 *************\n********* STEP 10 *************\n");
@@ -1151,7 +1151,7 @@ int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row) {
 	return (TCP_packet_send(_MAIN_SCKT, &pQue->pGw->TCP_Hdr, (Ui08 *)pQue->pDataIO, oLen + sizeof(AY_GWDATAHDR)));
 }
 
-int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
+int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	unsigned char		*pPckt;
 	AY_GWDRCTHDR		*pGwDH;
 	Ui32				LenSend;
@@ -1190,7 +1190,8 @@ int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	LenSend					= ((len + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
 	pPckt					= (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
 	pGwDH					= (AY_GWDRCTHDR *)((Ui08 *)pPckt);
-	pGwDH->_Test10			= PACKET_TEST_DATA10;
+	if (M2M == _M2M_)	{pGwDH->_Test10 = PACKET_TEST_DATA14;}
+	else				{pGwDH->_Test10 = PACKET_TEST_DATA10;}
 	pGwDH->_Test11			= pLocConn->ConM2M_Id;
 	pGwDH->_DevNo			= pInfom->DevRead._id;
 	//pGwDH->_LocalIP			= *((Ui32 *)&((tcp_headerAll *)(pkt_data + 0))->_ipHeader.saddr);
@@ -1198,7 +1199,12 @@ int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	   	 
 	memcpy(pCont, pkt_data, len);
 	//---------------------------//
-	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+	if (M2M == _M2M_)	{ 
+		AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
+		if (pGw == nullptr) {	return -1;	}///< unknown GW
+		AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+	}
+	else{ AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0)); }	
 	//------- SEND
 	//TCP_header_init(&AY_TCPheader);
 	TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
@@ -1210,7 +1216,7 @@ int AY_DirectSendToListed(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	return (TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pPckt, LenSend));
 }
 
-int AY_DirectSendToListedRcv(Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
+int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
 	unsigned char		*pPckt;
 	AY_GWDRCTHDR		*pGwDH;
 	Ui32				LenSend;
@@ -1462,8 +1468,6 @@ int main(void)//(int argc, char **argv)
 		else if (!AY_Client_WaitSyncToServer) {
 		//.. wait
 		}
-		
-		
 		else if (!AY_Client_SendServer) {
 			AY_Ram.AY_DeviceCnt = 0;
 			AY_Ram.AY_DevPcktNo = 0;
@@ -1490,6 +1494,14 @@ int main(void)//(int argc, char **argv)
 				AY_Client_SendServer = 0;
 			}			
 		}
+#if (DIRECT_SEND==1)	
+		else if (!AY_Client_ConnectRemoteGws) {
+			if (!AY_Client_StartRemoteGws) {
+
+				AY_Client_StartRemoteGws = 1;
+			}
+		}
+#endif		
 		else if (!AY_Client_ListenThreads) {
 			AY_StartSlaveListen();
 			AY_Client_ListenThreads = 1;
