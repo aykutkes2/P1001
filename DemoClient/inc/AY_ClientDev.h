@@ -60,6 +60,8 @@ typedef union _AY_GWFLAGs {
 	struct {
 		Ui16	Full_ : 1;
 		Ui16	InfoLoaded_ : 1;
+		Ui16	SycStart_ : 1;
+		Ui16	SycComplete_ : 1;
 	};
 }AY_GWFLAGs;
 typedef struct  _AY_GWINFO {///< 2 + 12 + 54 + 16 +  4+4+4+4 = 100 Bytes

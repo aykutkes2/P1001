@@ -297,7 +297,7 @@ AY_GWINFO	*pAYCLNT_FindFirstFreeGwId(int *pId) {
 		if (pGw->GwF.Full_ == 0) {
 			memset(pGw, 0, sizeof(AY_GWINFO));
 			pGw->TimeOut = AY_CLNTGW_TIMEOUT_VAL;
-			*pId = i;
+			if (pId != nullptr) { *pId = i; }
 			return pGw;
 		}
 		pGw++;
@@ -364,14 +364,14 @@ AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId) {
 	Ui32 i, j;
 	Ui08 *p;
 
-	*pId = -1;
+	if (pId != nullptr) { *pId = -1; }
 	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
 	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
 		pGw = pAYCLNT_FindGwById(i);
 		if (pGw != nullptr) {
 			if (pGw->GwF.Full_) {
 				if ((pGw->_Unique[0] == pUnique[0]) && (pGw->_Unique[1] == pUnique[1]) && (pGw->_Unique[2] == pUnique[2])) {
-					*pId = i;
+					if (pId != nullptr) { *pId = i; }
 					return pGw;
 				}
 			}
@@ -385,14 +385,14 @@ AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId) {
 	Ui32 i, j;
 	Ui08 *p;
 
-	*pId = -1;
+	if (pId != nullptr) { *pId = -1; }
 	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
 	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
 		pGw = pAYCLNT_FindGwById(i);
 		if (pGw != nullptr) {
 			if (pGw->GwF.Full_) {
 				if (pGw->MyPortNo == PortNo) {
-					*pId = i;
+					if (pId != nullptr) { *pId = i; }
 					return pGw;
 				}
 			}

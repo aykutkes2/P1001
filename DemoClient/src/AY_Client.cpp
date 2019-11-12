@@ -185,7 +185,6 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							//___________________ LOCAL CONNECTION ____________________________________________//
 							AY_LOCCONNINFO		LocConn0, *pLocConn;
 							uip_eth_hdr			*pHdr;
-							//tcp_headerAll		*pTCP;
 							//--------------//
 							LocConn0.IPA_Hdr.daddr = *((ip_address *)&pInfom->DevRead._LocalIp);
 							LocConn0.IPA_Hdr.saddr = MyIP_Address; //ayk! pTCP2->_ipHeader.saddr;
@@ -251,14 +250,13 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 
 					printf("AYCLNT--> ============ DIRECT RCV Test & Find Target =========\n ");
 					pGwDH = (AY_GWDRCTHDR	*)pData;
-					pInfom = pAY_FindLocDevInfoByDevRowNo/*pAY_FindDevInfoByDevNo*/(pGwDH->_DevNo);
+					pInfom = pAY_FindLocDevInfoByDevRowNo(pGwDH->_DevNo);
 					if (pInfom) {///< there is a valid target 
 						if ((pInfom->DevRead._Type == _MIRROR_) || (pInfom->DevRead._Type == _GUEST_)) {///< target must be a mirror device
 							AY_DEVINFO		 *pInfom2;
 							AY_GWINFO		*pGw0;
 							tcp_headerAll	*pTCP2;
 							ip_headerAll	IPA;
-							//AY_LOCCONNINFO	*pLocConn0 = nullptr;
 							//---------------------------//
 #if STEP_TEST == 1
 							printf("********* STEP D7 *************\n********* STEP D7 *************\n********* STEP D7 *************\n");
@@ -277,34 +275,6 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							printf("AYCLNT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
 							AYPRINT_TCP_Header(pTCP2);
 #endif	
-							////___________________ LOCAL CONNECTION ____________________________________________//
-							//AY_LOCCONNINFO		LocConn0, *pLocConn;
-							//uip_eth_hdr			*pHdr;
-							//tcp_headerAll		*pTCP;
-							////--------------//
-							//LocConn0.IPA_Hdr.daddr = *((ip_address *)&pInfom->DevRead._LocalIp);
-							//LocConn0.IPA_Hdr.saddr = MyIP_Address; //ayk! pTCP2->_ipHeader.saddr;
-							//if ((header->len > (sizeof(uip_eth_hdr) + sizeof(ip_header))) && ((pTCP->_ipHeader.proto == UIP_PROTO_UDP) || (pTCP->_ipHeader.proto == UIP_PROTO_TCP))) {
-							//	LocConn0.IPA_Hdr.dport = pTCP2->_tcpHeader.dport;
-							//	LocConn0.IPA_Hdr.sport = pTCP2->_tcpHeader.sport;
-							//}
-							//else {
-							//	LocConn0.IPA_Hdr.dport = 0;
-							//	LocConn0.IPA_Hdr.sport = 0;
-							//}
-							//LocConn0.pDevInfo = pInfom;
-							//memcpy(&LocConn0.src, &pTCP2->_ethHeader.src, sizeof(uip_eth_addr));
-							//memcpy(&LocConn0.dest, &DefaultMac[0], sizeof(uip_eth_addr));
-							//pLocConn = pAYCLNT_TestAddOrUpdateLocConn(&LocConn0, 0, &LocConn0.src, _ETH_SRC_);
-							//memcpy(&pLocConn->src, &pTCP2->_ethHeader.src, sizeof(uip_eth_addr));
-							//pLocConn->Odaddr = pTCP2->_ipHeader.daddr;
-							//pLocConn->Osaddr = pTCP2->_ipHeader.saddr;
-							//pLocConn->ConM2M_Id = pGwDH->_ConM2M_Id;
-							////______________________________________________________________________________________//
-							//pTCP2->_ethHeader.src = MyEth_Address; //ayk! LocConn0.src;
-							//pTCP2->_ethHeader.dest = pLocConn->dest;
-							//pTCP2->_ipHeader.saddr = MyIP_Address;
-							//pTCP2->_ipHeader.daddr = *((ip_address *)&pInfom->DevRead._LocalIp);
 #if STEP_TEST == 1
 							printf("********* STEP D8 *************\n********* STEP D8 *************\n********* STEP D8 *************\n");
 							AYPRINT_TCP_Header(pTCP2);
@@ -585,8 +555,9 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				else {
 					AY_DeviceStartResp *pDevStrt = (AY_DeviceStartResp	*)pData;
 					if (GW_DEVICE_LIST) {
-						Ui32 i, j, k;
-						Ui32 m, n;
+						Ui32	i, j , k;
+						Ui32	n;
+						int		m;
 						Ui08 Temp[45];
 						AY_DeviceStartResp	*pRsp = (AY_DeviceStartResp *)(pkt_data + sizeof(tcp_headerAll)); // 
 						AY_DeviceRead		*pDev = (AY_DeviceRead *)(pkt_data + sizeof(tcp_headerAll) + sizeof(AY_DeviceStartResp)); // 
@@ -640,6 +611,17 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 								if ((!AY_Client_RecvServer) && (AY_Ram.AY_DeviceList[i]._Type == _MIRROR_)) {
 									printf("Remote Device found Device No:%d ID:%d Type:%d LocalIP:%s\n", i, AY_Ram.AY_DeviceList[i]._id, AY_Ram.AY_DeviceList[i]._Type, AY_ConvertIPToStrRet((Ui08 *)&AY_Ram.AY_DeviceList[i]._LocalIp, (char*)&Temp[0]));
 									AYFILE_AddIPsToFile((char*)&AddIP_File[0], CngFile.NetInterfaceName, &AY_Ram.AY_DeviceList[i]._LocalIp, 1, *((Ui32*)&CngFile.NetworkSubnetMask[0]), *((Ui32*)&CngFile.NetworkGatewayIp[0]), 1);
+#if (DIRECT_SEND==1)
+									if ( memcmp(&AY_Ram.AY_DeviceList[i]._Unique[0], &AY_Ram.AY_DeviceLast._Unique[0], 12) != 0 ) {
+										AY_GWINFO		Gw;
+										memcpy(&AY_Ram.AY_DeviceLast._Unique[0], &AY_Ram.AY_DeviceList[i]._Unique[0],  12);
+										memset(&Gw, 0, sizeof(AY_GWINFO));
+										Gw.GwF.Full_ = 1;
+										memcpy(&Gw._Unique[0], &AY_Ram.AY_DeviceLast._Unique[0], 12);
+										AYCLNT_TestAddOrUpdateGw(&Gw, &m);
+										printf("AYDVSTRT-->\t **** NEW GW FOUND ***\t  ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x \n ",m, Gw._Unique[0], Gw._Unique[1], Gw._Unique[2]);
+									}
+#endif
 								}
 							}
 							AY_Ram.AY_DeviceCnt += j;

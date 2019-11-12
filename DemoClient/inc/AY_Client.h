@@ -37,6 +37,7 @@ typedef struct _AY_GlobalRAM {
 	Ui32			AY_DeviceCnt;
 	Ui16			AY_DevPcktNo;
 	AY_DeviceRead	AY_DeviceList[256];
+	AY_DeviceRead	AY_DeviceLast;
 	Ui08			AY_Unique[12];
 	Ui08			AY_Sessionkey[16];
 	Ui32			AY_SendCnt;
