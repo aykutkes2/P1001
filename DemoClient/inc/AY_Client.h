@@ -98,6 +98,7 @@ enum _SRVSTRT_TYP {
 enum _DIRECT_CONNTYPE {
 	_TOSRV_,
 	_M2M_,
+	_G2G_,
 };
 extern int AY_SendDeviceStartToServer(Ui08 Filter);
 

@@ -43,7 +43,11 @@ enum _MYSOCKETS {
 	_SLVS_SCKT
 };
 /*
-9296b90bfb8199e1a7e6f030
+4c1593a321e88eec4c66a143
+26b6f3236c6de567b68e3d46c7a88452
+87361ce2f003b86ea88c6ae49690a319
+b13d96b5c9b9e958882d8501ebb4aae5
+1cc7fbbeef5debc47a5d720aada25fdf
 */
 #define PACKET_TEST_DATA0			0x1EB99AB7		///< GW Device List 
 #define PACKET_TEST_DATA1			0x92D1D121
@@ -63,6 +67,10 @@ enum _MYSOCKETS {
 #define PACKET_TEST_DATA15			0x929df23b		///< M2M New Direct Send Data		SRV - GW2
 #define PACKET_TEST_DATA16			0xda9a4971		///< M2M New Direct Response Data	GW2 - SRV
 #define PACKET_TEST_DATA17			0x8fcf7868		///< M2M New Direct Send Data		GW1 - SRV
+#define PACKET_TEST_DATA18			0x9296b90b		///< G2G New Direct Send Data		GW1 - SRV
+#define PACKET_TEST_DATA19			0xfb8199e1		///< G2G New Direct Send Data		SRV - GW2
+#define PACKET_TEST_DATA20			0xa7e6f030		///< G2G New Direct Response Data	GW2 - SRV
+#define PACKET_TEST_DATA21			0x6edd1823		///< G2G New Direct Send Data		GW1 - SRV
 
 
 extern const MYSQL_STRS MySQLParams;

@@ -1190,8 +1190,9 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	LenSend					= ((len + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
 	pPckt					= (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
 	pGwDH					= (AY_GWDRCTHDR *)((Ui08 *)pPckt);
-	if (M2M == _M2M_)	{pGwDH->_Test10 = PACKET_TEST_DATA14;}
-	else				{pGwDH->_Test10 = PACKET_TEST_DATA10;}
+	if (M2M == _G2G_)		{ pGwDH->_Test10 = PACKET_TEST_DATA18; }
+	else if (M2M == _M2M_)	{ pGwDH->_Test10 = PACKET_TEST_DATA14; }
+	else					{ pGwDH->_Test10 = PACKET_TEST_DATA10; }
 	pGwDH->_Test11			= pLocConn->ConM2M_Id;
 	pGwDH->_DevNo			= pInfom->DevRead._id;
 	//pGwDH->_LocalIP			= *((Ui32 *)&((tcp_headerAll *)(pkt_data + 0))->_ipHeader.saddr);
@@ -1199,9 +1200,9 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	   	 
 	memcpy(pCont, pkt_data, len);
 	//---------------------------//
-	if (M2M == _M2M_)	{ 
+	if (M2M >= _M2M_)	{ 
 		AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
-		if (pGw == nullptr) {	return -1;	}///< unknown GW
+		if ((pGw == nullptr) || (!pGw->GwF.SycComplete_)) {	return -1;	}///< unknown GW
 		AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
 	}
 	else{ AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0)); }	
@@ -1251,8 +1252,10 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 
 		LenSend = ((len + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
 		pPckt = (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
-		pGwDH = (AY_GWDRCTHDR *)((Ui08 *)pPckt);
-		pGwDH->_Test10 = PACKET_TEST_DATA12;
+		pGwDH = (AY_GWDRCTHDR *)((Ui08 *)pPckt); 
+		if (M2M == _G2G_)		{ pGwDH->_Test10 = PACKET_TEST_DATA20; }
+		else if (M2M == _M2M_)	{ pGwDH->_Test10 = PACKET_TEST_DATA16; }
+		else					{ pGwDH->_Test10 = PACKET_TEST_DATA12; }
 		pGwDH->_ConM2M_Id = pLocConn->ConM2M_Id;
 		pGwDH->_DevNo = pInfom->DevRead._id;
 		pCont = pPckt + sizeof(AY_GWDRCTHDR);
@@ -1264,7 +1267,12 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 		pTCP->_ipHeader.daddr = pLocConn->Osaddr;
 		pTCP->_ipHeader.saddr = pLocConn->Odaddr;
 		//-----------------------------//
-		AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+		if (M2M >= _M2M_) {
+			AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
+			if ((pGw == nullptr)||(!pGw->GwF.SycComplete_)) { return -1; }///< unknown GW
+			AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+		}
+		else { AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0)); }
 		//------- SEND
 		//TCP_header_init(&AY_TCPheader);
 		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
