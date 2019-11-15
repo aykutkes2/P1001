@@ -145,7 +145,83 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			}
 			if (TcpLen) {
 				printf("Server Port Call\n");/* */
-				if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA11) {///< Direct Send Request
+				if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA19) {///< Sync to Gw Request
+					AY_GWSYNCRQST		*pGwRqst;
+					Ui16				oLen;
+					int					i;
+
+					printf("AYCLNT--> ============ Sync to Gw Request =========\n ");
+					pGwRqst = (AY_GWSYNCRQST	*)pData;
+
+					//------ DECRPT -------------------//
+					oLen = header->len - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
+					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+
+					AY_GWINFO		Gw,*pGw;
+					memset(&Gw, 0, sizeof(AY_GWINFO));
+					Gw.GwF.Full_ = 1;
+					memcpy(&Gw._Unique[0], &pGwRqst->_SrcUnique[0], 12);
+					pGw = pAYCLNT_TestAddOrUpdateGw(&Gw, &i);
+					pGw->GwF.Full_ = 1;
+					printf("AYDVSTRT-->\t **** NEW GW FOUND ***\t  ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x \n ", i, Gw._Unique[0], Gw._Unique[1], Gw._Unique[2]);
+					
+					AY_Generate_AES128(&pGwRqst->_SessionKey[0]);
+					memcpy(&pGw->Sessionkey[0], &pGwRqst->_SessionKey[0], 16);
+					pGw->GwF.SycStart_ = 1;
+					pGw->GwF.SycComplete_ = 1;
+					//--------------------------------------------------------------//
+					//--------------------------------------------------------------//
+					pGwRqst->_Test18 = PACKET_TEST_DATA20;
+					pGwRqst->_Test19 = PACKET_TEST_DATA20;
+					pGwRqst->_QueRowNo = PACKET_TEST_DATA20;
+
+					//memcpy(&pGwRqst->_PubKey[0], (Ui08 *)&SIGNING_PUB_KEY[0], sizeof(pGwRqst->_PubKey));
+
+					//------ RSA ENCRPT
+					Ui08	Cont[256];
+					AY_Crypt_RSAEncrpt((Ui08 *)&pGwRqst->_PubKey[0], (Ui08 *)&pGwRqst->_InfoCont[0], 240, (Ui08 *)&Cont[0], &oLen);
+					memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
+					//------ ENCRPT
+					AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], &pGwRqst->_InfoCont[0], ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0));
+
+					//------- SEND
+					TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
+#if STEP_TEST==1
+					printf("********* STEP G3 *************\n********* STEP G3 *************\n********* STEP G3 *************\n");
+					AYPRINT_TCP_Header(&AY_TCPheader);
+#endif
+					TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&pGwRqst, sizeof(AY_GWSYNCRQST));
+
+				}
+				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA21) {///< Sync to Gw Response
+					AY_GWSYNCRQST		*pGwRqst;
+					Ui16				oLen;
+					int					i;
+
+					printf("AYCLNT--> ============ Sync to Gw Response =========\n ");
+					pGwRqst = (AY_GWSYNCRQST	*)pData;
+
+					//------ DECRPT -------------------//
+					oLen = header->len - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
+					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+					//------ RSA DECRPT -------------------//
+					Ui08	Cont[256];
+					AY_Crypt_RSADecrpt((Ui08 *)&SIGNING_PR_KEY[0], (Ui08 *)&pGwRqst->_InfoCont[0], 256, (Ui08 *)&Cont[0], &oLen);
+					memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
+					//--------------------------------------------------------------------------------//
+					AY_GWINFO		Gw, *pGw;
+					memset(&Gw, 0, sizeof(AY_GWINFO));
+					Gw.GwF.Full_ = 1;
+					memcpy(&Gw._Unique[0], &pGwRqst->_DstUnique[0], 12);
+					pGw = pAYCLNT_TestAddOrUpdateGw(&Gw, &i);
+					pGw->GwF.Full_ = 1;
+					printf("AYDVSTRT-->\t **** GW SYNC COMPLETE ***\t  ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x \n ", i, Gw._Unique[0], Gw._Unique[1], Gw._Unique[2]);
+
+					memcpy(&pGw->Sessionkey[0], &pGwRqst->_SessionKey[0], 16);
+					pGw->GwF.SycStart_ = 1;
+					pGw->GwF.SycComplete_ = 1;
+				}
+				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA11) {///< Direct Send Request
 					AY_GWDRCTHDR		*pGwDH;
 					Ui16				oLen, iLen;
 					AY_DEVINFO			*pInfom;
@@ -176,7 +252,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							//------ DECRPT -------------------//
 							oLen = iLen - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
 							AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
-							pTCP2 = ((tcp_headerAll *)(pData + sizeof(AY_GWDRCTHDR)));
+							oLen -= PCKT_CNT_LEN;
+							pTCP2 = ((tcp_headerAll *)(pData + PCKT_CNT_LEN + sizeof(AY_GWDRCTHDR)));
 #if STEP_TEST == 1
 							printf("********* STEP D3B *************\n********* STEP D3B *************\n********* STEP D3B *************\n");
 							printf("AYCLNT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
@@ -269,7 +346,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							//------ DECRPT -------------------//
 							oLen = iLen - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
 							AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
-							pTCP2 = ((tcp_headerAll *)(pData + sizeof(AY_GWDRCTHDR)));
+							oLen -= PCKT_CNT_LEN;
+							pTCP2 = ((tcp_headerAll *)(pData + PCKT_CNT_LEN + sizeof(AY_GWDRCTHDR)));
 #if STEP_TEST == 1
 							printf("********* STEP D7B *************\n********* STEP D7B *************\n********* STEP D7B *************\n");
 							printf("AYCLNT--> SSK = "); AY_HexValPrint((Ui08 *)&AY_Ram.AY_Sessionkey[0], 16); printf("\r\n");
@@ -618,7 +696,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 										memset(&Gw, 0, sizeof(AY_GWINFO));
 										Gw.GwF.Full_ = 1;
 										memcpy(&Gw._Unique[0], &AY_Ram.AY_DeviceLast._Unique[0], 12);
-										AYCLNT_TestAddOrUpdateGw(&Gw, &m);
+										pAYCLNT_TestAddOrUpdateGw(&Gw, &m);
 										printf("AYDVSTRT-->\t **** NEW GW FOUND ***\t  ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x \n ",m, Gw._Unique[0], Gw._Unique[1], Gw._Unique[2]);
 									}
 #endif
@@ -1156,7 +1234,6 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	AY_GWDRCTHDR		*pGwDH;
 	Ui32				LenSend;
 	Ui08				*pCont;
-	//tcp_headerAll		TCPheader;
 
 	//___________________ LOCAL CONNECTION ____________________________________________//
 	AY_LOCCONNINFO		LocConn0, *pLocConn;
@@ -1187,7 +1264,7 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	pLocConn->Osaddr = pTCP->_ipHeader.saddr;
 	//______________________________________________________________________________________//
 
-	LenSend					= ((len + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
+	LenSend					= ((len + PCKT_CNT_LEN + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
 	pPckt					= (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
 	pGwDH					= (AY_GWDRCTHDR *)((Ui08 *)pPckt);
 	if (M2M == _G2G_)		{ pGwDH->_Test10 = PACKET_TEST_DATA18; }
@@ -1196,18 +1273,17 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	pGwDH->_Test11			= pLocConn->ConM2M_Id;
 	pGwDH->_DevNo			= pInfom->DevRead._id;
 	//pGwDH->_LocalIP			= *((Ui32 *)&((tcp_headerAll *)(pkt_data + 0))->_ipHeader.saddr);
-	pCont					= pPckt + sizeof(AY_GWDRCTHDR);
+	pCont					= pPckt + sizeof(AY_GWDRCTHDR) + PCKT_CNT_LEN;
 	   	 
-	memcpy(pCont, pkt_data, len);
+	if (len > 0) { memcpy(pCont, pkt_data, len); }
 	//---------------------------//
 	if (M2M >= _M2M_)	{ 
 		AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
 		if ((pGw == nullptr) || (!pGw->GwF.SycComplete_)) {	return -1;	}///< unknown GW
-		AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+		AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], (pCont - PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0));
 	}
-	else{ AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0)); }	
+	else{ AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (pCont - PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0)); }
 	//------- SEND
-	//TCP_header_init(&AY_TCPheader);
 	TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 #if STEP_TEST==1
 	printf("********* STEP D2 *************\n********* STEP D2 *************\n********* STEP D2 *************\n");
@@ -1222,7 +1298,6 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 	AY_GWDRCTHDR		*pGwDH;
 	Ui32				LenSend;
 	Ui08				*pCont;
-	//tcp_headerAll		TCPheader;
 
 	//___________________ LOCAL CONNECTION ____________________________________________//
 	AY_LOCCONNINFO		LocConn0, *pLocConn;
@@ -1250,7 +1325,7 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 	if (pLocConn != nullptr) {
 		memcpy(&pLocConn->dest, &pTCP->_ethHeader.src, sizeof(uip_eth_addr));
 
-		LenSend = ((len + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
+		LenSend = ((len + PCKT_CNT_LEN + 15) & 0xFFF0) + sizeof(AY_GWDRCTHDR);
 		pPckt = (unsigned char*)_AY_MallocMemory(LenSend);///< allocate memory for income data
 		pGwDH = (AY_GWDRCTHDR *)((Ui08 *)pPckt); 
 		if (M2M == _G2G_)		{ pGwDH->_Test10 = PACKET_TEST_DATA20; }
@@ -1258,9 +1333,9 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 		else					{ pGwDH->_Test10 = PACKET_TEST_DATA12; }
 		pGwDH->_ConM2M_Id = pLocConn->ConM2M_Id;
 		pGwDH->_DevNo = pInfom->DevRead._id;
-		pCont = pPckt + sizeof(AY_GWDRCTHDR);
+		pCont = pPckt + sizeof(AY_GWDRCTHDR) + PCKT_CNT_LEN;
 
-		memcpy(pCont, pkt_data, len);
+		if (len > 0) { memcpy(pCont, pkt_data, len); }
 		//---------------------------//
 		pTCP = (tcp_headerAll *)(pCont + 0); // tcp all header
 		pTCP->_ethHeader.dest = pLocConn->src;
@@ -1270,11 +1345,10 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 		if (M2M >= _M2M_) {
 			AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
 			if ((pGw == nullptr)||(!pGw->GwF.SycComplete_)) { return -1; }///< unknown GW
-			AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], pCont, ((len + 15) & 0xFFF0));
+			AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], (pCont- PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0));
 		}
-		else { AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], pCont, ((len + 15) & 0xFFF0)); }
+		else { AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (pCont - PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0)); }
 		//------- SEND
-		//TCP_header_init(&AY_TCPheader);
 		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
 #if STEP_TEST==1
 		printf("********* STEP D6 *************\n********* STEP D6 *************\n********* STEP D6 *************\n");
@@ -1284,6 +1358,43 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 		return (TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pPckt, LenSend));
 	}
 	return -1;
+}
+
+int AY_SyncToGwStart(Ui08 NewConn, Ui32	*pUnique, AY_DEVINFO *pInfom) {
+	AY_GWSYNCRQST		GwRqst;
+
+	if (pUnique != nullptr) {
+		memcpy(&GwRqst._DstUnique[0], pUnique, sizeof(GwRqst._DstUnique));
+	}
+	else if (pInfom != nullptr) {
+		memcpy(&GwRqst._DstUnique[0], &pInfom->DevRead._Unique[0], sizeof(GwRqst._DstUnique));
+	}
+	else {///< undef
+		return -1;
+	}
+
+	AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique((Ui32 *)&GwRqst._DstUnique[0], 0);
+	if ((pGw == nullptr) || (NewConn == 1)) {
+		GwRqst._Test18 = PACKET_TEST_DATA18;
+		GwRqst._Test19 = PACKET_TEST_DATA18;
+		GwRqst._QueRowNo = PACKET_TEST_DATA18;
+
+		memcpy((Ui08 *)&GwRqst._SrcUnique[0], (Ui08 *)&CngFile.UniqueID[0], sizeof(GwRqst._SrcUnique));
+		memcpy(&GwRqst._PubKey[0], (Ui08 *)&SIGNING_PUB_KEY[0], sizeof(GwRqst._PubKey));
+
+		AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], &GwRqst._InfoCont[0], ((sizeof(GwRqst._InfoCont) + 15) & 0xFFF0));
+
+		//------- SEND
+		TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
+#if STEP_TEST==1
+		printf("********* STEP G1 *************\n********* STEP G1 *************\n********* STEP G1 *************\n");
+		AYPRINT_TCP_Header(&AY_TCPheader);
+#endif
+		return ( TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&GwRqst, sizeof(AY_GWSYNCRQST)) );
+	}
+	else {
+		return 1;
+	}
 }
 
 int main(void)//(int argc, char **argv)
@@ -1502,14 +1613,14 @@ int main(void)//(int argc, char **argv)
 				AY_Client_SendServer = 0;
 			}			
 		}
-#if (DIRECT_SEND==1)	
-		else if (!AY_Client_ConnectRemoteGws) {
-			if (!AY_Client_StartRemoteGws) {
-
-				AY_Client_StartRemoteGws = 1;
-			}
-		}
-#endif		
+//#if (DIRECT_SEND==1)	
+//		else if (!AY_Client_ConnectRemoteGws) {
+//			if (!AY_Client_StartRemoteGws) {
+//
+//				AY_Client_StartRemoteGws = 1;
+//			}
+//		}
+//#endif		
 		else if (!AY_Client_ListenThreads) {
 			AY_StartSlaveListen();
 			AY_Client_ListenThreads = 1;

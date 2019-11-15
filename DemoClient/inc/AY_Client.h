@@ -102,7 +102,7 @@ enum _DIRECT_CONNTYPE {
 };
 extern int AY_SendDeviceStartToServer(Ui08 Filter);
 
-
+#define PCKT_CNT_LEN			4
 
 
 

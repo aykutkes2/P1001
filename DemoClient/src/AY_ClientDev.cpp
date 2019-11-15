@@ -401,7 +401,7 @@ AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId) {
 	return pGw;
 }
 
-int AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
+AY_GWINFO	*pAYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 	AY_GWINFO	*pGw0 = nullptr;
 	int i=0;
 
@@ -416,7 +416,7 @@ int AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 	*pGw0 = *pGw;
 	pGw0->TimeOut = AY_CLNTGW_TIMEOUT_VAL;
 
-	return i;
+	return pGw0;
 }
 
 /*

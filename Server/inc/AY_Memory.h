@@ -129,6 +129,29 @@ typedef struct _AY_GWDRCTHDR {
 	//Ui32		_LocalIP;	///< Local IP address (SRC)	
 }AY_GWDRCTHDR;
 
+//-----------------------------------------------------//
+#define AY_GWSYNCRQST_SIZE_OF_INFO_CONT		1024
+#define AY_GWSYNCRQST_CONT_OFST				12
+typedef struct _AY_GWSYNCRQST {
+	Ui32		_Test18;
+	Ui32		_Test19;
+	Ui32		_QueRowNo;
+	union {
+		Ui08	_InfoCont[AY_GWSYNCRQST_SIZE_OF_INFO_CONT];
+		struct {
+			Ui32		_SrcUnique[3];
+			Ui32		_DstUnique[3];
+			Ui08		_SessionKey[16];
+			Ui32		SendCnt;
+			Ui32		ReadCnt;
+			Ui32		ErrCnt;
+			Ui32		reserved0[3];
+			Ui08		_PubKey[960];
+		};
+	};
+}AY_GWSYNCRQST;
+
+
 #pragma pack(pop)
 
 enum _DEVTYPES {

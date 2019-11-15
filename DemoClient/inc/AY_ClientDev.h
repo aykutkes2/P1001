@@ -148,7 +148,7 @@ extern int			AYCLNT_CalcGwCnt(int *pCnt);
 extern int			AYCLNT_FindGwId(AY_GWINFO	*pGw);
 extern AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId);
 extern AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId);
-extern int			AYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId);
+extern AY_GWINFO	*pAYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId);
 extern int			AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp);
 extern AY_GWINFO	*pAYCLNT_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp);
 extern int			AYCLNT_GwReleaseSlot(AY_GWINFO	*pGw);
