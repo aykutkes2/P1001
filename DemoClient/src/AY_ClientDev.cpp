@@ -411,6 +411,9 @@ AY_GWINFO	*pAYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 	}
 	else {
 		pGw0 = pAYCLNT_FindFirstFreeGwId(pId);
+		memset(pGw0, 0, sizeof(AY_GWINFO));
+		memcpy(&pGw0->_Unique[0], &pGw->_Unique[0], 12);
+		pGw0->GwF.Full_ = 1;
 		i = 2;
 	}
 	*pGw0 = *pGw;

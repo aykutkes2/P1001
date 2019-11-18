@@ -25,7 +25,7 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 	Si32			i;
 
 	pGwDH = (AY_GWDRCTHDR	*)(pPtr + sizeof(tcp_headerAll));
-	if (pGwDH->_Test10 == PACKET_TEST_DATA10) {
+	if ((pGwDH->_Test10 == PACKET_TEST_DATA10)|| (pGwDH->_Test10 == PACKET_TEST_DATA14)) {
 #if STEP_TEST==1
 		printf("********* STEP D2 *************\n********* STEP D2 *************\n********* STEP D2 *************\n");
 		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
@@ -37,17 +37,14 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 			AY_M2M_CONNTYPE			*pConnM2M;
 			Ui08					*pPckt;
 
-			// ack seq düþün !!!
-			//j = pSrc->_TCPh._tcpHeader.acknum;
-			//pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
-			//pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
-			//pSrc->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 			//----------------------------------------------------------------//
 			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
 			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
 			memcpy(pPckt, pGwDH, Len);///< copy received packet
 			//---------------------------//
-			AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt+sizeof(AY_GWDRCTHDR)), (Len- sizeof(AY_GWDRCTHDR)));
+			if (pGwDH->_Test10 == PACKET_TEST_DATA10) {
+				AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt + sizeof(AY_GWDRCTHDR)), (Len - sizeof(AY_GWDRCTHDR)));
+			}
 			//---------------------------//
 			pConnM2M->_Src._pConn = pSrc;
 			pConnM2M->_Src._DevNo = pGwDH->_DevNo;
@@ -57,7 +54,7 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pConnM2M, (sizeof(AY_M2M_CONNTYPE) + Len), QTARGET_DIRECT_SEND, 0));
 		}
 	}
-	else if (pGwDH->_Test10 == PACKET_TEST_DATA12) {
+	else if ((pGwDH->_Test10 == PACKET_TEST_DATA12)|| (pGwDH->_Test10 == PACKET_TEST_DATA16)) {
 #if STEP_TEST==1
 		printf("********* STEP D6 *************\n********* STEP D6 *************\n********* STEP D6 *************\n");
 		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
@@ -69,17 +66,14 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 			AY_M2M_CONNTYPE			*pConnM2M;
 			Ui08					*pPckt;
 
-			// ack seq düþün !!!
-			//j = pSrc->_TCPh._tcpHeader.acknum;
-			//pSrc->_TCPh._tcpHeader.acknum = pSrc->_TCPh._tcpHeader.seqnum;
-			//pSrc->_TCPh._tcpHeader.seqnum = j;///< convert TCP counters
-			//pSrc->_TCPh._tcpHeader.acknum += _HTONSL( sizeof(AY_DeviceStart) );
 			//----------------------------------------------------------------//
 			pConnM2M = (AY_M2M_CONNTYPE	*)_AY_MallocMemory(sizeof(AY_M2M_CONNTYPE) + Len);
 			pPckt = ((Ui08 *)pConnM2M) + sizeof(AY_M2M_CONNTYPE);
 			memcpy(pPckt, pGwDH, Len);///< copy received packet
 			//---------------------------//
-			AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt + sizeof(AY_GWDRCTHDR)), (Len - sizeof(AY_GWDRCTHDR)));
+			if (pGwDH->_Test10 == PACKET_TEST_DATA12) {
+				AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt + sizeof(AY_GWDRCTHDR)), (Len - sizeof(AY_GWDRCTHDR)));
+			}
 			//---------------------------//			
 			pConnM2M->_Src._pConn = pSrc;
 			pConnM2M->_Src._DevNo = pGwDH->_DevNo;
@@ -89,12 +83,49 @@ int AY_TestLoadDirectSendRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pConnM2M, (sizeof(AY_M2M_CONNTYPE) + Len), QTARGET_DIRECT_RESP, 0));
 		}
 	}
+	else if (pGwDH->_Test10 == PACKET_TEST_DATA18) {
+#if STEP_TEST==1
+		printf("********* STEP G1 *************\n********* STEP G1 *************\n********* STEP G1 *************\n");
+		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
+#endif
+		printf("AYDVSTRT--> Packet type is M2M Request\n");
+		AY_CONNTYPE		*pSrc;
+		pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);///< Find Request GW
+		if (pSrc != nullptr) {
+			Ui08					*pPckt;
+			//----------------------------------------------------------------//
+			pPckt = (Ui08 *)_AY_MallocMemory(Len);
+			memcpy(pPckt, pGwDH, Len);///< copy received packet
+			//---------------------------//
+			AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt + sizeof(AY_GWDRCTHDR)), (Len - sizeof(AY_GWDRCTHDR)));
+			//======= Load to Queue
+			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pPckt, (Len), QTARGET_M2M_REQST, 0));
+		}
+	}
+	else if (pGwDH->_Test10 == PACKET_TEST_DATA20) {
+#if STEP_TEST==1
+		printf("********* STEP G3 *************\n********* STEP G3 *************\n********* STEP G3 *************\n");
+		AYPRINT_TCP_Header((tcp_headerAll *)pPtr);
+#endif
+		printf("AYDVSTRT--> Packet type is M2M Response\n");
+		AY_CONNTYPE		*pSrc;
+		pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);///< Find Request GW
+		if (pSrc != nullptr) {
+			Ui08					*pPckt;
+			//----------------------------------------------------------------//
+			pPckt = (Ui08 *)_AY_MallocMemory(Len);
+			memcpy(pPckt, pGwDH, Len);///< copy received packet
+			//---------------------------//
+			AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], ((Ui08 *)pPckt + sizeof(AY_GWDRCTHDR)), (Len - sizeof(AY_GWDRCTHDR)));
+			//======= Load to Queue
+			return(AYSRV_QueueLoad(AYSRV_QueueFindFirstFreeRow(), (Ui08 *)pPckt, (Len), QTARGET_M2M_RESP, 0));
+		}
+	}
 	return 0;///< not me
 }
 
 void AYSRV_QueueDirectSend(AY_QUEUE *pQ) {
 	AY_M2M_CONNTYPE			*pConnM2M;
-	tcp_headerAll			*pTCP;
 	AY_CONNTYPE				*pDst;
 	Ui08					*pData;
 	tcp_headerAll			TCPheader;
@@ -105,13 +136,20 @@ void AYSRV_QueueDirectSend(AY_QUEUE *pQ) {
 	pConnM2M = pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_UPDATE);
 
 	pDst = pConnM2M->_Dst._pConn;
-	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
-	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA11;
+	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);
+	if (((AY_GWDRCTHDR *)pData)->_Test10 == PACKET_TEST_DATA10) {
+		((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA11;
+	} 
+	else{
+		((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA15;
+	}
 	((AY_GWDRCTHDR *)pData)->_ConM2M_Id = ConM2M_Id;
 	((AY_GWDRCTHDR *)pData)->_DevNo = pConnM2M->_Dst._DevNo;
 	oLen = ((pQ->InLen - (sizeof(AY_M2M_CONNTYPE) + sizeof(AY_GWDRCTHDR)) + 15) & 0xFFF0);
 	//---------------------------//
-	AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (pData + sizeof(AY_GWDRCTHDR)), oLen);
+	if (((AY_GWDRCTHDR *)pData)->_Test10 == PACKET_TEST_DATA10) {
+		AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (pData + sizeof(AY_GWDRCTHDR)), oLen);
+	}
 	//------- SEND
 	memcpy(&TCPheader, &pDst->_TCPh, sizeof(tcp_headerAll));
 	AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
@@ -133,7 +171,6 @@ void AYSRV_QueueDirectSend(AY_QUEUE *pQ) {
 
 void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 	AY_M2M_CONNTYPE			*pConnM2M;
-	tcp_headerAll			*pTCP;
 	AY_CONNTYPE				*pDst;
 	Ui08					*pData;
 	tcp_headerAll			TCPheader;
@@ -142,16 +179,24 @@ void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 
 	pConnM2M = (AY_M2M_CONNTYPE	*)pQ->pIn;
 	ConM2M_Id = pConnM2M->M_LastUpdateMin;
-	pConnM2M = pAYM2M_ReadConn(ConM2M_Id);// pAYM2M_FindOrAddConn(pConnM2M, &ConM2M_Id, AY_CONN_FIND);
+	pConnM2M = pAYM2M_ReadConn(ConM2M_Id);
 
 	pDst = pConnM2M->_Src._pConn;
-	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);// +sizeof(AY_GWDRCTHDR);
-	((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA13;
+	pData = ((Ui08 *)pQ->pIn) + sizeof(AY_M2M_CONNTYPE);
+
+	if (((AY_GWDRCTHDR *)pData)->_Test10 == PACKET_TEST_DATA12) {
+		((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA13;
+	}
+	else {
+		((AY_GWDRCTHDR *)pData)->_Test10 = PACKET_TEST_DATA17;
+	}
 	((AY_GWDRCTHDR *)pData)->_ConM2M_Id = ConM2M_Id;
 	((AY_GWDRCTHDR *)pData)->_DevNo = pConnM2M->_Src._DevNo;
 	oLen = ((pQ->InLen - (sizeof(AY_M2M_CONNTYPE) + sizeof(AY_GWDRCTHDR)) + 15) & 0xFFF0);
 	//---------------------------//
-	AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (pData + sizeof(AY_GWDRCTHDR)), oLen);
+	if (((AY_GWDRCTHDR *)pData)->_Test10 == PACKET_TEST_DATA12) {
+		AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], (pData + sizeof(AY_GWDRCTHDR)), oLen);
+	}
 	//------- SEND
 	memcpy(&TCPheader, &pDst->_TCPh, sizeof(tcp_headerAll));
 	AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
@@ -171,6 +216,76 @@ void AYSRV_QueueDirectResponse(AY_QUEUE *pQ) {
 	return;
 }
 
+
+void AYSRV_QueueSendRequestM2M(AY_QUEUE *pQ) {
+	AY_CONNTYPE				*pDst;
+	tcp_headerAll			TCPheader;
+	Ui16					oLen;
+	AY_GWSYNCRQST			*pGwRqst;
+
+	pGwRqst = ((AY_GWSYNCRQST *)pQ->pIn);
+
+	pDst = pFindConnByUniqueID((UNIQUE_ID *)&pGwRqst->_DstUnique[0]);///< Find Response GW
+	if (pDst != nullptr) {
+		pGwRqst->_Test18 = PACKET_TEST_DATA19;
+		pGwRqst->_Test19 = PACKET_TEST_DATA19;
+		pGwRqst->_QueRowNo = PACKET_TEST_DATA19;
+		oLen = ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0);
+		//---------------------------//
+		AY_Crypt_AES128((Ui08 *)&pDst->_SessionKey[0], &pGwRqst->_InfoCont[0], oLen);
+		//------- SEND
+		memcpy(&TCPheader, &pDst->_TCPh, sizeof(tcp_headerAll));
+		AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
+#if STEP_TEST==1
+		printf("********* STEP G2 *************\n********* STEP G2 *************\n********* STEP G2 *************\n");
+		AYPRINT_TCP_Header(&TCPheader);
+#endif
+		TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)pGwRqst, oLen);
+		pDst->_TCPh._tcpHeader.acknum = TCPheader._tcpHeader.acknum;
+		pDst->_TCPh._tcpHeader.seqnum = TCPheader._tcpHeader.seqnum;
+	}
+	//--------------
+	///< delete from queue
+	pQ->QFlg._QFinishedF = 1;
+	pQ->QFlg._QKeepF = 0;
+	pQ->QFlg._QBusyF = 1;
+	return;
+}
+
+void AYSRV_QueueSendResponseM2M(AY_QUEUE *pQ) {
+	tcp_headerAll			TCPheader;
+	Ui16					oLen;
+	AY_GWSYNCRQST			*pGwRqst;
+	AY_CONNTYPE				*pSrc;
+
+	pGwRqst = ((AY_GWSYNCRQST *)pQ->pIn);
+
+	pSrc = pFindConnByUniqueID((UNIQUE_ID *)&pGwRqst->_SrcUnique[0]);///< Find Response GW
+	if (pSrc != nullptr) {
+		pGwRqst->_Test18 = PACKET_TEST_DATA21;
+		pGwRqst->_Test19 = PACKET_TEST_DATA21;
+		pGwRqst->_QueRowNo = PACKET_TEST_DATA21;
+		oLen = ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0);
+		//---------------------------//
+		AY_Crypt_AES128((Ui08 *)&pSrc->_SessionKey[0], &pGwRqst->_InfoCont[0], oLen);
+		//------- SEND
+		memcpy(&TCPheader, &pSrc->_TCPh, sizeof(tcp_headerAll));
+		AY_ChngPacketDest_TCP(&TCPheader, &MyEth_Address, _ETH_DST_);
+#if STEP_TEST==1
+		printf("********* STEP G4 *************\n********* STEP G4 *************\n********* STEP G4 *************\n");
+		AYPRINT_TCP_Header(&TCPheader);
+#endif
+		TCP_packet_send(_MAIN_SCKT, &TCPheader, (Ui08 *)pGwRqst, oLen);
+		pSrc->_TCPh._tcpHeader.acknum = TCPheader._tcpHeader.acknum;
+		pSrc->_TCPh._tcpHeader.seqnum = TCPheader._tcpHeader.seqnum;
+	}
+	//--------------
+	///< delete from queue
+	pQ->QFlg._QFinishedF = 1;
+	pQ->QFlg._QKeepF = 0;
+	pQ->QFlg._QBusyF = 1;
+	return;
+}
 
 
 //============================================================================================================

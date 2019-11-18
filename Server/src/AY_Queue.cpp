@@ -41,6 +41,12 @@ void QUEUE_Process(int ql) {
 		case QTARGET_DIRECT_RESP:
 			AYSRV_QueueDirectResponse(pQ);
 			break;
+		case QTARGET_M2M_REQST:
+			AYSRV_QueueSendRequestM2M(pQ);
+			break;
+		case QTARGET_M2M_RESP:
+			AYSRV_QueueSendResponseM2M(pQ);
+			break;
 		}
 		if ((pQ->QFlg._QFinishedF == 1) && (pQ->QFlg._QKeepF == 0) && (pQ->QFlg._QBusyF == 1)) {
 			if (pQ->InLen) {

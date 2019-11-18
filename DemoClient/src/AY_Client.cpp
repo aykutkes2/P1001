@@ -147,10 +147,16 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				printf("Server Port Call\n");/* */
 				if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA19) {///< Sync to Gw Request
 					AY_GWSYNCRQST		*pGwRqst;
-					Ui16				oLen;
+					Ui16				iLen,oLen;
 					int					i;
+					unsigned char		*pPckt;
 
 					printf("AYCLNT--> ============ Sync to Gw Request =========\n ");
+					iLen = header->len;
+					pPckt = (unsigned char*)_AY_MallocMemory(iLen);///< allocate memory for income data
+					memcpy(pPckt, pkt_data, iLen);
+					pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
+
 					pGwRqst = (AY_GWSYNCRQST	*)pData;
 
 					//------ DECRPT -------------------//
@@ -179,7 +185,10 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 
 					//------ RSA ENCRPT
 					Ui08	Cont[256];
-					AY_Crypt_RSAEncrpt((Ui08 *)&pGwRqst->_PubKey[0], (Ui08 *)&pGwRqst->_InfoCont[0], 240, (Ui08 *)&Cont[0], &oLen);
+					Ui08	O_PubKey[2048];
+
+					memcpy((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_PubKey[0], 960);
+					AY_Crypt_RSAEncrpt((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_InfoCont[0], 240, (Ui08 *)&Cont[0], &oLen);
 					memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
 					//------ ENCRPT
 					AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], &pGwRqst->_InfoCont[0], ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0));
@@ -195,10 +204,16 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 				}
 				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA21) {///< Sync to Gw Response
 					AY_GWSYNCRQST		*pGwRqst;
-					Ui16				oLen;
+					Ui16				iLen,oLen;
 					int					i;
+					unsigned char		*pPckt;
 
 					printf("AYCLNT--> ============ Sync to Gw Response =========\n ");
+					iLen = header->len;
+					pPckt = (unsigned char*)_AY_MallocMemory(iLen);///< allocate memory for income data
+					memcpy(pPckt, pkt_data, iLen);
+					pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
+
 					pGwRqst = (AY_GWSYNCRQST	*)pData;
 
 					//------ DECRPT -------------------//
@@ -1613,14 +1628,47 @@ int main(void)//(int argc, char **argv)
 				AY_Client_SendServer = 0;
 			}			
 		}
-//#if (DIRECT_SEND==1)	
-//		else if (!AY_Client_ConnectRemoteGws) {
-//			if (!AY_Client_StartRemoteGws) {
-//
-//				AY_Client_StartRemoteGws = 1;
-//			}
-//		}
-//#endif		
+#if (DIRECT_SEND==1)	
+		else if (!AY_Client_ConnectRemoteGws) {
+			AY_GWINFO	*pGw0;
+			if (!AY_Client_StartRemoteGws) {
+				j = AYCLNT_CalcGwCnt(0);
+				i = 0;
+				AY_Client_StartRemoteGws = 1;
+			}
+			if (j) {
+				int k;
+				for (k = i; k < j; k++) {
+					pGw0 = pAYCLNT_FindGwById(k);
+					if (pGw0->GwF.Full_) {
+						if (!pGw0->GwF.SycStart_) {
+							AY_SyncToGwStart(1, (Ui32	*)&pGw0->_Unique[0], 0);
+							pGw0->ErrCnt = 0;
+							AY_Client_ConnectRemoteGws = 1;
+						}
+						else if (pGw0->GwF.SycComplete_) {
+							pGw0->ErrCnt = 0;
+							if (k == i) { i++; }
+						}
+						else {
+							AY_Delay(1000);
+							pGw0->ErrCnt++;
+							if (pGw0->ErrCnt > 5) {
+								pGw0->GwF.SycStart_ = 0;
+							}
+						}
+					}
+					else if (k == i) {	i++;	}
+				}
+				if (i == j) {
+					AY_Client_ConnectRemoteGws = 1;
+				}
+			}
+			else {
+				AY_Client_ConnectRemoteGws = 1;
+			}
+		}
+#endif		
 		else if (!AY_Client_ListenThreads) {
 			AY_StartSlaveListen();
 			AY_Client_ListenThreads = 1;

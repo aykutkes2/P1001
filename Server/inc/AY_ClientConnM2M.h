@@ -33,3 +33,9 @@ extern Ui32 AYM2M_ReadConn(Ui32 ConnId, AY_M2M_CONNTYPE *pConnRd);
 
 extern AY_M2M_CONNTYPE	*pAYM2M_ReadConn(Ui32 ConnId);
 
+
+extern void AYSRV_QueueSendRequestM2M(AY_QUEUE *pQ);
+
+extern void AYSRV_QueueSendResponseM2M(AY_QUEUE *pQ);
+
+
