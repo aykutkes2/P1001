@@ -146,6 +146,21 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			if (TcpLen) {
 				printf("Server Port Call\n");/* */
 				if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA19) {///< Sync to Gw Request
+#if 1
+
+					AY_CLNTQUEUE		*pQue;
+					int					i;
+					pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
+					if (pQue != nullptr) {
+						pQue->pInfo = 0;
+						pQue->DataIOLen = header->len;
+						pQue->pDataIO = (unsigned char*)_AY_MallocMemory(pQue->DataIOLen);///< allocate memory for outgoing data
+						memcpy(pQue->pDataIO, pkt_data, pQue->DataIOLen);
+						pQue->Status = _M2M_CONNRQST;///< 
+						pQue->QueF.Full_ = 1;///< start core process
+						//--------------//
+					}	
+#else					
 					AY_GWSYNCRQST		*pGwRqst;
 					Ui16				iLen,oLen;
 					int					i;
@@ -200,7 +215,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					AYPRINT_TCP_Header(&AY_TCPheader);
 #endif
 					TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&pGwRqst, sizeof(AY_GWSYNCRQST));
-
+#endif
 				}
 				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA21) {///< Sync to Gw Response
 					AY_GWSYNCRQST		*pGwRqst;
@@ -1412,6 +1427,67 @@ int AY_SyncToGwStart(Ui08 NewConn, Ui32	*pUnique, AY_DEVINFO *pInfom) {
 	}
 }
 
+int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row) {
+	AY_GWSYNCRQST		*pGwRqst;
+	Ui16				iLen, oLen;
+	int					i;
+	unsigned char		*pPckt;
+	Ui08				*pData;
+
+	printf("AYCLNT--> ============ Sync to Gw Request =========\n ");
+	iLen = pQue->DataIOLen;
+	pPckt = pQue->pDataIO;// (unsigned char*)_AY_MallocMemory(iLen);///< allocate memory for income data
+	//memcpy(pPckt, pkt_data, iLen);
+	pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
+
+	pGwRqst = (AY_GWSYNCRQST	*)pData;
+
+	//------ DECRPT -------------------//
+	oLen = iLen - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
+	AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+
+	AY_GWINFO		Gw, *pGw;
+	memset(&Gw, 0, sizeof(AY_GWINFO));
+	Gw.GwF.Full_ = 1;
+	memcpy(&Gw._Unique[0], &pGwRqst->_SrcUnique[0], 12);
+	pGw = pAYCLNT_TestAddOrUpdateGw(&Gw, &i);
+	pGw->GwF.Full_ = 1;
+	printf("AYDVSTRT-->\t **** NEW GW FOUND ***\t  ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x \n ", i, Gw._Unique[0], Gw._Unique[1], Gw._Unique[2]);
+
+	AY_Generate_AES128(&pGwRqst->_SessionKey[0]);
+	memcpy(&pGw->Sessionkey[0], &pGwRqst->_SessionKey[0], 16);
+	pGw->GwF.SycStart_ = 1;
+	pGw->GwF.SycComplete_ = 1;
+	//--------------------------------------------------------------//
+	//--------------------------------------------------------------//
+	pGwRqst->_Test18 = PACKET_TEST_DATA20;
+	pGwRqst->_Test19 = PACKET_TEST_DATA20;
+	pGwRqst->_QueRowNo = PACKET_TEST_DATA20;
+
+	//memcpy(&pGwRqst->_PubKey[0], (Ui08 *)&SIGNING_PUB_KEY[0], sizeof(pGwRqst->_PubKey));
+
+	//------ RSA ENCRPT
+	Ui08	Cont[256];
+	Ui08	Info[256];
+	Ui08	O_PubKey[2048];
+
+	memcpy((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_PubKey[0], 960);
+	memcpy((Ui08 *)&Info[0], (Ui08 *)&pGwRqst->_InfoCont[0], 256);
+	AY_Crypt_RSAEncrpt((Ui08 *)&/*CngFile.ServerPublicKey[0]*/O_PubKey[0], (Ui08 *)&Info[0] /*&pGwRqst->_InfoCont[0]*/, 240, (Ui08 *)&Cont[0], &oLen);
+	//AY_Crypt_RSAEncrpt((Ui08 *)&/*SERVER_PUB_KEY*/CngFile.ServerPublicKey[0], (Ui08 *)&DevStrt._Input[0], 240, (Ui08 *)&OutData[0], &oLen);
+	memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
+	//------ ENCRPT
+	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], &pGwRqst->_InfoCont[0], ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0));
+
+	//------- SEND
+	TCP_header_load(&AY_TCPheader, SrvEth_Address, SrvIP_Address, CngFile.ServerPort, MyEth_Address, MyIP_Address, MyClientInstPort, AY_TCPheader._tcpHeader.acknum, AY_TCPheader._tcpHeader.seqnum, (_PSH | _ACK));
+#if STEP_TEST==1
+	printf("********* STEP G3 *************\n********* STEP G3 *************\n********* STEP G3 *************\n");
+	AYPRINT_TCP_Header(&AY_TCPheader);
+#endif
+	return(TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&pGwRqst, sizeof(AY_GWSYNCRQST)));
+}
+
 int main(void)//(int argc, char **argv)
 {
 #if DK_DEMO
@@ -1659,6 +1735,7 @@ int main(void)//(int argc, char **argv)
 						}
 					}
 					else if (k == i) {	i++;	}
+					AYCLNT_CoreDoTask();
 				}
 				if (i == j) {
 					AY_Client_ConnectRemoteGws = 1;

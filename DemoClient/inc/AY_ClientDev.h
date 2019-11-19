@@ -275,8 +275,10 @@ enum _AYCLNT_STATUS {
 	_WAIT_SERVER_FOR_GW,
 	_CHNG_SERVER_CONN,
 	_PRE_SEND_PCKT,
+	_M2M_CONNRQST,
 
 	_FIND_GW2=16,
+	_Q_BREAK_,
 };
 
 //================== Extrenals ===========================//
@@ -285,3 +287,4 @@ extern int AY_SendGwInfoRequest(AY_CLNTQUEUE *pQue, Si32 row);
 extern int AY_ChngPacketDest_TCP(tcp_headerAll *pTCP, uip_eth_addr eth, Ui08 SrcDst);
 extern int AY_SendGwInfoSend(AY_CLNTQUEUE *pQue, Si32 row);
 extern int AY_SendGwInfoSend2(AY_CLNTQUEUE *pQue, Si32 row);
+extern int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row);

@@ -137,7 +137,10 @@ int mbedtls_hardware_poll(void *data, Ui08 *output, size_t len, size_t *olen) {
 	srand((unsigned int)time(NULL));
 
 	for (i = 0; i < 48; i++) {
-		*output = rand() % 256;
+		*output = 0;
+		while ((*output == 0) || (*output == 0xFF)) {
+			*output = rand() % 256;
+		}
 		output++;
 	}
 	return 0;///< success for tls functions
@@ -159,11 +162,21 @@ int AY_Crypt_RSAEncrpt(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 
 	mbedtls_ctr_drbg_init(&ctr_drbg);
 	
 	ret = mbedtls_pk_parse_public_key(&PubKey_, pPubK, strlen((const char*)pPubK) + 1);
-	if (ret != 0) { return -1; }
-	ret = mbedtls_pk_encrypt(&PubKey_, Buffer, Len, BufferO, &olen, Len+1024, mbedtls_hardware_poll2/*mbedtls_ctr_drbg_random*/, &ctr_drbg);
-	if (ret != 0) { return -1; }
-	*oLen = (Ui16)olen;
-	return 1;
+	if (ret == 0) {
+		ret = mbedtls_pk_encrypt(&PubKey_, Buffer, Len, BufferO, &olen, Len + 1024, mbedtls_hardware_poll2/*mbedtls_ctr_drbg_random*/, &ctr_drbg);
+		if (ret == 0) {
+			*oLen = (Ui16)olen;
+		}
+	}
+
+	mbedtls_ctr_drbg_free(&ctr_drbg);
+	mbedtls_pk_free(&PubKey_);
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
 }
 
 int AY_Crypt_RSADecrpt(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 *oLen) {
@@ -177,11 +190,22 @@ int AY_Crypt_RSADecrpt(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 
 	mbedtls_ctr_drbg_init(&ctr_drbg);
 
 	ret = mbedtls_pk_parse_key(&PrvKey_, pPrvK, strlen((const char*)pPrvK) + 1, NULL, 0);
-	if (ret != 0) { return -1; }
-	ret = mbedtls_pk_decrypt(&PrvKey_, Buffer, Len, BufferO, &olen, Len+1024, mbedtls_hardware_poll2/*mbedtls_ctr_drbg_random*/, &ctr_drbg);
-	if (ret != 0) { return -1; }
-	*oLen = (Ui16)olen;
-	return 1;
+	if (ret == 0) {
+		ret = mbedtls_pk_decrypt(&PrvKey_, Buffer, Len, BufferO, &olen, Len + 1024, mbedtls_hardware_poll2/*mbedtls_ctr_drbg_random*/, &ctr_drbg);
+		if (ret == 0) {
+			*oLen = (Ui16)olen;
+		}
+	}
+
+	mbedtls_pk_free(&PrvKey_);
+	mbedtls_ctr_drbg_free(&ctr_drbg);
+
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
 }
 
 /*
