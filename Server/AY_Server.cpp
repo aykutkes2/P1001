@@ -103,7 +103,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 		int Len;
 		AY_CONNTYPE	*pConnTyp;
 		if (TCP_packet_check((Ui08 *)pkt_data, &Len) == 1) {
-			pConnTyp = pFindConnByTCPheader((tcp_headerAll *)pkt_data);
+			pConnTyp = pFindConnByTCPheader((tcp_headerAll *)pkt_data,0);
 			if (pConnTyp != nullptr) {
 				tcp_headerAll	TCP;
 

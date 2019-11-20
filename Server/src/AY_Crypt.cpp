@@ -84,10 +84,11 @@ int AY_Generate_AES128(Ui08 *pKey) {
 	return 1;	
 }
 
+#if 1
 int AY_Crypt_RSASign(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *pSign) {
 	Ui08 HashOutBuffer[64];
 	Ui08 RSASignBuffer[256];
-	Ui16 ret=0;
+	Ui16 ret = 0;
 	Ui32 hash_len = 64;
 	//Ui32 *sig_len;
 	mbedtls_pk_context prktest;
@@ -101,7 +102,7 @@ int AY_Crypt_RSASign(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *pSign) {
 	if (ret != 0) { return -1; }
 	rsatest = (mbedtls_rsa_context *)(prktest).pk_ctx;
 
-	mbedtls_rsa_pkcs1_sign(rsatest, NULL, NULL, MBEDTLS_RSA_PRIVATE, MBEDTLS_MD_SHA512,	hash_len, HashOutBuffer, RSASignBuffer);
+	mbedtls_rsa_pkcs1_sign(rsatest, NULL, NULL, MBEDTLS_RSA_PRIVATE, MBEDTLS_MD_SHA512, hash_len, HashOutBuffer, RSASignBuffer);
 	if (ret != 0) { return -1; }
 	memcpy(pSign, RSASignBuffer, 256);
 	return 1;
@@ -110,7 +111,7 @@ int AY_Crypt_RSASign(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *pSign) {
 int AY_Crypt_RSAVerify(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *pSign) {
 	mbedtls_pk_context PubKey_;
 	Ui08 HashOutBuffer[64];
-	Ui16 ret=0;
+	Ui16 ret = 0;
 	size_t sig_len, hash_len;
 	sig_len = 256;
 	hash_len = 64;
@@ -144,7 +145,7 @@ int mbedtls_hardware_poll(void *data, Ui08 *output, size_t len, size_t *olen) {
 		output++;
 	}
 	return 0;///< success for tls functions
-	
+
 }
 int mbedtls_hardware_poll2(void *data, Ui08 *output, size_t len) {
 	int i;
@@ -160,7 +161,7 @@ int AY_Crypt_RSAEncrpt(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 
 	*oLen = 0;
 	mbedtls_pk_init(&PubKey_);
 	mbedtls_ctr_drbg_init(&ctr_drbg);
-	
+
 	ret = mbedtls_pk_parse_public_key(&PubKey_, pPubK, strlen((const char*)pPubK) + 1);
 	if (ret == 0) {
 		ret = mbedtls_pk_encrypt(&PubKey_, Buffer, Len, BufferO, &olen, Len + 1024, mbedtls_hardware_poll2/*mbedtls_ctr_drbg_random*/, &ctr_drbg);
@@ -207,7 +208,170 @@ int AY_Crypt_RSADecrpt(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 
 		return -1;
 	}
 }
+#else
+int AY_Crypt_RSASign(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *pSign) {
+	//const char *pers = "rsa_encrypt";
+	Ui08 HashOutBuffer[64];
+	Ui08 RSASignBuffer[256];
+	Ui16 ret=0;
+	Ui32 hash_len = 64;
+	//Ui32 *sig_len;
+	mbedtls_pk_context prktest;
+	mbedtls_rsa_context *rsatest;
+	//mbedtls_entropy_context entropy;
 
+	mbedtls_pk_init(&prktest);
+	//mbedtls_entropy_init(&entropy);
+
+	//ret = mbedtls_ctr_drbg_seed(ctr_drbg, mbedtls_hardware_poll2,	entropy, (const Ui08 *)pers,strlen(pers));
+	ret = mbedtls_sha512_ret(Buffer, Len, HashOutBuffer, 0);
+	if (ret == 0) {
+		ret = mbedtls_pk_parse_key(&prktest, pPrvK, strlen((const char*)pPrvK) + 1, NULL, 0);
+		if (ret == 0) {
+			rsatest = (mbedtls_rsa_context *)(prktest).pk_ctx;
+
+			mbedtls_rsa_pkcs1_sign(rsatest, NULL, NULL, MBEDTLS_RSA_PRIVATE, MBEDTLS_MD_SHA512, hash_len, HashOutBuffer, RSASignBuffer);
+			if (ret == 0) {
+				memcpy(pSign, RSASignBuffer, 256);
+			}
+		}
+	}
+	mbedtls_pk_free(&prktest);
+	//mbedtls_free(rsatest);
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
+}
+
+int AY_Crypt_RSAVerify(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *pSign) {
+	mbedtls_pk_context PubKey_;
+	Ui08 HashOutBuffer[64];
+	Ui16 ret=0;
+	size_t sig_len, hash_len;
+	sig_len = 256;
+	hash_len = 64;
+
+	mbedtls_pk_init(&PubKey_);
+
+	ret = mbedtls_sha512_ret(Buffer, Len, HashOutBuffer, 0);
+	if (ret == 0) {
+		ret = mbedtls_pk_parse_public_key(&PubKey_, pPubK, strlen((const char*)pPubK) + 1);
+		if (ret == 0) {
+			ret = mbedtls_pk_verify(&PubKey_, MBEDTLS_MD_SHA512, HashOutBuffer, hash_len, pSign, sig_len);
+		}
+	}
+	mbedtls_pk_free(&PubKey_);
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
+}
+
+/*
+	Generate random 48 bytes of data
+*/
+int mbedtls_hardware_poll(void *data, Ui08 *output, size_t len, size_t *olen) {
+	int i;
+
+	i = RAND_MAX;
+	/* initialize random seed: */
+	srand((unsigned int)time(NULL));
+
+	for (i = 0; i < 48; i++) {
+		*output = 0;
+		while ((*output == 0) || (*output == 0xFF)) {
+			*output = rand() % 256;
+		}
+		output++;
+	}
+	return 0;///< success for tls functions
+	
+}
+int mbedtls_hardware_poll2(void *data, Ui08 *output, size_t len) {
+	int i;
+	return mbedtls_hardware_poll(data, output, len, (ui32 *)&i);
+}
+
+int AY_Crypt_RSAEncrpt(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 *oLen) {
+	const char pers[] = "rsa_encrypt";
+	mbedtls_pk_context PubKey_;
+	mbedtls_ctr_drbg_context ctr_drbg;
+	Ui16 ret;
+	size_t olen = 0;
+
+	//Ui08 PubKeyBufTmp[2048];
+	Ui08 DataBufTmp[256];
+	Ui08 EncryptedBufTmp[256];
+	//memset(PubKeyBufTmp, 0, 2048);
+	memset(DataBufTmp, 0, 256);
+	memset(BufferO, 0, 256);
+	//memcpy(PubKeyBufTmp, pPubK, 1024);
+	memcpy(DataBufTmp, Buffer, Len);
+
+	*oLen = 0;
+	mbedtls_pk_init(&PubKey_);
+	mbedtls_ctr_drbg_init(&ctr_drbg);
+	
+	ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_hardware_poll2,&ctr_drbg, (const unsigned char *)&pers[0],strlen((const char *)pers));
+	if (ret == 0) {
+		ret = mbedtls_pk_parse_public_key(&PubKey_, pPubK, strlen((const char*)pPubK) + 1);
+		if (ret == 0) {
+			ret = mbedtls_pk_encrypt(&PubKey_, DataBufTmp, Len, EncryptedBufTmp/*BufferO*/, &olen, 256/*Len + 1024*/, mbedtls_hardware_poll2, &ctr_drbg);
+			if (ret == 0) {
+				*oLen = (Ui16)olen;
+				memcpy(BufferO, EncryptedBufTmp, 256);
+			}
+		}
+	}
+	mbedtls_ctr_drbg_free(&ctr_drbg);
+	mbedtls_pk_free(&PubKey_);
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
+}
+
+int AY_Crypt_RSADecrpt(Ui08 *pPrvK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 *oLen) {
+	const char pers[] = "rsa_decrypt";
+	mbedtls_pk_context PrvKey_;
+	mbedtls_ctr_drbg_context ctr_drbg;
+	mbedtls_entropy_context entropy;
+	Ui16 ret;
+	size_t olen = 0;
+
+	*oLen = 0;
+	mbedtls_entropy_init(&entropy);
+	mbedtls_pk_init(&PrvKey_);
+	mbedtls_ctr_drbg_init(&ctr_drbg);
+
+	ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_hardware_poll2, (void*)&entropy, (const unsigned char *)&pers[0], strlen((const char *)pers));
+	ret = mbedtls_pk_parse_key(&PrvKey_, pPrvK, strlen((const char*)pPrvK) + 1, NULL, 0);
+	if (ret == 0) {
+		ret = mbedtls_pk_decrypt(&PrvKey_, Buffer, Len, BufferO, &olen, Len + 1024, mbedtls_hardware_poll2, &ctr_drbg);
+		if (ret == 0) {
+			*oLen = (Ui16)olen;
+		}
+	}
+
+	mbedtls_pk_free(&PrvKey_);
+	mbedtls_ctr_drbg_free(&ctr_drbg);
+	mbedtls_entropy_free(&entropy);
+
+	if (ret == 0) {
+		return 1;
+	}
+	else {
+		return -1;
+	}
+}
+#endif
 /*
 	Generate random 4 bytes of data
 */

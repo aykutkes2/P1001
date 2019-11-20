@@ -172,13 +172,13 @@ int AY_TestLoadDeviceStart(Ui08 *pPtr,Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 			_AY_FreeMemory((unsigned char*)pDevStrt);
 			//==================== Test & Response if There is a waiting GWInfo Request
 			AY_CONNTYPE	*pSrc, *pDst;
-			pDst = pFindConnByUniqueID((UNIQUE_ID *)&pDevStrtIn->_Unique[0]);
+			pDst = pFindConnByUniqueID((UNIQUE_ID *)&pDevStrtIn->_Unique[0],0);
 			if (pDst != nullptr) {//ieriki adým sonra aç !!!
 				//pDst->_TCPh._tcpHeader.acknum += _HTONSL(Len);
 				i = AYSRV_FindUniqQ(*((UNIQUE_ID *)&pDevStrtIn->_Unique[0]/*not used*/), *((UNIQUE_ID *)&pDevStrtIn->_Unique[0]), _UNIQ_NOT_SRC);
 				if (i >= 0) {
 					if (UniqQ_Lst.UniqQ[i].UniqFnc == _UNIQUE_Q_RENT) {
-						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].SrcUniq);
+						pSrc = pFindConnByUniqueID((UNIQUE_ID *)&UniqQ_Lst.UniqQ[i].SrcUniq,0);
 						if (pSrc != nullptr) {
 							AY_GWINFORESP		GwRsp;
 							tcp_headerAll		TCPheader;
@@ -229,7 +229,7 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 		if (Len == sizeof(AY_GWINFORQST)) {
 			AY_CONNTYPE	*pSrc, *pDst;
 			AY_GWRENTRQST	GwRent;
-			pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr);
+			pSrc = pFindConnByTCPheader((tcp_headerAll *)pPtr,0);
 			if (pSrc != nullptr) {
 				i = AYSRV_UniqQ_FindFirstFreeRow();
 				if (i != -1) {
@@ -237,7 +237,7 @@ int AY_TestLoadGwInfoRqst(Ui08 *pPtr, Ui16 Len, AY_CONNTYPE	*pConnTyp) {
 					memcpy(pInfoRqst, (AY_GWINFORQST	*)(pPtr + sizeof(tcp_headerAll)), sizeof(AY_GWINFORQST));
 					//---------------------------//
 					AY_Decrypt_AES128((Ui08 *)&pSrc->_SessionKey[0], (Ui08 *)&pInfoRqst->_InfoCont[0], AY_GWINFORQST_SIZE_OF_INFO_CONT);
-					pDst = pFindConnByUniqueID((UNIQUE_ID *)&pInfoRqst->_Unique[0]);
+					pDst = pFindConnByUniqueID((UNIQUE_ID *)&pInfoRqst->_Unique[0],0);
 					if (pDst != nullptr) {
 						tcp_headerAll		TCPheader;
 						Ui16 oLen;
@@ -475,7 +475,7 @@ AY_CONNTYPE	*pAYCONN_ReadConn(Ui32 ConnId) {
 	return nullptr;
 }
 
-AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP) {
+AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP, Ui32 *pId) {
 	AY_CONNTYPE	*pConnTyp = nullptr;
 	Ui32 i;
 
@@ -484,6 +484,7 @@ AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP) {
 		if (pConnTyp != nullptr) {
 			if ((pConnTyp->_TCPh._ipHeader.saddr.longip == pTCP->_ipHeader.saddr.longip) && (pConnTyp->_TCPh._tcpHeader.sport == pTCP->_tcpHeader.sport)) {
 				printf("AYCONN--> Conn found - UDP header matched i=%d \n", i);
+				if (pId != nullptr) { *pId = i; }
 				return pConnTyp;
 			}
 		}
@@ -492,7 +493,7 @@ AY_CONNTYPE	*pFindConnByTCPheader(tcp_headerAll *pTCP) {
 	return nullptr;
 }
 
-AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique) {
+AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique, Ui32 *pId) {
 	AY_CONNTYPE	*pConnTyp = nullptr;
 	Ui32 i;
 
@@ -503,6 +504,7 @@ AY_CONNTYPE	*pFindConnByUniqueID(UNIQUE_ID *pUnique) {
 			printf("\n\t\tConnectionNo = %d\n Uniq0: 0x%08x , Uniq1: 0x%08x , Uniq2: 0x%08x \n", i, pConnTyp->_UnqiueId[0], pConnTyp->_UnqiueId[1], pConnTyp->_UnqiueId[2]);
 			if ((pConnTyp->_UnqiueId[0] == pUnique->_UniqueL[0]) && (pConnTyp->_UnqiueId[1] == pUnique->_UniqueL[1]) && (pConnTyp->_UnqiueId[2] == pUnique->_UniqueL[2])) {///< device found 
 				printf("AYCONN--> Conn found - Unique ID matched i=%d \n", i);
+				if (pId != nullptr) { *pId = i; }
 				return pConnTyp;
 			}
 		}

@@ -73,7 +73,10 @@ typedef struct  _AY_GWINFO {///< 2 + 12 + 54 + 16 +  4+4+4+4 = 100 Bytes
 	Si32			TimeOut;
 	Ui32			SendCnt;
 	Ui32			ReadCnt;
-	Ui32			ErrCnt;
+	union {
+		Ui32			ErrCnt;
+		Ui32			GwNoOnSrv;
+	};
 }AY_GWINFO;
 typedef struct  _AY_GWINFOLST {///< 4096*88 = 360448 Bytes
 	AY_GWINFO	Info[4096];
@@ -147,7 +150,8 @@ extern AY_GWINFO	*pAYCLNT_FindFirstFreeGwId(int *pId);
 extern int			AYCLNT_CalcGwCnt(int *pCnt);
 extern int			AYCLNT_FindGwId(AY_GWINFO	*pGw);
 extern AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId);
-extern AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId);
+extern AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, Ui32 *pId);
+extern AY_GWINFO	*pAYCLNT_FindGwBy_GwNoOnSrv(Ui32 GwNoOnSrv, Ui32 *pId);
 extern AY_GWINFO	*pAYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId);
 extern int			AYCLNT_UpdateGwInfo(AY_GWINFO	*pGw, Ui08 *pComp, Ui08 Comp);
 extern AY_GWINFO	*pAYCLNT_AddGwToList(Ui08 *pComp, Ui32 *pUnique, Ui08 Comp);

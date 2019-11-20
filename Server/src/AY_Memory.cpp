@@ -6,14 +6,14 @@
 #include <time.h>
 #include <AY_Memory.h>
 
-unsigned char	*_AY_MallocMemory(Ui32 Cnt) {
-	return((unsigned char	*)malloc(Cnt));
-}
-
-void _AY_FreeMemory(unsigned char	*pBuff) {
-	free(pBuff);
-	return;
-}
+//unsigned char	*_AY_MallocMemory(Ui32 Cnt) {
+//	return((unsigned char	*)malloc(Cnt));
+//}
+//
+//void _AY_FreeMemory(unsigned char	*pBuff) {
+//	free(pBuff);
+//	return;
+//}
 
 AY_DeviceRead	*_AY_MallocClientsMemory(Ui32 ClntCnt) {
 	AY_DeviceRead	*ptr;

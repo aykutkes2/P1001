@@ -380,10 +380,9 @@ AY_GWINFO	*pAYCLNT_FindGwByUnique(Ui32 *pUnique, int *pId) {
 	return pGw;
 }
 
-AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId) {
+AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, Ui32 *pId) {
 	AY_GWINFO	*pGw = nullptr;
-	Ui32 i, j;
-	Ui08 *p;
+	Ui32 i;
 
 	if (pId != nullptr) { *pId = -1; }
 	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
@@ -401,18 +400,40 @@ AY_GWINFO	*pAYCLNT_FindGwByPortNo(Ui16 PortNo, int *pId) {
 	return pGw;
 }
 
+AY_GWINFO	*pAYCLNT_FindGwBy_GwNoOnSrv(Ui32 GwNoOnSrv, Ui32 *pId) {
+	AY_GWINFO	*pGw = nullptr;
+	Ui32 i;
+
+	if (pId != nullptr) { *pId = -1; }
+	AYCLNT_GW_Cnt = AYCLNT_CalcGwCnt(0);
+	for (i = 0; i < AYCLNT_GW_Cnt; i++) {
+		pGw = pAYCLNT_FindGwById(i);
+		if (pGw != nullptr) {
+			if (pGw->GwF.Full_) {
+				if (pGw->GwNoOnSrv == GwNoOnSrv) {
+					if (pId != nullptr) { *pId = i; }
+					return pGw;
+				}
+			}
+		}
+	}
+	return pGw;
+}
+
 AY_GWINFO	*pAYCLNT_TestAddOrUpdateGw(AY_GWINFO	*pGw, int *pId) {
 	AY_GWINFO	*pGw0 = nullptr;
 	int i=0;
 
 	pGw0 = pAYCLNT_FindGwByUnique(&pGw->_Unique[0], pId);
 	if (pGw0 != nullptr) {///< update
+		pGw0->GwNoOnSrv = pGw->GwNoOnSrv;
 		i = 1;
 	}
 	else {
 		pGw0 = pAYCLNT_FindFirstFreeGwId(pId);
 		memset(pGw0, 0, sizeof(AY_GWINFO));
 		memcpy(&pGw0->_Unique[0], &pGw->_Unique[0], 12);
+		pGw0->GwNoOnSrv = pGw->GwNoOnSrv;
 		pGw0->GwF.Full_ = 1;
 		i = 2;
 	}

@@ -77,6 +77,7 @@ struct pcap_pkthdr {
 	Ui32 len;	/* length this packet (off wire) */
 };
 
+#define M2M_USE_QUEUE			0
 
 #define GW_DEVICE_LIST			((((AY_DeviceStartResp	*)pData)->_Test0 == PACKET_TEST_DATA0) && (((AY_DeviceStartResp	*)pData)->_Test1 == PACKET_TEST_DATA1))
 #define GW_INFO_REQUEST			((((AY_GWINFORESP	*)pData)->_Test2 == PACKET_TEST_DATA2) && (((AY_GWINFORESP	*)pData)->_Test3 == PACKET_TEST_DATA3))
@@ -146,7 +147,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 			if (TcpLen) {
 				printf("Server Port Call\n");/* */
 				if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA19) {///< Sync to Gw Request
-#if 1
+#if (M2M_USE_QUEUE==1)
 
 					AY_CLNTQUEUE		*pQue;
 					int					i;
@@ -165,10 +166,11 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					Ui16				iLen,oLen;
 					int					i;
 					unsigned char		*pPckt;
+					Ui08				in[2048];
 
 					printf("AYCLNT--> ============ Sync to Gw Request =========\n ");
 					iLen = header->len;
-					pPckt = (unsigned char*)_AY_MallocMemory(iLen);///< allocate memory for income data
+					pPckt = (unsigned char*)&in[0];// _AY_MallocMemory(iLen);///< allocate memory for income data
 					memcpy(pPckt, pkt_data, iLen);
 					pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
 
@@ -182,6 +184,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					memset(&Gw, 0, sizeof(AY_GWINFO));
 					Gw.GwF.Full_ = 1;
 					memcpy(&Gw._Unique[0], &pGwRqst->_SrcUnique[0], 12);
+					Gw.GwNoOnSrv = pGwRqst->_QueRowNo;
 					pGw = pAYCLNT_TestAddOrUpdateGw(&Gw, &i);
 					pGw->GwF.Full_ = 1;
 					printf("AYDVSTRT-->\t **** NEW GW FOUND ***\t  ID:%d Unq0:0x%08x Unq1:0x%08x  Unq2:0x%08x \n ", i, Gw._Unique[0], Gw._Unique[1], Gw._Unique[2]);
@@ -195,16 +198,14 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					pGwRqst->_Test18 = PACKET_TEST_DATA20;
 					pGwRqst->_Test19 = PACKET_TEST_DATA20;
 					pGwRqst->_QueRowNo = PACKET_TEST_DATA20;
-
-					//memcpy(&pGwRqst->_PubKey[0], (Ui08 *)&SIGNING_PUB_KEY[0], sizeof(pGwRqst->_PubKey));
-
+					
 					//------ RSA ENCRPT
 					Ui08	Cont[256];
-					Ui08	O_PubKey[2048];
+					//Ui08	O_PubKey[2048];
 
-					memcpy((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_PubKey[0], 960);
-					AY_Crypt_RSAEncrpt((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_InfoCont[0], 240, (Ui08 *)&Cont[0], &oLen);
-					memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
+					//memcpy((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_PubKey[0], 960);
+					AY_Crypt_RSAEncrpt((Ui08 *)&pGwRqst->_PubKey[0] /*&O_PubKey[0]*/, (Ui08 *)&pGwRqst->_SessionKey[0], 240, (Ui08 *)&Cont[0], &oLen);
+					memcpy((Ui08 *)&pGwRqst->_SessionKey[0], (Ui08 *)&Cont[0], 256);
 					//------ ENCRPT
 					AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], &pGwRqst->_InfoCont[0], ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0));
 
@@ -214,7 +215,10 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					printf("********* STEP G3 *************\n********* STEP G3 *************\n********* STEP G3 *************\n");
 					AYPRINT_TCP_Header(&AY_TCPheader);
 #endif
-					TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&pGwRqst, sizeof(AY_GWSYNCRQST));
+					TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pGwRqst, sizeof(AY_GWSYNCRQST));
+					pGw->GwF.SycStart_ = 1;
+					pGw->GwF.SycComplete_ = 1;
+					//_AY_FreeMemory(pPckt);
 #endif
 				}
 				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA21) {///< Sync to Gw Response
@@ -222,10 +226,11 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					Ui16				iLen,oLen;
 					int					i;
 					unsigned char		*pPckt;
+					Ui08				in[2048];
 
 					printf("AYCLNT--> ============ Sync to Gw Response =========\n ");
 					iLen = header->len;
-					pPckt = (unsigned char*)_AY_MallocMemory(iLen);///< allocate memory for income data
+					pPckt = (unsigned char*)&in[0];// _AY_MallocMemory(iLen);///< allocate memory for income data
 					memcpy(pPckt, pkt_data, iLen);
 					pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
 
@@ -236,8 +241,8 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
 					//------ RSA DECRPT -------------------//
 					Ui08	Cont[256];
-					AY_Crypt_RSADecrpt((Ui08 *)&SIGNING_PR_KEY[0], (Ui08 *)&pGwRqst->_InfoCont[0], 256, (Ui08 *)&Cont[0], &oLen);
-					memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
+					AY_Crypt_RSADecrpt((Ui08 *)&SIGNING_PR_KEY[0], (Ui08 *)&pGwRqst->_SessionKey[0], 256, (Ui08 *)&Cont[0], &oLen);
+					memcpy((Ui08 *)&pGwRqst->_SessionKey[0], (Ui08 *)&Cont[0], 256);
 					//--------------------------------------------------------------------------------//
 					AY_GWINFO		Gw, *pGw;
 					memset(&Gw, 0, sizeof(AY_GWINFO));
@@ -250,19 +255,19 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					memcpy(&pGw->Sessionkey[0], &pGwRqst->_SessionKey[0], 16);
 					pGw->GwF.SycStart_ = 1;
 					pGw->GwF.SycComplete_ = 1;
+					//_AY_FreeMemory(pPckt);
 				}
-				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA11) {///< Direct Send Request
+				else if ( (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA11) || ((((AY_GWDRCTHDR	*)pData)->_Test10 & 0xFF000000) == PACKET_TEST_DATA15) ) {///< Direct Send Request
 					AY_GWDRCTHDR		*pGwDH;
 					Ui16				oLen, iLen;
 					AY_DEVINFO			*pInfom;
 					AY_CLNTQUEUE		*pQue;
 					AY_LOCCONNINFO		LocConn0;
-					int					i;
 					Ui08				*pPckt;
 
 					printf("AYCLNT--> ============ DIRECT SEND Test & Find Target =========\n ");
 					pGwDH = (AY_GWDRCTHDR	*)pData;
-					pInfom = pAY_FindDevInfoByDevNo(pGwDH->_DevNo);
+					pInfom = pAY_FindDevInfoByDevNo( (pGwDH->_DevNo & 0xFFFFFF) );
 					if (pInfom) {///< there is a valid target 
 						if ((pInfom->DevRead._Type == _REAL_)) {///< target must be a real device					
 							AY_DEVINFO		 *pInfom2;
@@ -281,7 +286,20 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
 							//------ DECRPT -------------------//
 							oLen = iLen - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
-							AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+							if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA11) {
+								AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+							}
+							else {
+								AY_GWINFO		*pGw;
+								Ui32			i;
+								iLen = (((AY_GWDRCTHDR	*)pData)->_Test10 & 0x00FFFFFF) | (((AY_GWDRCTHDR	*)pData)->_DevNo & 0xFF000000);
+								pGw = pAYCLNT_FindGwBy_GwNoOnSrv(iLen, &i);
+								if (pGw == nullptr) {
+									_AY_FreeMemory(pPckt);
+									return;
+								}
+								AY_Decrypt_AES128((Ui08 *)&pGw->Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+							}
 							oLen -= PCKT_CNT_LEN;
 							pTCP2 = ((tcp_headerAll *)(pData + PCKT_CNT_LEN + sizeof(AY_GWDRCTHDR)));
 #if STEP_TEST == 1
@@ -342,11 +360,11 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 								//...
 								break;
 							}
-							free(pPckt);
+							_AY_FreeMemory(pPckt);
 						}
 					}
 				}
-				else if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA13) {///< Direct Response Request
+				else if ((((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA13) || ((((AY_GWDRCTHDR	*)pData)->_Test10 & 0xFF000000) == PACKET_TEST_DATA17) ) {///< Direct Response Request
 					AY_GWDRCTHDR		*pGwDH;
 					Ui16				oLen, iLen;
 					AY_DEVINFO			*pInfom;
@@ -357,7 +375,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 
 					printf("AYCLNT--> ============ DIRECT RCV Test & Find Target =========\n ");
 					pGwDH = (AY_GWDRCTHDR	*)pData;
-					pInfom = pAY_FindLocDevInfoByDevRowNo(pGwDH->_DevNo);
+					pInfom = pAY_FindLocDevInfoByDevRowNo((pGwDH->_DevNo & 0xFFFFFF));
 					if (pInfom) {///< there is a valid target 
 						if ((pInfom->DevRead._Type == _MIRROR_) || (pInfom->DevRead._Type == _GUEST_)) {///< target must be a mirror device
 							AY_DEVINFO		 *pInfom2;
@@ -375,7 +393,20 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
 							//------ DECRPT -------------------//
 							oLen = iLen - sizeof(tcp_headerAll) - sizeof(AY_GWDRCTHDR);
-							AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+							if (((AY_GWDRCTHDR	*)pData)->_Test10 == PACKET_TEST_DATA11) {
+								AY_Decrypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+							}
+							else {
+								AY_GWINFO		*pGw;
+								Ui32			i;
+								iLen = (((AY_GWDRCTHDR	*)pData)->_Test10 & 0x00FFFFFF) | (((AY_GWDRCTHDR	*)pData)->_DevNo & 0xFF000000);
+								pGw = pAYCLNT_FindGwBy_GwNoOnSrv(iLen, &i);
+								if (pGw == nullptr) {
+									_AY_FreeMemory(pPckt);
+									return;
+								}
+								AY_Decrypt_AES128((Ui08 *)&pGw->Sessionkey[0], (Ui08 *)(pData + sizeof(AY_GWDRCTHDR)), oLen);
+							}
 							oLen -= PCKT_CNT_LEN;
 							pTCP2 = ((tcp_headerAll *)(pData + PCKT_CNT_LEN + sizeof(AY_GWDRCTHDR)));
 #if STEP_TEST == 1
@@ -410,7 +441,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 								break;
 							}
 							//-----------//
-							free(pPckt);
+							_AY_FreeMemory(pPckt);
 						}
 					}
 				}
@@ -502,7 +533,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 								}
 							}
 							//-----------//
-							free(pPckt);
+							_AY_FreeMemory(pPckt);
 						}
 					}
 
@@ -513,7 +544,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 					AY_DEVINFO			*pInfom;
 					AY_CLNTQUEUE		*pQue;
 					AY_LOCCONNINFO		LocConn0;
-					int					i;
+					Ui32					i;
 					Ui08				*pPckt;
 
 #if STEP_TEST == 1
@@ -610,7 +641,7 @@ void AY_MainSocket_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 									//...
 									break;
 								}
-								free(pPckt);
+								_AY_FreeMemory(pPckt);
 							}
 						}
 					}
@@ -886,6 +917,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 										SrvIP_Address.byte3,
 										SrvIP_Address.byte4);
 									AY_Client_GetSrvIPadr = 1;
+									_AY_FreeMemory(answer.rdata);
 									return;
 								}
 							}
@@ -897,6 +929,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 							}
 
 							printf("\n");
+							_AY_FreeMemory(answer.rdata);
 						}
 						else
 						{
@@ -923,7 +956,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 #endif
 					printf("AYCLNT--> PACKET (1)				DEMO1	--->	GHS1		(A request packet for Mirror(Reflection) Device)\n ");
 #if (DIRECT_SEND==1)
-					AY_DirectSendToListed(_TOSRV_, (Ui08 *)pkt_data, header->len, pInfom);
+					AY_DirectSendToListed(_M2M_, (Ui08 *)pkt_data, header->len, pInfom);
 #else
 					pQue = pAYCLNT_FindFirstFreeQueueId(&i);///< find an empty queue row for outgoing packet
 					if (pQue != nullptr) {
@@ -961,7 +994,7 @@ void AY_SocketRead_CallBack(Ui08 *param, const struct pcap_pkthdr *header, const
 						printf("********* STEP 5 *************\n********* STEP 5 *************\n********* STEP 5 *************\n");
 						AYPRINT_TCP_Header(pTCP);
 #endif	
-						AY_DirectSendToListedRcv(_TOSRV_, (Ui08 *)pkt_data, header->len, pInfom);
+						AY_DirectSendToListedRcv(_M2M_, (Ui08 *)pkt_data, header->len, pInfom);
 #else
 #if STEP_TEST == 1
 						printf("********* STEP 10 *************\n********* STEP 10 *************\n********* STEP 10 *************\n");
@@ -1309,7 +1342,7 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	//---------------------------//
 	if (M2M >= _M2M_)	{ 
 		AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
-		if ((pGw == nullptr) || (!pGw->GwF.SycComplete_)) {	return -1;	}///< unknown GW
+		if ((pGw == nullptr) || (!pGw->GwF.SycComplete_)) { _AY_FreeMemory(pPckt); return -1;	}///< unknown GW
 		AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], (pCont - PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0));
 	}
 	else{ AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (pCont - PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0)); }
@@ -1320,7 +1353,9 @@ int AY_DirectSendToListed(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom
 	printf("AYCLNT--> PACKET (1)				GW1	--->	SRV		(A request packet for Mirror(Reflection) Device)\n ");
 	AYPRINT_TCP_Header(&AY_TCPheader);
 #endif
-	return (TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pPckt, LenSend));
+	TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pPckt, LenSend);
+	_AY_FreeMemory(pPckt);
+	return 1;
 }
 
 int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pInfom) {
@@ -1374,7 +1409,7 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 		//-----------------------------//
 		if (M2M >= _M2M_) {
 			AY_GWINFO	*pGw = pAYCLNT_FindGwByUnique(&LocConn0.pDevInfo->DevRead._Unique[0], 0);
-			if ((pGw == nullptr)||(!pGw->GwF.SycComplete_)) { return -1; }///< unknown GW
+			if ((pGw == nullptr)||(!pGw->GwF.SycComplete_)) { _AY_FreeMemory(pPckt);  return -1; }///< unknown GW
 			AY_Crypt_AES128((Ui08 *)&pGw->Sessionkey[0], (pCont- PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0));
 		}
 		else { AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], (pCont - PCKT_CNT_LEN), ((len + PCKT_CNT_LEN + 15) & 0xFFF0)); }
@@ -1385,7 +1420,9 @@ int AY_DirectSendToListedRcv(Ui08 M2M, Ui08 *pkt_data, Ui32 len, AY_DEVINFO *pIn
 		printf("AYCLNT--> PACKET (1)				GW1	--->	SRV		(A request packet for Mirror(Reflection) Device)\n ");
 		AYPRINT_TCP_Header(&AY_TCPheader);
 #endif
-		return (TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pPckt, LenSend));
+		TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pPckt, LenSend);
+		_AY_FreeMemory(pPckt);
+		return 1;
 	}
 	return -1;
 }
@@ -1426,7 +1463,7 @@ int AY_SyncToGwStart(Ui08 NewConn, Ui32	*pUnique, AY_DEVINFO *pInfom) {
 		return 1;
 	}
 }
-
+#if (M2M_USE_QUEUE==1)
 int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	AY_GWSYNCRQST		*pGwRqst;
 	Ui16				iLen, oLen;
@@ -1436,8 +1473,7 @@ int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 
 	printf("AYCLNT--> ============ Sync to Gw Request =========\n ");
 	iLen = pQue->DataIOLen;
-	pPckt = pQue->pDataIO;// (unsigned char*)_AY_MallocMemory(iLen);///< allocate memory for income data
-	//memcpy(pPckt, pkt_data, iLen);
+	pPckt = pQue->pDataIO;
 	pData = (Ui08 *)(pPckt + sizeof(tcp_headerAll)); // 
 
 	pGwRqst = (AY_GWSYNCRQST	*)pData;
@@ -1463,18 +1499,10 @@ int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	pGwRqst->_Test18 = PACKET_TEST_DATA20;
 	pGwRqst->_Test19 = PACKET_TEST_DATA20;
 	pGwRqst->_QueRowNo = PACKET_TEST_DATA20;
-
-	//memcpy(&pGwRqst->_PubKey[0], (Ui08 *)&SIGNING_PUB_KEY[0], sizeof(pGwRqst->_PubKey));
-
+	
 	//------ RSA ENCRPT
 	Ui08	Cont[256];
-	Ui08	Info[256];
-	Ui08	O_PubKey[2048];
-
-	memcpy((Ui08 *)&O_PubKey[0], (Ui08 *)&pGwRqst->_PubKey[0], 960);
-	memcpy((Ui08 *)&Info[0], (Ui08 *)&pGwRqst->_InfoCont[0], 256);
-	AY_Crypt_RSAEncrpt((Ui08 *)&/*CngFile.ServerPublicKey[0]*/O_PubKey[0], (Ui08 *)&Info[0] /*&pGwRqst->_InfoCont[0]*/, 240, (Ui08 *)&Cont[0], &oLen);
-	//AY_Crypt_RSAEncrpt((Ui08 *)&/*SERVER_PUB_KEY*/CngFile.ServerPublicKey[0], (Ui08 *)&DevStrt._Input[0], 240, (Ui08 *)&OutData[0], &oLen);
+	AY_Crypt_RSAEncrpt((Ui08 *)&pGwRqst->_PubKey[0], (Ui08 *)&pGwRqst->_InfoCont[0], 240, (Ui08 *)&Cont[0], &oLen);
 	memcpy((Ui08 *)&pGwRqst->_InfoCont[0], (Ui08 *)&Cont[0], 256);
 	//------ ENCRPT
 	AY_Crypt_AES128((Ui08 *)&AY_Ram.AY_Sessionkey[0], &pGwRqst->_InfoCont[0], ((sizeof(pGwRqst->_InfoCont) + 15) & 0xFFF0));
@@ -1485,9 +1513,13 @@ int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row) {
 	printf("********* STEP G3 *************\n********* STEP G3 *************\n********* STEP G3 *************\n");
 	AYPRINT_TCP_Header(&AY_TCPheader);
 #endif
-	return(TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)&pGwRqst, sizeof(AY_GWSYNCRQST)));
+	return(TCP_packet_send(_MAIN_SCKT, &AY_TCPheader, (Ui08 *)pGwRqst, sizeof(AY_GWSYNCRQST)));
 }
-
+#else
+int Q_M2M_ConnRequest(AY_CLNTQUEUE *pQue, Si32 row) {
+	return 1;
+}
+#endif
 int main(void)//(int argc, char **argv)
 {
 #if DK_DEMO

@@ -540,6 +540,7 @@ int UDP_packet_send(Ui08 idx, udp_headerAll * UDP_header, Ui08 *pBuff, int len) 
 	return 1;
 }
 
+Ui08 In[2048], out[2048];
 int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) {
 	int i = sizeof(tcp_headerAll);
 	Ui08 *ptr = (Ui08	*)_AY_MallocMemory(len + sizeof(tcp_headerAll));///< max packet size
@@ -547,6 +548,8 @@ int TCP_packet_send(Ui08 idx, tcp_headerAll * TCP_header, Ui08 *pBuff, int len) 
 
 	memcpy(&ptr[0], TCP_header, i);
 	if (len) { memcpy(&ptr[i], pBuff, len); }
+	memcpy(&In[0], pBuff, len);
+	memcpy(&out[0], &ptr[i], len);
 	i += len;
 	pHdr->_ipHeader.tlen = mhtons(i - 14);	///< length 100 bytes
 	pHdr->_ipHeader.crc = 0;				///< header checksum

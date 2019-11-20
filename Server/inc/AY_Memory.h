@@ -160,9 +160,12 @@ enum _DEVTYPES {
 	_GUEST_,
 };
 
-extern unsigned char	*_AY_MallocMemory(Ui32 Cnt);
+//extern unsigned char	*_AY_MallocMemory(Ui32 Cnt);
 
-extern void _AY_FreeMemory(unsigned char	*pBuff);
+//extern void _AY_FreeMemory(unsigned char	*pBuff);
+#define _AY_MallocMemory		malloc
+#define _AY_CallocMemory		calloc
+#define _AY_FreeMemory			free
 
 extern AY_DeviceRead	*_AY_MallocClientsMemory(Ui32 ClntCnt);
 

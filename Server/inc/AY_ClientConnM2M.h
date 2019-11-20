@@ -17,6 +17,7 @@ typedef struct  _AY_M2M_CONNTYPE {
 	AY_M2M_TYPE		_Src;
 	AY_M2M_TYPE		_Dst;
 	//------------------------//
+	Ui32			TempData;
 	Ui32			M_LastUpdateMin;
 }AY_M2M_CONNTYPE;
 
@@ -32,6 +33,8 @@ extern AY_M2M_CONNTYPE *pAYM2M_FindOrAddConn(AY_M2M_CONNTYPE *pTempM2M, Ui32 *pI
 extern Ui32 AYM2M_ReadConn(Ui32 ConnId, AY_M2M_CONNTYPE *pConnRd);
 
 extern AY_M2M_CONNTYPE	*pAYM2M_ReadConn(Ui32 ConnId);
+
+extern AY_M2M_CONNTYPE	*pAYM2M_FindConnByUniqueID(UNIQUE_ID *pUnique, Ui08 SrcDst);
 
 
 extern void AYSRV_QueueSendRequestM2M(AY_QUEUE *pQ);
