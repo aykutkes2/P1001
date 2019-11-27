@@ -1159,8 +1159,6 @@ void AYCLNT_CoreDoTask(void) {
 			if (pQue->QueF.Full_) {///< not empty slot. there works to do
 				switch (pQue->Status) {
 				case _M2M_CONNRQST:
-					Q_M2M_ConnRequest(pQue, i);///< M2M connection request
-					pQue->Status = _Q_BREAK_;///< clear
 				break;
 				case _FIND_GW:///< first step for side packet
 					pGw0 = pAYCLNT_FindGwByUnique((Ui32 *)&pQue->pInfo->DevRead._Unique[0], &tmp);

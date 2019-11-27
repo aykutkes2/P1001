@@ -23,6 +23,7 @@
     <ProjectGuid>{5E5CE796-195E-4CA8-909F-42D9F3BD11FC}</ProjectGuid>
     <RootNamespace>DemoClient</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <ProjectName>LocalAndSafe</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
