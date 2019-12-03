@@ -7,9 +7,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _CRT_SECURE_NO_WARNINGS
 
-// Need to link with Ws2_32.lib
-#pragma comment (lib, "Ws2_32.lib")
-
+#include <AY_Main.h>
 #include<iostream>
 #include<cstdio>
 #include<fstream>
@@ -17,7 +15,6 @@
 #include<string>
 #include<cstdlib>
 #include<conio.h>
-#include<windows.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,7 +23,6 @@
 #include <AY_Functions.h>
 #include <AY_Socket.h>
 #include <AY_Memory.h>
-#include <process.h>
 #include <pcap.h>
 #if DEVICE_CLIENT
 #include <AY_Client.h>

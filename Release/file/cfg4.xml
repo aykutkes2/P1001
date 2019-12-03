@@ -1,0 +1,31 @@
+< ? xml version = "1.0" encoding = "UTF-8" ? >
+<!--
+By modifying this file,
+-->
+<Gateway>
+<Item id = "1" Name = "Local Network Interface Name" 		Value = "Local Area Connection" />	<!--exp: "Npcap Loopback Adapter", "Local Area Connection", "Wi-Fi", "Local Area Network 2", ""(means Local Area Connection)-->
+<Item id = "2" Name = "Local Network Ip Address" 			Value = "192.168.2.148" />	<!--exp: "192.168.2.101", ""(means automatic)-->
+<Item id = "3" Name = "Local Network Subnet Mask" 			Value = "255.255.255.0" />	<!--exp: "255.255.255.0", ""(means automatic)-->
+<Item id = "4" Name = "Local Network Gateway Ip" 			Value = "192.168.2.1" />	<!--exp: "192.168.2.1", ""(means automatic)-->
+<Item id = "5" Name = "Local Network Subnet Ip" 			Value = "192.168.2.0" />	<!--exp: "192.168.2.0", ""(means automatic)-->
+<Item id = "6" Name = "Gateway Name" 						Value = "" />	<!--exp: "Gateway-1", "Office", "Home", ""(means empty)-->
+<Item id = "7" Name = "Gateway Password" 					Value = "" />	<!--exp: "1234", "A1b4c32", ""(means empty)-->
+<Item id = "8" Name = "Allow To Add/Remove Ghost Ips" 		Value = "YES" />	<!--exp: "YES", "NO", ""(means YES)-->
+<Item id = "9" Name = "Unique ID" 							Value = "74D4353C4AB374D4353C4AB3" />	<!--exp: "112233445566778899AABBCC", ""(means generate new)-->
+<Item id = "10" Name = "Server Dns" 						Value = "192.168.2.146" />	<!--exp: "LocalAndSafe.com" -->
+<Item id = "11" Name = "Server Port" 						Value = "19820" />	<!--exp: "1982" -->
+<Item id = "12" Name = "DNS Ip" 							Value = "8.8.8.8" />	<!--exp: "8.8.4.4" -->
+<Item id = "13" Name = "DNS Port" 							Value = "53" />	<!--exp: "53" -->
+<Item id = "14" Name = "Server ID" 							Value = "1" />	<!--exp: "1", "121", ""(means 1 LocalAndSafe.com default server)-->
+<Item id = "15" Name = "Server Public Key" 					Value = "-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnJC0Zax2WvioDwC8IDfc
+Bk3Iw9CaVU0t6QgVA3Mgn0v3x/m0uPk/CzkCR4l0IDbG4mpn2N9E1727Gpn4sZo5
+lv9xy35K4kt+lUhd6Oj4JUj2HhnvUDeG81FdAQ/E1BBmLyWAYYNTVrG2tQ1+O7K9
+7lyE3avTPnfAeGOfvQe/lQ07TCyealtdYFYYFW3n5JW1okS2AIrIO7yt8bJ1fU1h
+3uIqO9IsVN11dO/Yz9PX4heYclBQzDnzzd/wXq7bQPXToZJE5MqQszAF+mliiCMG
+fp8+9OlJQwpwNxNKxEAVsBnK9u+CvSq/PQlwqdan1DUb/jnTCXQCDEEoLM4QLKbP
+HwIDAQAB
+-----END PUBLIC KEY-----
+"/>	<!-- Server's public key for Server ID  Server ID=1 means LocalAndSafe.com default server -->
+
+</Gateway>

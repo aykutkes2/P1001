@@ -148,8 +148,8 @@ int mbedtls_hardware_poll(void *data, Ui08 *output, size_t len, size_t *olen) {
 
 }
 int mbedtls_hardware_poll2(void *data, Ui08 *output, size_t len) {
-	int i;
-	return mbedtls_hardware_poll(data, output, len, (ui32 *)&i);
+	size_t i;
+	return mbedtls_hardware_poll(data, output, len, (size_t *)&i);
 }
 
 int AY_Crypt_RSAEncrpt(Ui08 *pPubK, Ui08 *Buffer, Ui16 Len, Ui08 *BufferO, Ui16 *oLen) {

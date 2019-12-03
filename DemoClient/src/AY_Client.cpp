@@ -1,5 +1,9 @@
-#include "pch.h"
+
+//#if ( _WIN32 | _WIN64 )
+//#include "pch.h"
 #undef UNICODE
+//#endif
+
 /*
 =========== Demo Configurations ================
 									|192.168.2.149|(SRV)
@@ -27,9 +31,8 @@ PACKET (C)				SRV		--->	GW1			(GW info response)
 
 
 */
-#include <stdio.h>
+#include <AY_Main.h>
 #include <time.h>
-#include <windows.h>
 
 #include <AY_Printf.h>
 #include <AY_Functions.h>
