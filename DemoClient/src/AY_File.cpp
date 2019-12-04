@@ -1,4 +1,4 @@
-#include "pch.h"
+//#include "pch.h"
 #undef UNICODE
 /*
 =========== Demo Configurations ================
@@ -8,9 +8,10 @@ Client 2				192.168.2.146	74-D4-35-3C-4A-B3		74-D4-35-3C-4A-B3-74-D4-35-3C-4A-B3
 Device 1				192.168.2.147
 Device 1 Ghost			192.168.2.148
 */
+#include <AY_Main.h>
 #include <stdio.h>
 #include <time.h>
-#include <windows.h>
+//#include <windows.h>
 
 #include <AY_Printf.h>
 #include <AY_Functions.h>
@@ -22,6 +23,16 @@ Device 1 Ghost			192.168.2.148
 #include <AY_Command.h>
 #include <AY_File.h>
 
+
+#if _LINUX_OS_
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string>
+#include <fstream>
+#else
 /* File Handling with C++ using ifstream & ofstream class object*/
 /* To write the Content in File*/
 /* Then to read the content of file*/
@@ -32,10 +43,17 @@ Device 1 Ghost			192.168.2.148
 
 #include <string>
 using namespace std;
+#endif
 
+#if _LINUX_OS_
+static FILE * fio;
+static FILE * fout;
+static FILE * fin;
+#else
 static fstream fio;
 static ofstream fout;
 static ifstream fin;
+#endif
 
 const char AddIP_File0[] = "file/AddIP.bat";
 const char AddIP_File1[] = "file/AddIP1.bat";
@@ -44,6 +62,26 @@ const char *AddIP_File;
 
 int AYFILE_OpenFile(char *pFile) {
 	char line[256];
+#if _LINUX_OS_
+	ssize_t nrd;
+	char c=1;
+	Ui08 i;
+
+	fin = fopen(pFile, "w+");
+	fout = fopen(pFile, "w+");
+	printf("FILE: %s opened\n", pFile);
+	memset(line, 0, sizeof(line));
+	while (c != EOF) {
+		c = fgetc(fin);
+		line[i] = c;
+		i++;
+		if (i > 254) {
+			line[i] = 0;
+			printf("FILE: %s LINE: %s\n", pFile, line);
+			i = 0;
+		}
+	}
+#else
 	fin.open(pFile, ios::in | ios::binary);
 	fout.open(pFile, ios::out | ios::binary);
 	printf("FILE: %s opened\n", pFile);
@@ -51,10 +89,54 @@ int AYFILE_OpenFile(char *pFile) {
 	while (fin.read(&line[0], 255)) {
 		printf("FILE: %s LINE: %s\n", pFile, line);
 	};
+#endif
 	return 1;
 }
+#if _LINUX_OS_
+int AYFILE_IsOpenFile(FILE *fin) {
+	return(fin->_fileno);
+}
 
+int AYFILE_ReadLine(void *fin2, char *pLine, Ui16 MaxLen) {
+	Ui16 i=0;
+	char c=1;
+	FILE *fin = (FILE *)(*fin2);
+	while ((c != EOF) && (c != '\r') && (c != '\r') && (i< MaxLen)) {
+		c = fgetc(fin);
+		*pLine = c;
+		pLine++;
+		i++;
+	}
+	return(i);
+}
+#else
+int AYFILE_ReadLine(void *fin2, char *pLine, Ui16 MaxLen) {
+	ifstream *fin = (ifstream *)fin2;
+	if (fin->getline(pLine, MaxLen)) {
+		return 1;
+	}
+	return 0;
+}
+#endif
 int AYFILE_CloseFile(char *pFile) {
+#if _LINUX_OS_
+	if (AYFILE_IsOpenFile(fin)) {
+		fclose(fin);
+		printf("FILE: %s closed\n", pFile);
+	}
+	else {
+		printf("FILE: %s error: open file for output failed!\n", pFile);
+	}
+	if (AYFILE_IsOpenFile(fout)) {
+		fclose(fout);
+		printf("SYSTEM: %s run\n", pFile);
+		AYCMD_SystemWrite(pFile);
+		printf("FILE: %s closed\n", pFile);
+	}
+	else {
+		printf("FILE: %s error: open file for output failed!\n", pFile);
+	}
+#else
 	if (fin.is_open()) {
 		fin.close();
 		printf("FILE: %s closed\n", pFile);
@@ -71,10 +153,25 @@ int AYFILE_CloseFile(char *pFile) {
 	else {
 		printf("FILE: %s error: open file for output failed!\n", pFile);
 	}
+#endif
 	return 1;
 }
 
 int AYFILE_ClearFile(char *pFile) {
+#if _LINUX_OS_
+	if (AYFILE_IsOpenFile(fout)) {
+		printf("FILE: %s error: file already opened!\n", pFile);
+		fclose(fout);
+	}
+	fout = fopen(pFile, "w+");///< opens a text file for both reading and writing. (it first cuts the length of the file to zero if it exists, or create a file if it does not exist)
+	printf("FILE: %s opened\n", pFile);
+	//fputc(0x00, fout);
+	printf("FILE: %s clear\n", pFile);
+	fclose(fout);
+	printf("FILE: %s closed\n", pFile);
+	fout = fopen(pFile, "a+");//< opens a text file in both reading and writing mode. (It creates a file if it does not exist. Reading will start from the beginning but writing can only be done at the end)
+	printf("FILE: %s opened as app\n", pFile);
+#else
 	if (fout.is_open()) {
 		printf("FILE: %s error: file already opened!\n", pFile); 
 		fout.close();
@@ -87,7 +184,7 @@ int AYFILE_ClearFile(char *pFile) {
 	printf("FILE: %s closed\n", pFile);
 	fout.open(pFile, ios::out | ios::app | ios::binary);
 	printf("FILE: %s opened as app\n", pFile);
-
+#endif
 	return 1;
 }
 /*
@@ -105,14 +202,22 @@ int AYFILE_AddIPsToFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt, Ui32
 		for (i = 0; i < 6; i++) {
 			if (System) {	AYCMD_SystemWrite((char*)&cd[0]);		}
 			strcpy(line, cd);		strcat(line, "\r\n");
+#if _LINUX_OS_
+			fputs((char *)&line, fout);
+#else
 			fout.write((char *)&line, strlen(line));
+#endif
 			printf("FILE: %s NEW LINE: %s", pFile, line);
 		}
 	}
 	else if (cnt > 0xFFFE) {
 		if (System) { AYCMD_SystemWrite((char*)&exit[0]); }
 		strcpy(line, exit);		strcat(line, "\r\n");
+#if _LINUX_OS_
+		fputs((char *)&line, fout);
+#else
 		fout.write((char *)&line, strlen(line));
+#endif
 		printf("FILE: %s NEW LINE: %s", pFile, line);
 	}
 	else {
@@ -126,7 +231,11 @@ int AYFILE_AddIPsToFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt, Ui32
 
 			if (System) { AYCMD_SystemWrite((char*)&line[0]); }
 			strcat(line, "\r\n");
+#if _LINUX_OS_
+			fputs((char *)&line, fout);
+#else
 			fout.write((char *)&line, strlen(line));
+#endif
 			printf("FILE: %s NEW LINE: %s", pFile, line);
 			pIP++;
 			cnt--;
@@ -152,14 +261,22 @@ int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt,
 		for (i = 0; i < 6; i++) {
 			if (System) { AYCMD_SystemWrite((char*)&cd[0]); }
 			strcpy(line, cd);		strcat(line, "\r\n");
+#if _LINUX_OS_
+			fputs((char *)&line, fout);
+#else
 			fout.write((char *)&line, strlen(line));
+#endif
 			printf("FILE: %s NEW LINE: %s", pFile, line);
 		}
 	}
 	else if (cnt > 0xFFFE) {
 		if (System) { AYCMD_SystemWrite((char*)&exit[0]); }
 		strcpy(line, exit);		strcat(line, "\r\n");
+#if _LINUX_OS_
+		fputs((char *)&line, fout);
+#else
 		fout.write((char *)&line, strlen(line));
+#endif
 		printf("FILE: %s NEW LINE: %s", pFile, line);
 	}
 	else {
@@ -171,7 +288,11 @@ int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt,
 			strcat(line, netsh3);			
 			if (System) { AYCMD_SystemWrite((char*)&line[0]); }
 			strcat(line, "\r\n");
+#if _LINUX_OS_
+			fputs((char *)&line, fout);
+#else
 			fout.write((char *)&line, strlen(line));
+#endif
 			printf("FILE: %s NEW LINE: %s", pFile, line);
 
 			cnt--;
@@ -203,13 +324,25 @@ int AYFILE_TestConfigFile(Ui08 Create) {
 	int j = 0;
 	char line[1024];
 
+#if _LINUX_OS_
+	fin = fopen(cfg_file, "w+");
+#else
 	fin.open(cfg_file, ios::in | ios::binary);
+#endif
 	if ( (!fin)|| (Create==0xAA) ) {
 		if (Create) {
 			printf("FILE: %s not found\n", (char *)&cfg_file[0]);
+#if _LINUX_OS_
+			fout = fopen(cfg_file, "w+");///< opens a text file for both reading and writing. (it first cuts the length of the file to zero if it exists, or create a file if it does not exist)
+			//fputc(0x00, fout);
+			fclose(fout);
+			fout = fopen(cfg_file, "a+");//< opens a text file in both reading and writing mode. (It creates a file if it does not exist. Reading will start from the beginning but writing can only be done at the end)
+
+#else
 			fout.open(cfg_file, ios::trunc);
 			fout.close();
 			fout.open(cfg_file, ios::out | ios::app | ios::binary);
+#endif
 			printf("FILE: %s opened as app\n", (char *)&cfg_file[0]);
 			while (Default_Config_File[i] != 0) {
 				memset(line, 0, sizeof(line));
@@ -221,10 +354,18 @@ int AYFILE_TestConfigFile(Ui08 Create) {
 				strcat(line, "\r\n");
 				j = 0;
 				i++;
+#if _LINUX_OS_
+				fputs((char *)&line, fout);
+#else
 				fout.write((char *)&line, strlen(line));
+#endif
 				printf("FILE: %s NEW LINE: %s\n", cfg_file, line);
 			}
+#if _LINUX_OS_
+			fclose(fout);
+#else
 			fout.close();
+#endif
 			printf("FILE: %s closed\n", cfg_file);
 		}
 		else {
@@ -235,7 +376,11 @@ int AYFILE_TestConfigFile(Ui08 Create) {
 	}
 	else {
 		printf("FILE: %s opened\n", cfg_file);
+#if _LINUX_OS_
+		fclose(fin);
+#else
 		fin.close();
+#endif
 		printf("FILE: %s closed\n", cfg_file);
 		return 1;
 	}
@@ -250,7 +395,11 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	const char value[] = "Value = \"";
 	char *p,*q;
 
+#if _LINUX_OS_
+	fin = fopen(cfg_file, "w+");
+#else
 	fin.open(cfg_file, ios::in | ios::binary);
+#endif
 	if (!fin) {
 		printf("FILE: %s not found\n", cfg_file);
 		return -1;///< file no
@@ -258,7 +407,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	else {
 		printf("FILE: %s opened\n", cfg_file);
 		memset(line, 0, sizeof(line));	
-		while (fin.getline(&line[0], 1023)) {
+		while (AYFILE_ReadLine((void *)&fin, &line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if (p != 0) {
@@ -270,7 +419,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 					q = pVal;///< start
 					while (*p != '"') {
 						if (*p == 0) {
-							fin.getline(&line[0], 1023);
+							AYFILE_ReadLine((void *)&fin, &line[0], 1023);
 							printf("FILE: %s LINE: %s\n", cfg_file, line);
 							p = &line[0];
 						}
@@ -286,14 +435,22 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 					*pVal = 0;
 					printf("FILE: %s COMPONENT: %s\n", cfg_file, q);
 					printf("\n");
+#if _LINUX_OS_
+					fclose(fin);
+#else
 					fin.close();
+#endif
 					printf("FILE: %s comp. found, file closed\n", cfg_file);
 					return 1;
 				}
 			}
 		};
 	}
+#if _LINUX_OS_
+	fclose(fin);
+#else
 	fin.close();
+#endif
 	printf("FILE: %s comp. not found, file closed\n", cfg_file);
 	return -1;
 }
@@ -307,9 +464,12 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 	const char item[] = "<Item id = \"";
 	const char value[] = "Value = \"";
 	char *p,*q;
-
-
+	
+#if _LINUX_OS_
+	fin = fopen(cfg_file, "w+");
+#else
 	fin.open(cfg_file, ios::in | ios::binary);
+#endif
 	if (!fin) {
 		printf("FILE: %s not found\n", cfg_file);
 		return -1;///< file no
@@ -319,7 +479,7 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 
 		printf("FILE: %s opened to read \n", cfg_file);
 		memset(line, 0, sizeof(line));
-		while (fin.getline(&line[0], 1023)) {
+		while (AYFILE_ReadLine((void *)&fin, &line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if(p != 0){
@@ -346,6 +506,19 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 			strcat(line, "\n");
 			strcat(file, line);
 		};
+#if _LINUX_OS_
+		fout = fopen(cfg_file, "w+");///< opens a text file for both reading and writing. (it first cuts the length of the file to zero if it exists, or create a file if it does not exist)
+		printf("FILE: %s opened\n", cfg_file);
+		//fputc(0x00, fout);
+		printf("FILE: %s clear\n", cfg_file);
+		fclose(fout);
+		printf("FILE: %s closed\n", cfg_file);
+		fout = fopen(cfg_file, "a+");//< opens a text file in both reading and writing mode. (It creates a file if it does not exist. Reading will start from the beginning but writing can only be done at the end)
+		printf("FILE: %s opened as app\n", cfg_file);
+		fputs((char *)&file, fout);
+		fout.close();
+		printf("FILE: %s closed\n", cfg_file);
+#else
 		fout.open(cfg_file, ios::out | ios::binary);
 		printf("FILE: %s opened to write \n", cfg_file);
 		fout.write((char *)"", 0);
@@ -357,8 +530,13 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 		fout.write((char *)&file, strlen(file));
 		fout.close();
 		printf("FILE: %s closed\n", cfg_file);
+#endif
 	}
+#if _LINUX_OS_
+	fclose(fin);
+#else
 	fin.close();
+#endif
 	printf("FILE: %s reader closed\n", cfg_file);
 	return -1;
 }
@@ -515,13 +693,25 @@ int AYFILE_TestCertFile(Ui08 Create) {
 	int j = 0;
 	char file[32768];
 
+#if _LINUX_OS_
+	fin = fopen(cert_file, "w+");
+#else
 	fin.open(cert_file, ios::in | ios::binary);
+#endif
 	if (!fin){
 		if (Create) {
 			printf("FILE: %s not found\n", (char *)&cert_file[0]);
+#if _LINUX_OS_
+			fout = fopen(cert_file, "w+");///< opens a text file for both reading and writing. (it first cuts the length of the file to zero if it exists, or create a file if it does not exist)
+			//fputc(0x00, fout);
+			fclose(fout);
+			fout = fopen(cert_file, "a+");//< opens a text file in both reading and writing mode. (It creates a file if it does not exist. Reading will start from the beginning but writing can only be done at the end)
+
+#else
 			fout.open(cert_file, ios::trunc);
 			fout.close();
 			fout.open(cert_file, ios::out | ios::app | ios::binary);
+#endif
 			printf("FILE: %s opened as app\n", (char *)&cert_file[0]);
 			
 			i = strlen((char *)Default_Cert_File);
@@ -533,9 +723,17 @@ int AYFILE_TestCertFile(Ui08 Create) {
 				j--;
 			}
 			AY_Crypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
+#if _LINUX_OS_
+			fwrite((char *)&file, sizeof(char), sizeof(file), fout);
+#else
 			fout.write((char *)&file, i);
+#endif
 			printf("FILE: %s encprted write \n", cert_file);
+#if _LINUX_OS_
+			fclose(fout);
+#else
 			fout.close();
+#endif
 			printf("FILE: %s closed\n", cert_file);
 		}
 		else {
@@ -545,7 +743,11 @@ int AYFILE_TestCertFile(Ui08 Create) {
 	}
 	else {
 		printf("FILE: %s opened\n", cert_file);
+#if _LINUX_OS_
+		fclose(fin);
+#else
 		fin.close();
+#endif
 		printf("FILE: %s closed\n", cert_file);
 		return 1;
 	}
@@ -559,21 +761,39 @@ int AYFILE_ReadCertFile(void) {
 	char *p,*q;
 
 	if (AYFILE_TestCertFile(1)) {
+#if _LINUX_OS_
+		fin = fopen(cert_file, "w+");
+#else
 		fin.open(cert_file, ios::in | ios::binary);
+#endif
 		if (!fin) {
 			printf("FILE: %s There is something wrong!!\n", (char *)&cert_file[0]);
+#if _LINUX_OS_
+			fclose(fin);
+#else
 			fin.close();
+#endif
 			printf("FILE: %s closed\n", cert_file);
 			return -1;
 		}
 		else {
 			i = 0;			
 			p = &file[0];
+#if _LINUX_OS_
+			char c = 1;
+			while (c != EOF)
+			{
+				c = fgetc(fin); /* read from file*/
+				*p = c;
+				i++;
+				p++;
+			}
+#else
 			while (fin.read(p, 1)) {
 				i++;
 				p++;
 			}
-
+#endif
 			AY_Decrypt_AES128((Ui08 *)&cert_aes[0], (Ui08 *)&file[0], (Ui16)i);
 			p = (char *)&file[0];
 			CLIENT_CERT_NO = (Ui32)AY_ConvertStringToUi64(p);
@@ -587,7 +807,11 @@ int AYFILE_ReadCertFile(void) {
 			if ((p) && (q)) {
 				memcpy(&SIGNING_PR_KEY[0], p, (q - p + sizeof("-----END RSA PRIVATE KEY-----\n")));
 			}
+#if _LINUX_OS_
+			fclose(fin);
+#else
 			fin.close();
+#endif
 			printf("FILE: %s closed\n", cert_file);
 			return 1;
 		}

@@ -10,9 +10,6 @@
     <ClCompile Include="..\DemoClient\src\AY_ClientPrjtBased.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\DemoClient\src\AY_ClientSocket.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\DemoClient\src\AY_Command.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

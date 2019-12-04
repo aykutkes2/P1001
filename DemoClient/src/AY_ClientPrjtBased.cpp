@@ -1,4 +1,4 @@
-#include "pch.h"
+//#include "pch.h"
 #undef UNICODE
 
 #include <AY_Printf.h>

@@ -1,4 +1,4 @@
-#include "pch.h"
+//#include "pch.h"
 #undef UNICODE
 /*
 =========== Demo Configurations ================
@@ -8,9 +8,9 @@ Client 2				192.168.2.146	74-D4-35-3C-4A-B3		74-D4-35-3C-4A-B3-74-D4-35-3C-4A-B3
 Device 1				192.168.2.147
 Device 1 Ghost			192.168.2.148
 */
+#include <AY_Main.h>
 #include <stdio.h>
 #include <time.h>
-#include <windows.h>
 
 #include <AY_Printf.h>
 #include <AY_Functions.h>
@@ -21,13 +21,18 @@ Device 1 Ghost			192.168.2.148
 #include <AY_Memory.h>
 #include <AY_Command.h>
 
+#if _LINUX_OS_
+#else
 #include <iostream>
-
+#endif
 int AYCMD_SystemWrite(char *pSys) {
 	return system(pSys);
 }
 
 int AYCMD_TakeThisIP(Ui08 *pIP) {
+#if _LINUX_OS_
+	printf("WRITE COMMAND FOR LINUX !!!!");
+#else
 	printf("Trying to run cmd using runas cmd");
 	//system("cmd;");
 	//system("runas /user:administrator regedit");
@@ -46,13 +51,18 @@ int AYCMD_TakeThisIP(Ui08 *pIP) {
 	//system("runas /user:administrator netsh interface ip add address \"Local Area Connection\" 192.168.2.215 255.255.255.0 192.168.2.1");
 	//system("runas /user:administrator netsh interface ip add address \"Local Area Connection\" 192.168.2.216 255.255.255.0 192.168.2.1");
 	system("pause");
+#endif
 	return 1;
 }
 
 
 int AYCMD_LeaveThisIP(Ui08 *pIP) {
+#if _LINUX_OS_
+	printf("WRITE COMMAND FOR LINUX !!!!");
+#else
 	printf("Trying to run cmd using runas cmd");
 	system("cmd;");
+#endif
 
 	return 1;
 }

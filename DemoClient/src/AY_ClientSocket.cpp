@@ -1,6 +1,6 @@
 
 
-#include "pch.h"
+//#include "pch.h"
 #undef UNICODE
 
 #define LOCATION_DTKM		1

@@ -84,7 +84,6 @@
     <ClCompile Include="..\DemoClient\src\AY_Client.cpp" />
     <ClCompile Include="..\DemoClient\src\AY_ClientDev.cpp" />
     <ClCompile Include="..\DemoClient\src\AY_ClientPrjtBased.cpp" />
-    <ClCompile Include="..\DemoClient\src\AY_ClientSocket.cpp" />
     <ClCompile Include="..\DemoClient\src\AY_Command.cpp" />
     <ClCompile Include="..\DemoClient\src\AY_File.cpp" />
     <ClCompile Include="..\Server\src\AY_Functions.cpp" />
@@ -122,7 +121,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>DEVICE_CLIENT;DIRECT_SEND=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEVICE_CLIENT;DIRECT_SEND=1;__CHAR_UNSIGNED__;__CUDACC__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
