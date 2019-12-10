@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include <chrono>
 #include <unistd.h>
-//#include <arpa/inet.h>
+#include <arpa/inet.h>
 
 #include <netpacket/packet.h>
 #include <net/if.h>
@@ -48,7 +48,9 @@
 #if _LINUX_OS_
 #define Sleep(mSec)											usleep((mSec*1000))
 #define closesocket(_Sckt_)									close(_Sckt_)
-
+#define GetCurrentProcessId									getpid
+#define _endthread											abort
+#define HANDLE												int
 #endif
 
 

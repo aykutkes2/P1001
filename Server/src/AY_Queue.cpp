@@ -155,7 +155,7 @@ int AYSRV_QueueLoad(int ql,Ui08 *pIn,Ui16 InLen,Ui08 Target,Ui08 Type) {
 	printf("AYQUEUE--> ql = %d\n InLen = %d\n pIn = %d\n Target = %d\n Type = %d\n", ql, InLen, (unsigned int)pIn, Target, Type);
 
 	if (ql >= QUEUE_THREAD_ALLWAYS) {
-		hThread = (HANDLE)_beginthread((_beginthread_proc_type)pQUEUE_ThreadAddress[ql], QUEUE_STACK_SIZE, 0);
+		hThread = (HANDLE)AYSCKT_beginthread((void*)pQUEUE_ThreadAddress[ql], QUEUE_STACK_SIZE, 0);
 	}	
 	return ql;
 }
@@ -164,7 +164,7 @@ void AYSRV_QueueInit(void) {
 	int i;
 	memset((Ui08 *)&AY_Queue[0], 0, sizeof(AY_Queue));
 	for (i = 0; i < QUEUE_THREAD_ALLWAYS; i++) {
-		hThread = (HANDLE)_beginthread((_beginthread_proc_type)pQUEUE_ThreadAddress[i], QUEUE_STACK_SIZE, 0);
+		hThread = (HANDLE)AYSCKT_beginthread((void*)pQUEUE_ThreadAddress[i], QUEUE_STACK_SIZE, 0);
 	}	
 }
 

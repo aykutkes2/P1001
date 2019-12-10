@@ -1550,7 +1550,7 @@ int main(void)//(int argc, char **argv)
 			else {
 				*((Ui32 *)&MyIP_Address) = *((Ui32 *)&CngFile.NetIpAddress);
 			}
-			if (AYSCKT_Socket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
+			if (AYSCKT_Socket_Init(_MAIN_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, CngFile.ServerPort, 0, (void *)AY_MainSocket_CallBack, AY_ClientInitLoop) == 1) {
 
 				printf("IP address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _IP_), (char*)&Temp[0]));
 				printf("Subnet address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)&MyIP_Address.byte1) + _SUBNET_), (char*)&Temp[0]));
@@ -1562,7 +1562,7 @@ int main(void)//(int argc, char **argv)
 		}
 		else if (!AY_Client_GetMACadr) {
 			if (!AY_Client_WaitMACadr) {
-				if (AYSCKT_Socket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, 0, 0, AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
+				if (AYSCKT_Socket_Init(_SLVS_SCKT, (Ui08 *)&MyMac[0], &MyIP_Address.byte1, 0, 0, (void *)AY_SocketRead_CallBack, AY_ClientInitLoop) == 1) {
 					memcpy(&MyEth_Address.addr[0], &MyMac[0], sizeof(uip_eth_addr));
 					AY_StartSlaveListenMAC(*(uip_eth_addr *)&MyMac[0], _ETH_DST_);
 					AYSCKT_WhoHasIP(_SLVS_SCKT, *((uip_eth_addr *)&DefaultMac[0]), MyIP_Addresses._gateway, *((uip_eth_addr *)&MyMac[0]), MyIP_Address, MyIP_Addresses._gateway);

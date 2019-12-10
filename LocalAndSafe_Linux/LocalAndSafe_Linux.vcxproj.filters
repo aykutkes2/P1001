@@ -28,6 +28,222 @@
     <ClCompile Include="..\Server\src\AY_Socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Server\src\AY_Crypt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\aes.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\aesni.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\arc4.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\asn1parse.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\asn1write.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\base64.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\bignum.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\blowfish.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\camellia.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ccm.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\certs.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\cipher.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\cipher_wrap.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\cmac.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ctr_drbg.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\debug.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\des.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\dhm.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ecdh.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ecdsa.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ecjpake.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ecp.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ecp_curves.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\entropy.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\entropy_poll.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\error.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\gcm.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\havege.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\hmac_drbg.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\md.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\md_wrap.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\md2.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\md4.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\md5.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\memory_buffer_alloc.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\oid.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\padlock.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pem.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pk.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pk_wrap.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pkcs5.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pkcs11.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pkcs12.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pkparse.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\pkwrite.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\platform.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ripemd160.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\rsa.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\rsa_internal.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\sha1.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\sha256.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\sha512.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_cache.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_ciphersuites.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_cli.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_cookie.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_srv.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_ticket.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\ssl_tls.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\threading.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\timing.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\version.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\version_features.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509_create.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509_crl.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509_crt.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509_csr.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509write_crt.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\x509write_csr.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mbedTLS\library\xtea.c">
+      <Filter>Source Files\mbedTls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -35,6 +251,12 @@
     </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{99f58433-a16c-448e-9aa7-aac2253d1c63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mbedTls">
+      <UniqueIdentifier>{0fed4747-1cc0-4445-9e23-380b56c6ed84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\mbedTls">
+      <UniqueIdentifier>{8d15af62-946a-408a-bbf1-2654b5ab36d7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -74,5 +296,231 @@
     <ClInclude Include="..\Server\inc\AY_Main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\aes.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\aesni.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\arc4.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\asn1.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\asn1write.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\base64.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\bignum.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\blowfish.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\bn_mul.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\camellia.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ccm.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\certs.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\check_config.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\cipher.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\cipher_internal.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\cmac.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\compat-1.3.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\config.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ctr_drbg.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\debug.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\des.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\dhm.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecdh.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecdsa.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecjpake.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecp.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecp_internal.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\entropy.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\entropy_poll.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\error.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\gcm.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\havege.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\hmac_drbg.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md_internal.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md2.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md4.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md5.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\memory_buffer_alloc.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\net.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\net_sockets.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\oid.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\padlock.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pem.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pk.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pk_internal.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pkcs5.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pkcs11.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pkcs12.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\platform.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\platform_time.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ripemd160.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\rsa.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\rsa_internal.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\sha1.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\sha256.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\sha512.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_cache.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_ciphersuites.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_cookie.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_internal.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_ticket.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\threading.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\timing.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\version.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509_crl.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509_crt.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509_csr.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mbedTLS\include\mbedtls\xtea.h">
+      <Filter>Header Files\mbedTls</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\mbedTLS\library\.gitignore">
+      <Filter>Source Files\mbedTls</Filter>
+    </None>
+    <None Include="..\mbedTLS\library\Makefile">
+      <Filter>Source Files\mbedTls</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\mbedTLS\library\CMakeLists.txt">
+      <Filter>Source Files\mbedTls</Filter>
+    </Text>
   </ItemGroup>
 </Project>

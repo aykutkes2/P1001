@@ -97,7 +97,7 @@ int AYFILE_IsOpenFile(FILE *fin) {
 	return(fin->_fileno);
 }
 
-int AYFILE_ReadLine(void *fin2, char *pLine, Ui16 MaxLen) {
+int AYFILE_ReadLine(unsigned int *fin2, char *pLine, Ui16 MaxLen) {
 	Ui16 i=0;
 	char c=1;
 	FILE *fin = (FILE *)(*fin2);
@@ -110,7 +110,7 @@ int AYFILE_ReadLine(void *fin2, char *pLine, Ui16 MaxLen) {
 	return(i);
 }
 #else
-int AYFILE_ReadLine(void *fin2, char *pLine, Ui16 MaxLen) {
+int AYFILE_ReadLine(unsigned int *fin2, char *pLine, Ui16 MaxLen) {
 	ifstream *fin = (ifstream *)fin2;
 	if (fin->getline(pLine, MaxLen)) {
 		return 1;
@@ -407,7 +407,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	else {
 		printf("FILE: %s opened\n", cfg_file);
 		memset(line, 0, sizeof(line));	
-		while (AYFILE_ReadLine((void *)&fin, &line[0], 1023)) {
+		while (AYFILE_ReadLine((unsigned int *)&fin, &line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if (p != 0) {
@@ -419,7 +419,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 					q = pVal;///< start
 					while (*p != '"') {
 						if (*p == 0) {
-							AYFILE_ReadLine((void *)&fin, &line[0], 1023);
+							AYFILE_ReadLine((unsigned int *)&fin, &line[0], 1023);
 							printf("FILE: %s LINE: %s\n", cfg_file, line);
 							p = &line[0];
 						}
@@ -479,7 +479,7 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 
 		printf("FILE: %s opened to read \n", cfg_file);
 		memset(line, 0, sizeof(line));
-		while (AYFILE_ReadLine((void *)&fin, &line[0], 1023)) {
+		while (AYFILE_ReadLine((unsigned int *)&fin, &line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if(p != 0){
@@ -516,7 +516,7 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 		fout = fopen(cfg_file, "a+");//< opens a text file in both reading and writing mode. (It creates a file if it does not exist. Reading will start from the beginning but writing can only be done at the end)
 		printf("FILE: %s opened as app\n", cfg_file);
 		fputs((char *)&file, fout);
-		fout.close();
+		fclose(fout);
 		printf("FILE: %s closed\n", cfg_file);
 #else
 		fout.open(cfg_file, ios::out | ios::binary);
@@ -687,7 +687,7 @@ int AYFILE_ConfigFileUpdate(void) {
 * netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all
 */
 const char cert_file[] = "file/cert.ayk";
-const char cert_aes[16] = { 0x62,0xa3,0x3b,0xe9,0x1f,0xff,0xc2,0x0e,0xc9,0xfd,0xfc,0xda,0x6a,0x71,0x25,0x29 };
+const unsigned char cert_aes[16] = { 0x62,0xa3,0x3b,0xe9,0x1f,0xff,0xc2,0x0e,0xc9,0xfd,0xfc,0xda,0x6a,0x71,0x25,0x29 };
 int AYFILE_TestCertFile(Ui08 Create) {
 	int i = 0;
 	int j = 0;

@@ -78,7 +78,9 @@
     <IncludePath>..\DemoClient\inc;..\Test\inc;..\mbedTLS\include;..\ClientRaw;..\WinPcap\include;..\Server\inc;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\DemoClient\inc;..\Test\inc;..\mbedTLS\include;..\ClientRaw;..\WinPcap\include;..\Server\inc;$(IncludePath)</IncludePath>
+    <IncludePath>.\;.\DemoClient\inc;.\Test\inc;.\mbedTLS\include;.\ClientRaw;.\WinPcap\include;.\Server\inc;..\DemoClient\inc;..\Server\inc;..\Test\inc;..\mbedTLS\include;..\ClientRaw;..\WinPcap\include;$(IncludePath)</IncludePath>
+    <AdditionalSourcesToCopyMapping>..\Server\inc\AY_Crypt.h;..\Server\inc\AY_Main.h;..\mbedTLS:=.\mbedTLS;$(AdditionalSourcesToCopyMapping)</AdditionalSourcesToCopyMapping>
+    <SourcesToCopyRemotelyOverride>@(SourcesToCopyRemotely);@(DataFilesToCopyRemotely)</SourcesToCopyRemotelyOverride>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\DemoClient\src\AY_Client.cpp" />
@@ -86,6 +88,78 @@
     <ClCompile Include="..\DemoClient\src\AY_ClientPrjtBased.cpp" />
     <ClCompile Include="..\DemoClient\src\AY_Command.cpp" />
     <ClCompile Include="..\DemoClient\src\AY_File.cpp" />
+    <ClCompile Include="..\mbedTLS\library\aes.c" />
+    <ClCompile Include="..\mbedTLS\library\aesni.c" />
+    <ClCompile Include="..\mbedTLS\library\arc4.c" />
+    <ClCompile Include="..\mbedTLS\library\asn1parse.c" />
+    <ClCompile Include="..\mbedTLS\library\asn1write.c" />
+    <ClCompile Include="..\mbedTLS\library\base64.c" />
+    <ClCompile Include="..\mbedTLS\library\bignum.c" />
+    <ClCompile Include="..\mbedTLS\library\blowfish.c" />
+    <ClCompile Include="..\mbedTLS\library\camellia.c" />
+    <ClCompile Include="..\mbedTLS\library\ccm.c" />
+    <ClCompile Include="..\mbedTLS\library\certs.c" />
+    <ClCompile Include="..\mbedTLS\library\cipher.c" />
+    <ClCompile Include="..\mbedTLS\library\cipher_wrap.c" />
+    <ClCompile Include="..\mbedTLS\library\cmac.c" />
+    <ClCompile Include="..\mbedTLS\library\ctr_drbg.c" />
+    <ClCompile Include="..\mbedTLS\library\debug.c" />
+    <ClCompile Include="..\mbedTLS\library\des.c" />
+    <ClCompile Include="..\mbedTLS\library\dhm.c" />
+    <ClCompile Include="..\mbedTLS\library\ecdh.c" />
+    <ClCompile Include="..\mbedTLS\library\ecdsa.c" />
+    <ClCompile Include="..\mbedTLS\library\ecjpake.c" />
+    <ClCompile Include="..\mbedTLS\library\ecp.c" />
+    <ClCompile Include="..\mbedTLS\library\ecp_curves.c" />
+    <ClCompile Include="..\mbedTLS\library\entropy.c" />
+    <ClCompile Include="..\mbedTLS\library\entropy_poll.c" />
+    <ClCompile Include="..\mbedTLS\library\error.c" />
+    <ClCompile Include="..\mbedTLS\library\gcm.c" />
+    <ClCompile Include="..\mbedTLS\library\havege.c" />
+    <ClCompile Include="..\mbedTLS\library\hmac_drbg.c" />
+    <ClCompile Include="..\mbedTLS\library\md.c" />
+    <ClCompile Include="..\mbedTLS\library\md2.c" />
+    <ClCompile Include="..\mbedTLS\library\md4.c" />
+    <ClCompile Include="..\mbedTLS\library\md5.c" />
+    <ClCompile Include="..\mbedTLS\library\md_wrap.c" />
+    <ClCompile Include="..\mbedTLS\library\memory_buffer_alloc.c" />
+    <ClCompile Include="..\mbedTLS\library\oid.c" />
+    <ClCompile Include="..\mbedTLS\library\padlock.c" />
+    <ClCompile Include="..\mbedTLS\library\pem.c" />
+    <ClCompile Include="..\mbedTLS\library\pk.c" />
+    <ClCompile Include="..\mbedTLS\library\pkcs11.c" />
+    <ClCompile Include="..\mbedTLS\library\pkcs12.c" />
+    <ClCompile Include="..\mbedTLS\library\pkcs5.c" />
+    <ClCompile Include="..\mbedTLS\library\pkparse.c" />
+    <ClCompile Include="..\mbedTLS\library\pkwrite.c" />
+    <ClCompile Include="..\mbedTLS\library\pk_wrap.c" />
+    <ClCompile Include="..\mbedTLS\library\platform.c" />
+    <ClCompile Include="..\mbedTLS\library\ripemd160.c" />
+    <ClCompile Include="..\mbedTLS\library\rsa.c" />
+    <ClCompile Include="..\mbedTLS\library\rsa_internal.c" />
+    <ClCompile Include="..\mbedTLS\library\sha1.c" />
+    <ClCompile Include="..\mbedTLS\library\sha256.c" />
+    <ClCompile Include="..\mbedTLS\library\sha512.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_cache.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_ciphersuites.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_cli.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_cookie.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_srv.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_ticket.c" />
+    <ClCompile Include="..\mbedTLS\library\ssl_tls.c" />
+    <ClCompile Include="..\mbedTLS\library\threading.c" />
+    <ClCompile Include="..\mbedTLS\library\timing.c" />
+    <ClCompile Include="..\mbedTLS\library\version.c" />
+    <ClCompile Include="..\mbedTLS\library\version_features.c" />
+    <ClCompile Include="..\mbedTLS\library\x509.c" />
+    <ClCompile Include="..\mbedTLS\library\x509write_crt.c" />
+    <ClCompile Include="..\mbedTLS\library\x509write_csr.c" />
+    <ClCompile Include="..\mbedTLS\library\x509_create.c" />
+    <ClCompile Include="..\mbedTLS\library\x509_crl.c" />
+    <ClCompile Include="..\mbedTLS\library\x509_crt.c" />
+    <ClCompile Include="..\mbedTLS\library\x509_csr.c" />
+    <ClCompile Include="..\mbedTLS\library\xtea.c" />
+    <ClCompile Include="..\Server\src\AY_Crypt.cpp" />
     <ClCompile Include="..\Server\src\AY_Functions.cpp" />
     <ClCompile Include="..\Server\src\AY_Memory.cpp" />
     <ClCompile Include="..\Server\src\AY_Printf.cpp" />
@@ -98,12 +172,90 @@
     <ClInclude Include="..\DemoClient\inc\AY_ClientSocket.h" />
     <ClInclude Include="..\DemoClient\inc\AY_Command.h" />
     <ClInclude Include="..\DemoClient\inc\AY_File.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\aes.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\aesni.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\arc4.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\asn1.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\asn1write.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\base64.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\bignum.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\blowfish.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\bn_mul.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\camellia.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ccm.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\certs.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\check_config.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\cipher.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\cipher_internal.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\cmac.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\compat-1.3.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\config.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ctr_drbg.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\debug.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\des.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\dhm.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecdh.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecdsa.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecjpake.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecp.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ecp_internal.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\entropy.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\entropy_poll.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\error.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\gcm.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\havege.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\hmac_drbg.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md2.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md4.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md5.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\md_internal.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\memory_buffer_alloc.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\net.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\net_sockets.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\oid.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\padlock.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pem.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pk.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pkcs11.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pkcs12.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pkcs5.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\pk_internal.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\platform.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\platform_time.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ripemd160.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\rsa.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\rsa_internal.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\sha1.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\sha256.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\sha512.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_cache.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_ciphersuites.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_cookie.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_internal.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\ssl_ticket.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\threading.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\timing.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\version.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509_crl.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509_crt.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\x509_csr.h" />
+    <ClInclude Include="..\mbedTLS\include\mbedtls\xtea.h" />
     <ClInclude Include="..\Server\inc\AY_Functions.h" />
     <ClInclude Include="..\Server\inc\AY_Main.h" />
     <ClInclude Include="..\Server\inc\AY_Memory.h" />
     <ClInclude Include="..\Server\inc\AY_Printf.h" />
     <ClInclude Include="..\Server\inc\AY_Socket.h" />
     <ClInclude Include="..\Server\inc\AY_Type.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\mbedTLS\library\.gitignore" />
+    <None Include="..\mbedTLS\library\Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\mbedTLS\library\CMakeLists.txt" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -116,13 +268,16 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\Server\inc;..\Test\inc;..\DemoClient\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Server\inc;..\Test\inc;..\DemoClient\inc;..\mbedTLS\include;.\mbedTLS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>DEVICE_CLIENT;DIRECT_SEND=1;__CHAR_UNSIGNED__;__CUDACC__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <Link>
+      <LibraryDependencies>pthread;pcap;%(LibraryDependencies)</LibraryDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

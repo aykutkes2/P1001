@@ -14,8 +14,12 @@
 #include<sstream>
 #include<string>
 #include<cstdlib>
+#if _LINUX_OS_
+#define	s_addr_		s_addr
+#else
 #include<conio.h>
-
+#define	s_addr_		S_un.S_addr
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -23,7 +27,14 @@
 #include <AY_Functions.h>
 #include <AY_Socket.h>
 #include <AY_Memory.h>
+#if _LINUX_OS_
+//#include "pcap-int.h"
+#include <pcap/pcap.h>
+#include <pcap/sll.h>
+#include <pcap/vlan.h>
+#else
 #include <pcap.h>
+#endif
 #if DEVICE_CLIENT
 #include <AY_Client.h>
 #include <AY_ClientPrjtBased.h>
@@ -127,8 +138,6 @@ void _packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_ch
 static pcap_if_t *alldevs;
 static pcap_t *fs;
 static Ui32 MyNetMask;
-//static struct bpf_program My_fcode;
-//static u_char SocketBuff[1500];
 static udp_headerAll MyUDP_header;
 
 typedef struct _AYSCKT_Thread {
@@ -137,7 +146,6 @@ typedef struct _AYSCKT_Thread {
 	struct bpf_program My_fcode;
 	pcap_if_t *d;
 }AYSCKT_Thread;
-//AYSCKT_Thread *pThrd;
 AYSCKT_Thread Thrd[_THRDS_];
 
 #if (_THRDS_>0)
@@ -145,6 +153,7 @@ void Socket_Thread_0(void *pParams) {
 	printf("THREAD=0 In thread function \n");
 	pcap_loop(Thrd[0].pfp, 0, (pcap_handler)Thrd[0].pMyHandler, NULL);
 	printf("THREAD=0 Thread function ends \n");
+
 	_endthread();
 }
 #endif
@@ -180,6 +189,31 @@ void Socket_Thread_4(void *pParams) {
 	_endthread();
 }
 #endif
+HANDLE AYSCKT_beginthread(void *pCallBack,Ui32 size, void *_ArgList) {
+	HANDLE hThread;
+#if _LINUX_OS_
+	pthread_t cThread;
+	pthread_attr_t attr;
+	int stack_size;
+	int s;
+
+	s = pthread_attr_init(&attr);
+	//if (s != 0)
+	//	handle_error_en(s, "pthread_attr_init");
+
+	s = pthread_attr_setstacksize(&attr, size);
+	//if (s != 0)
+	//	handle_error_en(s, "pthread_attr_setstacksize");
+
+	s = pthread_create(&cThread, &attr, (void*(*)(void *))pCallBack, _ArgList);
+	//if (s != 0)
+	//	handle_error_en(s, "pthread_create");
+	hThread = ((HANDLE)s);
+#else
+	hThread = (HANDLE)_beginthread((_beginthread_proc_type)pCallBack, size, _ArgList);
+#endif
+	return ((HANDLE)hThread);
+}
 
 int AYSCKT_FilterSet(pcap_t *fp, bpf_program *pfcode, char *pfilter, Ui32 netmask) {
 	//struct bpf_program fcode;
@@ -210,7 +244,7 @@ int AYSCKT_FilterFree(struct bpf_program *pfcode) {
 int AYSCKT_StartThread(void *pCallBack) {
 	HANDLE hThread;
 
-	hThread = (HANDLE)_beginthread((_beginthread_proc_type)pCallBack, THREAD_STACK_SIZE, 0);
+	hThread = (HANDLE)AYSCKT_beginthread((void*)pCallBack, THREAD_STACK_SIZE, 0);
 
 	return 1;
 }
@@ -335,7 +369,7 @@ int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfilt
 				if (a->addr->sa_family == AF_INET) {
 					printf(" %s", inet_ntoa(((struct sockaddr_in*)a->addr)->sin_addr));
 					if (*((Ui32 *)pAdr) == 0) {
-						if ((Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.S_un.S_addr)) {
+						if ((Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.s_addr_)) {
 							//if (j == _A) {
 							//	printf("\n\n_A = %d I will use this device !!!\n\n",_A); 
 							//	printf(" %s \n\n", inet_ntoa(((struct sockaddr_in*)a->addr)->sin_addr));
@@ -345,7 +379,7 @@ int AYSCKT_Socket_Init(Ui08 idx, Ui08 *pMAC, Ui08 *pAdr, Ui16 rPort, char *pfilt
 							j++;
 						}
 					}
-					else if (*((Ui32 *)pAdr) == (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.S_un.S_addr)) {
+					else if (*((Ui32 *)pAdr) == (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.s_addr_)) {
 						b = a;
 						DevFound = 1;
 					}
@@ -386,7 +420,7 @@ L_DevFound:
 	printf("Gateway address: %s\n", AY_ConvertIPToStrRet((Ui08 *)(((Ui32 *)pAdr) + _GW_), &errbuf[0]));
 //==========================================================================================================//
 	if ((a != NULL)&& (d != NULL)) {
-		*((Ui32 *)pAdr) = (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.S_un.S_addr);
+		*((Ui32 *)pAdr) = (Ui32)(((struct sockaddr_in*)a->addr)->sin_addr.s_addr_);
 		/* Open the adapter */
 		if ((fp = pcap_open_live(d->name/*argv[1]*/,		// name of the device
 			65536,			// portion of the packet to capture. It doesn't matter in this case 
@@ -401,7 +435,7 @@ L_DevFound:
 		//*pFp = (void *)fp;
 		if (d->addresses != NULL) {
 			/* Retrieve the mask of the first address of the interface */
-			MyNetMask = ((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
+			MyNetMask = ((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.s_addr_;
 		}
 		else
 			/* If the interface is without addresses we suppose to be in a C class network */
@@ -827,13 +861,8 @@ void AYPRINT_UDP_Header(udp_headerAll *pUDP) {
 }
 
 void AYPRINT_TCP_Header(tcp_headerAll *pTCP) {
-	union {
-		char Buff[64];
-		struct {
-			char Buff0[32];
-			char Buff1[32];
-		};
-	};
+	char Buff[64], Buff1[64];
+	#define Buff0	Buff
 	
 	printf("\t\t***************\tPACKET HEADER\t******************\n");
 	printf("\t\tPROTOCOL:\t\t%d\n", pTCP->_ipHeader.proto);
