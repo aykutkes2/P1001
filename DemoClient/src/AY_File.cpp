@@ -55,9 +55,15 @@ static ofstream fout;
 static ifstream fin;
 #endif
 
+#if _LINUX_OS_
+const char AddIP_File0[] = "AddIP.bat";
+const char AddIP_File1[] = "AddIP1.bat";
+const char AddIP_File2[] = "AddIP2.bat";
+#else
 const char AddIP_File0[] = "file/AddIP.bat";
 const char AddIP_File1[] = "file/AddIP1.bat";
 const char AddIP_File2[] = "file/AddIP2.bat";
+#endif
 const char *AddIP_File;
 
 int AYFILE_OpenFile(char *pFile) {
@@ -67,8 +73,8 @@ int AYFILE_OpenFile(char *pFile) {
 	char c=1;
 	Ui08 i;
 
-	fin = fopen(pFile, "w+");
-	fout = fopen(pFile, "w+");
+	fin = fopen(pFile, "r+");
+	fout = fopen(pFile, "r+");
 	printf("FILE: %s opened\n", pFile);
 	memset(line, 0, sizeof(line));
 	while (c != EOF) {
@@ -97,11 +103,11 @@ int AYFILE_IsOpenFile(FILE *fin) {
 	return(fin->_fileno);
 }
 
-int AYFILE_ReadLine(unsigned int *fin2, char *pLine, Ui16 MaxLen) {
+int AYFILE_ReadLine(FILE *fin, char *pLine, Ui16 MaxLen) {
 	Ui16 i=0;
 	char c=1;
-	FILE *fin = (FILE *)(*fin2);
-	while ((c != EOF) && (c != '\r') && (c != '\r') && (i< MaxLen)) {
+//	FILE *fin = (FILE *)(*fin2);
+	while ((c != EOF) && (c != '\r') && (c != '\n') && (i< MaxLen)) {
 		c = fgetc(fin);
 		*pLine = c;
 		pLine++;
@@ -110,8 +116,8 @@ int AYFILE_ReadLine(unsigned int *fin2, char *pLine, Ui16 MaxLen) {
 	return(i);
 }
 #else
-int AYFILE_ReadLine(unsigned int *fin2, char *pLine, Ui16 MaxLen) {
-	ifstream *fin = (ifstream *)fin2;
+int AYFILE_ReadLine(ifstream *fin, char *pLine, Ui16 MaxLen) {
+	//ifstream *fin = (ifstream *)fin2;
 	if (fin->getline(pLine, MaxLen)) {
 		return 1;
 	}
@@ -306,9 +312,15 @@ int AYFILE_DeleteIPsFromFile(char *pFile, char *pInterface, Ui32 *pIP, Ui16 cnt,
 /*
 * netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all
 */
+#if _LINUX_OS_
+const char cfg_file0[] = "cfg.xml";
+const char cfg_file1[] = "cfg1.xml";
+const char cfg_file2[] = "cfg2.xml";
+#else
 const char cfg_file0[] = "file/cfg.xml";
 const char cfg_file1[] = "file/cfg1.xml";
 const char cfg_file2[] = "file/cfg2.xml";
+#endif
 const char *cfg_file;
 int AYFILE_SelectConfigFile(Ui08 FileNo) {
 	switch (FileNo) {
@@ -325,7 +337,7 @@ int AYFILE_TestConfigFile(Ui08 Create) {
 	char line[1024];
 
 #if _LINUX_OS_
-	fin = fopen(cfg_file, "w+");
+	fin = fopen(cfg_file, "r+");
 #else
 	fin.open(cfg_file, ios::in | ios::binary);
 #endif
@@ -396,7 +408,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	char *p,*q;
 
 #if _LINUX_OS_
-	fin = fopen(cfg_file, "w+");
+	fin = fopen(cfg_file, "r+");
 #else
 	fin.open(cfg_file, ios::in | ios::binary);
 #endif
@@ -407,7 +419,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 	else {
 		printf("FILE: %s opened\n", cfg_file);
 		memset(line, 0, sizeof(line));	
-		while (AYFILE_ReadLine((unsigned int *)&fin, &line[0], 1023)) {
+		while (AYFILE_ReadLine(/*(unsigned int *)&*/fin, &line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if (p != 0) {
@@ -419,7 +431,7 @@ int AYFILE_ConfigFileReadComp(char *pVal, int comp) {
 					q = pVal;///< start
 					while (*p != '"') {
 						if (*p == 0) {
-							AYFILE_ReadLine((unsigned int *)&fin, &line[0], 1023);
+							AYFILE_ReadLine(/*(unsigned int *)&*/fin, &line[0], 1023);
 							printf("FILE: %s LINE: %s\n", cfg_file, line);
 							p = &line[0];
 						}
@@ -466,7 +478,7 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 	char *p,*q;
 	
 #if _LINUX_OS_
-	fin = fopen(cfg_file, "w+");
+	fin = fopen(cfg_file, "r+");
 #else
 	fin.open(cfg_file, ios::in | ios::binary);
 #endif
@@ -479,7 +491,7 @@ int AYFILE_ConfigFileWriteComp(char *pVal, int comp) {
 
 		printf("FILE: %s opened to read \n", cfg_file);
 		memset(line, 0, sizeof(line));
-		while (AYFILE_ReadLine((unsigned int *)&fin, &line[0], 1023)) {
+		while (AYFILE_ReadLine(/*(unsigned int *)&*/fin, &line[0], 1023)) {
 			printf("FILE: %s LINE: %s\n", cfg_file, line);
 			p = strstr(line, item);
 			if(p != 0){
@@ -686,7 +698,11 @@ int AYFILE_ConfigFileUpdate(void) {
 /*
 * netsh interface ip delete address "Wi-Fi" addr=192.168.2.148 gateway=all
 */
+#if _LINUX_OS_
+const char cert_file[] = "cert.ayk";
+#else
 const char cert_file[] = "file/cert.ayk";
+#endif
 const unsigned char cert_aes[16] = { 0x62,0xa3,0x3b,0xe9,0x1f,0xff,0xc2,0x0e,0xc9,0xfd,0xfc,0xda,0x6a,0x71,0x25,0x29 };
 int AYFILE_TestCertFile(Ui08 Create) {
 	int i = 0;
@@ -694,7 +710,7 @@ int AYFILE_TestCertFile(Ui08 Create) {
 	char file[32768];
 
 #if _LINUX_OS_
-	fin = fopen(cert_file, "w+");
+	fin = fopen(cert_file, "r+");
 #else
 	fin.open(cert_file, ios::in | ios::binary);
 #endif
@@ -762,7 +778,7 @@ int AYFILE_ReadCertFile(void) {
 
 	if (AYFILE_TestCertFile(1)) {
 #if _LINUX_OS_
-		fin = fopen(cert_file, "w+");
+		fin = fopen(cert_file, "r+");
 #else
 		fin.open(cert_file, ios::in | ios::binary);
 #endif

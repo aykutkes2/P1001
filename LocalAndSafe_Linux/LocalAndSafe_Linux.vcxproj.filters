@@ -258,6 +258,9 @@
     <Filter Include="Header Files\mbedTls">
       <UniqueIdentifier>{8d15af62-946a-408a-bbf1-2654b5ab36d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="files">
+      <UniqueIdentifier>{2bb06379-22aa-4b21-9d35-93f76bf92b54}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Server\inc\AY_Functions.h">
@@ -517,10 +520,30 @@
     <None Include="..\mbedTLS\library\Makefile">
       <Filter>Source Files\mbedTls</Filter>
     </None>
+    <None Include="..\file\cert.ayk">
+      <Filter>files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\mbedTLS\library\CMakeLists.txt">
       <Filter>Source Files\mbedTls</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\file\cfg.xml">
+      <Filter>files</Filter>
+    </Xml>
+    <Xml Include="..\file\cfg1.xml">
+      <Filter>files</Filter>
+    </Xml>
+    <Xml Include="..\file\cfg2.xml">
+      <Filter>files</Filter>
+    </Xml>
+    <Xml Include="..\file\cfg3.xml">
+      <Filter>files</Filter>
+    </Xml>
+    <Xml Include="..\file\cfg4.xml">
+      <Filter>files</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

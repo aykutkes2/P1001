@@ -79,7 +79,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>.\;.\DemoClient\inc;.\Test\inc;.\mbedTLS\include;.\ClientRaw;.\WinPcap\include;.\Server\inc;..\DemoClient\inc;..\Server\inc;..\Test\inc;..\mbedTLS\include;..\ClientRaw;..\WinPcap\include;$(IncludePath)</IncludePath>
-    <AdditionalSourcesToCopyMapping>..\Server\inc\AY_Crypt.h;..\Server\inc\AY_Main.h;..\mbedTLS:=.\mbedTLS;$(AdditionalSourcesToCopyMapping)</AdditionalSourcesToCopyMapping>
+    <AdditionalSourcesToCopyMapping>..\Server\inc\AY_Crypt.h;..\Server\inc\AY_Main.h;$(AdditionalSourcesToCopyMapping)</AdditionalSourcesToCopyMapping>
     <SourcesToCopyRemotelyOverride>@(SourcesToCopyRemotely);@(DataFilesToCopyRemotely)</SourcesToCopyRemotelyOverride>
   </PropertyGroup>
   <ItemGroup>
@@ -251,11 +251,19 @@
     <ClInclude Include="..\Server\inc\AY_Type.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\file\cert.ayk" />
     <None Include="..\mbedTLS\library\.gitignore" />
     <None Include="..\mbedTLS\library\Makefile" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\mbedTLS\library\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\file\cfg.xml" />
+    <Xml Include="..\file\cfg1.xml" />
+    <Xml Include="..\file\cfg2.xml" />
+    <Xml Include="..\file\cfg3.xml" />
+    <Xml Include="..\file\cfg4.xml" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
